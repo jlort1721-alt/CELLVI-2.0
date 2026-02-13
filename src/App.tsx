@@ -13,6 +13,8 @@ import RoutePlanner from './features/fleet/components/RoutePlanner';
 import MaintenanceDashboard from './features/maintenance/pages/MaintenanceDashboard';
 import DriverRoute from './features/driver/pages/DriverRoute';
 import InstallPrompt from './components/pwa/InstallPrompt';
+import { CELLVIAssistant } from "@/components/AIChatWidget";
+import PublicLedgerVerifier from './pages/public/VerifyLedger';
 
 /* ── Lazy-loaded pages (code splitting) ── */
 const Index = lazy(() => import("./pages/Index"));
@@ -64,6 +66,7 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/verify" element={<PublicLedgerVerifier />} />
                 <Route path="/demo" element={<Demo />} />
                 <Route path="/pqr" element={<PQR />} />
                 <Route path="/auth" element={<Auth />} />
@@ -87,6 +90,7 @@ const App = () => (
               </Routes>
             </Suspense>
             <CookieBanner />
+            <CELLVIAssistant />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
