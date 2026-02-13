@@ -1,0 +1,17 @@
+### Enterprise Infrastructure Upgrade
+
+This PR implements the scaling strategy defined in docs/SCALING_STRATEGY.md and prepares the system for hyper-scale loads.
+
+#### Database Optimizations
+- **Spatial Indexing:** Added GIST index on geofences.geom for O(log N) geofencing lookups.
+- **Hot Cache:** Created vehicle_last_positions table to serve live map data instantly without scanning historical telemetry.
+- **Maintenance Performance:** Denormalized next_due_date column on maintenance_plans to speed up critical reports.
+
+#### Documentation
+- Added docs/SCALING_STRATEGY.md detailing partitioned tables and caching layers.
+- Updates docs/AUDIT_REPORT_V2.md confirming security and performance improvements.
+
+#### Validation
+- **Local:** Migrations applied successfully via supabase db push.
+- **Security:** RLS policies enforced on new cache tables.
+- **Schema Drift:** Resolved next_due_date column missing issue with a robust backfill migration.
