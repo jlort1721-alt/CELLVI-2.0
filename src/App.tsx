@@ -18,6 +18,7 @@ import DriverRoute from './features/driver/pages/DriverRoute';
 import InstallPrompt from './components/pwa/InstallPrompt';
 import { CELLVIAssistant } from "@/components/AIChatWidget";
 import PublicLedgerVerifier from './pages/public/VerifyLedger';
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 /* ── Lazy-loaded pages (code splitting) ── */
 const Index = lazy(() => import("./pages/Index"));
@@ -62,50 +63,52 @@ const PageLoader = () => (
 );
 
 const App = () => (
-  <PersistQueryClientProvider
-    client={queryClient}
-    persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}
-  >
-    <ThemeProvider>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <InstallPrompt />
-          <BrowserRouter>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/verify" element={<PublicLedgerVerifier />} />
-                <Route path="/demo" element={<Demo />} />
-                <Route path="/pqr" element={<PQR />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/platform" element={<ProtectedRoute><Platform /></ProtectedRoute>} />
-                <Route path="/api-docs" element={<ApiDocs />} />
-                <Route path="/tracking" element={<TrackingDashboard />} />
-                <Route path="/planning" element={<RoutePlanner />} />
-                <Route path="/driver" element={<DriverRoute />} />
-                <Route path="/privacidad" element={<Privacidad />} />
-                <Route path="/terminos" element={<Terminos />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="/preoperacional" element={<ProtectedRoute><ChecklistPage /></ProtectedRoute>} />
-                <Route path="/rndc" element={<ProtectedRoute><RNDCPage /></ProtectedRoute>} />
-                <Route path="/mantenimiento" element={<ProtectedRoute><MaintenanceDashboard /></ProtectedRoute>} />
-                <Route path="/mantenimiento-lista" element={<ProtectedRoute><MaintenancePage /></ProtectedRoute>} />
-                <Route path="/seguridad" element={<ProtectedRoute><SecurityPage /></ProtectedRoute>} />
-                <Route path="/auditoria" element={<ProtectedRoute><AuditLogPage /></ProtectedRoute>} />
-                <Route path="/reportes" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
-                <Route path="/maestro-repuestos" element={<ProtectedRoute><InventoryPage /></ProtectedRoute>} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <CookieBanner />
-              <CELLVIAssistant />
-            </Suspense>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </PersistQueryClientProvider>
+  <ErrorBoundary level="page">
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}
+    >
+      <ThemeProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <InstallPrompt />
+            <BrowserRouter>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/verify" element={<PublicLedgerVerifier />} />
+                  <Route path="/demo" element={<Demo />} />
+                  <Route path="/pqr" element={<PQR />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/platform" element={<ProtectedRoute><ErrorBoundary level="page"><Platform /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/api-docs" element={<ApiDocs />} />
+                  <Route path="/tracking" element={<ErrorBoundary level="feature"><TrackingDashboard /></ErrorBoundary>} />
+                  <Route path="/planning" element={<ErrorBoundary level="feature"><RoutePlanner /></ErrorBoundary>} />
+                  <Route path="/driver" element={<ErrorBoundary level="feature"><DriverRoute /></ErrorBoundary>} />
+                  <Route path="/privacidad" element={<Privacidad />} />
+                  <Route path="/terminos" element={<Terminos />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="/preoperacional" element={<ProtectedRoute><ErrorBoundary level="feature"><ChecklistPage /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/rndc" element={<ProtectedRoute><ErrorBoundary level="feature"><RNDCPage /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/mantenimiento" element={<ProtectedRoute><ErrorBoundary level="feature"><MaintenanceDashboard /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/mantenimiento-lista" element={<ProtectedRoute><ErrorBoundary level="feature"><MaintenancePage /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/seguridad" element={<ProtectedRoute><ErrorBoundary level="feature"><SecurityPage /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/auditoria" element={<ProtectedRoute><ErrorBoundary level="feature"><AuditLogPage /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/reportes" element={<ProtectedRoute><ErrorBoundary level="feature"><ReportsPage /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="/maestro-repuestos" element={<ProtectedRoute><ErrorBoundary level="feature"><InventoryPage /></ErrorBoundary></ProtectedRoute>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <CookieBanner />
+                <CELLVIAssistant />
+              </Suspense>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </PersistQueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
