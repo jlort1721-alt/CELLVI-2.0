@@ -72,10 +72,53 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'supabase-api-data',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 24h offline data
+                maxAgeSeconds: 60 * 60 * 24 // 24h
               },
               cacheableResponse: {
                 statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // Cache Edge Functions (AI Chat, Optimization)
+            urlPattern: /^https:\/\/.*\.supabase\.co\/functions\/v1\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-edge-functions',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 24h
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // Background Sync for Mutations (POST)
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            method: 'POST',
+            handler: 'NetworkOnly',
+            options: {
+              backgroundSync: {
+                name: 'supabase-mutations-queue',
+                options: {
+                  maxRetentionTime: 24 * 60 // Retry for 24 hours
+                }
+              }
+            }
+          },
+          {
+            // Background Sync for Mutations (PATCH)
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            method: 'PATCH',
+            handler: 'NetworkOnly',
+            options: {
+              backgroundSync: {
+                name: 'supabase-mutations-queue',
+                options: {
+                  maxRetentionTime: 24 * 60 // Retry for 24 hours
+                }
               }
             }
           },
@@ -86,7 +129,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'map-tiles',
               expiration: {
                 maxEntries: 500,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days tiles
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               },
               cacheableResponse: {
                 statuses: [0, 200]

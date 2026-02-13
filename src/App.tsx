@@ -1,8 +1,11 @@
+
 import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -37,14 +40,18 @@ const InventoryPage = lazy(() => import("./features/maintenance/pages/InventoryP
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 min cache
+      staleTime: 5 * 60 * 1000,
       retry: 2,
       refetchOnWindowFocus: false,
+      gcTime: 1000 * 60 * 60 * 24, // 24h
     },
   },
 });
 
-/* ── Page Loading Fallback ── */
+const persister = createSyncStoragePersister({
+  storage: window.localStorage,
+});
+
 const PageLoader = () => (
   <div className="h-screen w-screen flex items-center justify-center bg-navy">
     <div className="flex flex-col items-center gap-3">
@@ -55,7 +62,10 @@ const PageLoader = () => (
 );
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider
+    client={queryClient}
+    persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}
+  >
     <ThemeProvider>
       <AuthProvider>
         <TooltipProvider>
@@ -88,14 +98,14 @@ const App = () => (
                 <Route path="/maestro-repuestos" element={<ProtectedRoute><InventoryPage /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <CookieBanner />
+              <CELLVIAssistant />
             </Suspense>
-            <CookieBanner />
-            <CELLVIAssistant />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
     </ThemeProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
 );
 
 export default App;
