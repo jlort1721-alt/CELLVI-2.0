@@ -61,6 +61,7 @@ export const useCreateDevice = () => {
 };
 
 // ==================== TELEMETRY ====================
+// NOTE: This hook no longer polls. Use useRealtimeTelemetry() to subscribe to live updates.
 export const useTelemetry = (vehicleId?: string, options: PaginatedQueryOptions = {}) => {
   const page = options.page || 1;
   const pageSize = options.pageSize || DEFAULT_PAGE_SIZES.telemetry;
@@ -90,7 +91,7 @@ export const useTelemetry = (vehicleId?: string, options: PaginatedQueryOptions 
 
       return buildPaginationResult(data, count || 0, page, pageSize);
     },
-    refetchInterval: 10000, // Poll every 10 seconds
+    // ✅ NO MORE POLLING - Use useRealtimeTelemetry() hook for live updates
     enabled: options.enabled !== false,
   });
 };
@@ -174,6 +175,7 @@ export const useEvidence = (options: PaginatedQueryOptions = {}) => {
 };
 
 // ==================== COLD CHAIN ====================
+// NOTE: Consider adding useRealtimeColdChain() if real-time temperature monitoring is critical
 export const useColdChainLogs = (vehicleId?: string, options: PaginatedQueryOptions = {}) => {
   const page = options.page || 1;
   const pageSize = options.pageSize || DEFAULT_PAGE_SIZES.cold_chain;
@@ -203,7 +205,7 @@ export const useColdChainLogs = (vehicleId?: string, options: PaginatedQueryOpti
 
       return buildPaginationResult(data, count || 0, page, pageSize);
     },
-    refetchInterval: 15000,
+    // ✅ NO MORE POLLING - Consider adding Realtime subscription if needed
     enabled: options.enabled !== false,
   });
 };
