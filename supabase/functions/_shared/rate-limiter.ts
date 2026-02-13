@@ -1,170 +1,116 @@
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+
 /**
- * ===== EDGE FUNCTION RATE LIMITER =====
- * In-memory sliding window rate limiter for Supabase Edge Functions.
- * Uses Deno's KV store when available, falls back to in-memory Map.
- * 
- * Design: Sliding window counter per IP/key.
- * Edge Functions are stateless per invocation on Deno Deploy, so for
- * production scale, use Supabase's built-in Rate Limiting (via pg_net)
- * or an external Redis store. This provides per-instance protection.
+ * Durable Rate Limiter using Postgres - PR #13
+ * Survives deploys, shared across instances, fail-open strategy
  */
 
-interface RateLimitEntry {
-    count: number;
-    windowStart: number;
-}
-
-// In-memory store (per Edge Function instance)
-const store = new Map<string, RateLimitEntry>();
-
-// Cleanup stale entries periodically
-const CLEANUP_INTERVAL = 60_000; // 1 minute
-let lastCleanup = Date.now();
-
-function cleanup(windowMs: number) {
-    const now = Date.now();
-    if (now - lastCleanup < CLEANUP_INTERVAL) return;
-    lastCleanup = now;
-
-    for (const [key, entry] of store.entries()) {
-        if (now - entry.windowStart > windowMs * 2) {
-            store.delete(key);
-        }
-    }
-}
-
 export interface RateLimitConfig {
-    /** Maximum requests per window */
-    maxRequests: number;
-    /** Window duration in milliseconds */
-    windowMs: number;
-    /** Custom key extractor (default: client IP) */
-    keyExtractor?: (req: Request) => string;
+  maxRequests: number;
+  windowMs: number;
+  identifier: string;
+  endpoint: string;
 }
 
 export interface RateLimitResult {
-    allowed: boolean;
-    remaining: number;
-    resetAt: number;
-    retryAfterMs: number;
+  allowed: boolean;
+  remaining: number;
+  resetAt: Date;
+  retryAfter?: number;
 }
 
-/**
- * Check if a request is within rate limits.
- * Returns headers to include in the response.
- */
-export function checkRateLimit(req: Request, config: RateLimitConfig): RateLimitResult {
-    const { maxRequests, windowMs, keyExtractor } = config;
+export class RateLimitError extends Error {
+  constructor(public result: RateLimitResult, public statusCode = 429) {
+    super(`Rate limit exceeded. Retry after ${result.retryAfter} seconds.`);
+    this.name = "RateLimitError";
+  }
+}
 
-    // Extract key (IP or custom)
-    const key = keyExtractor
-        ? keyExtractor(req)
-        : req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-        req.headers.get("cf-connecting-ip") ||
-        req.headers.get("x-real-ip") ||
-        "unknown";
+export async function checkRateLimit(
+  supabase: SupabaseClient,
+  config: RateLimitConfig
+): Promise<RateLimitResult> {
+  const now = new Date();
+  const windowEnd = new Date(now.getTime() + config.windowMs);
 
-    const now = Date.now();
-    cleanup(windowMs);
+  try {
+    const { data: existing, error: fetchError } = await supabase
+      .from("rate_limits")
+      .select("*")
+      .eq("identifier", config.identifier)
+      .eq("endpoint", config.endpoint)
+      .gte("window_end", now.toISOString())
+      .order("window_start", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    const entry = store.get(key);
-
-    if (!entry || now - entry.windowStart >= windowMs) {
-        // New window
-        store.set(key, { count: 1, windowStart: now });
-        return {
-            allowed: true,
-            remaining: maxRequests - 1,
-            resetAt: now + windowMs,
-            retryAfterMs: 0,
-        };
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error("[RateLimiter] Fetch error (failing open):", fetchError);
+      return { allowed: true, remaining: config.maxRequests - 1, resetAt: windowEnd };
     }
 
-    entry.count++;
+    if (!existing) {
+      const { error: insertError } = await supabase.from("rate_limits").insert({
+        identifier: config.identifier,
+        endpoint: config.endpoint,
+        requests_count: 1,
+        window_start: now.toISOString(),
+        window_end: windowEnd.toISOString(),
+      });
 
-    if (entry.count > maxRequests) {
-        const retryAfterMs = windowMs - (now - entry.windowStart);
-        return {
-            allowed: false,
-            remaining: 0,
-            resetAt: entry.windowStart + windowMs,
-            retryAfterMs,
-        };
+      if (insertError) {
+        console.error("[RateLimiter] Insert error (failing open):", insertError);
+        return { allowed: true, remaining: config.maxRequests - 1, resetAt: windowEnd };
+      }
+
+      return { allowed: true, remaining: config.maxRequests - 1, resetAt: windowEnd };
     }
 
-    return {
-        allowed: true,
-        remaining: maxRequests - entry.count,
-        resetAt: entry.windowStart + windowMs,
-        retryAfterMs: 0,
-    };
+    const currentCount = existing.requests_count;
+    const resetAt = new Date(existing.window_end);
+
+    if (currentCount >= config.maxRequests) {
+      const retryAfter = Math.ceil((resetAt.getTime() - now.getTime()) / 1000);
+      return { allowed: false, remaining: 0, resetAt, retryAfter: Math.max(retryAfter, 1) };
+    }
+
+    const { error: updateError } = await supabase
+      .from("rate_limits")
+      .update({ requests_count: currentCount + 1, updated_at: now.toISOString() })
+      .eq("id", existing.id);
+
+    if (updateError) {
+      console.error("[RateLimiter] Update error (failing open):", updateError);
+      return { allowed: true, remaining: config.maxRequests - currentCount - 1, resetAt };
+    }
+
+    return { allowed: true, remaining: config.maxRequests - currentCount - 1, resetAt };
+
+  } catch (error) {
+    console.error("[RateLimiter] Unexpected error (failing open):", error);
+    return { allowed: true, remaining: config.maxRequests, resetAt: windowEnd };
+  }
 }
 
-/**
- * Generate standard rate limit response headers.
- */
-export function rateLimitHeaders(result: RateLimitResult): Record<string, string> {
-    return {
-        "X-RateLimit-Limit": result.remaining.toString(),
-        "X-RateLimit-Remaining": Math.max(0, result.remaining).toString(),
-        "X-RateLimit-Reset": Math.ceil(result.resetAt / 1000).toString(),
-        ...(result.retryAfterMs > 0
-            ? { "Retry-After": Math.ceil(result.retryAfterMs / 1000).toString() }
-            : {}),
-    };
+export async function enforceRateLimit(supabase: SupabaseClient, config: RateLimitConfig): Promise<void> {
+  const result = await checkRateLimit(supabase, config);
+  if (!result.allowed) throw new RateLimitError(result);
 }
 
-/**
- * Create a 429 Too Many Requests response.
- */
-export function rateLimitResponse(
-    result: RateLimitResult,
-    corsHeaders: Record<string, string>
-): Response {
-    return new Response(
-        JSON.stringify({
-            error: "Too many requests. Please try again later.",
-            retryAfterSeconds: Math.ceil(result.retryAfterMs / 1000),
-        }),
-        {
-            status: 429,
-            headers: {
-                ...corsHeaders,
-                ...rateLimitHeaders(result),
-                "Content-Type": "application/json",
-            },
-        }
-    );
+export function getRateLimitHeaders(result: RateLimitResult): HeadersInit {
+  const headers: HeadersInit = {
+    "X-RateLimit-Remaining": String(result.remaining),
+    "X-RateLimit-Reset": result.resetAt.toISOString(),
+  };
+  if (result.retryAfter) headers["Retry-After"] = String(result.retryAfter);
+  return headers;
 }
 
-// ===== Pre-configured limiters for common use cases =====
-
-/** Checkout: 5 req/min per IP (prevent abuse) */
-export const CHECKOUT_LIMIT: RateLimitConfig = {
-    maxRequests: 5,
-    windowMs: 60_000,
-};
-
-/** Verification: 20 req/min per IP */
-export const VERIFY_LIMIT: RateLimitConfig = {
-    maxRequests: 20,
-    windowMs: 60_000,
-};
-
-/** Portal: 10 req/min per IP */
-export const PORTAL_LIMIT: RateLimitConfig = {
-    maxRequests: 10,
-    windowMs: 60_000,
-};
-
-/** General API: 60 req/min per IP */
-export const API_LIMIT: RateLimitConfig = {
-    maxRequests: 60,
-    windowMs: 60_000,
-};
-
-/** Strict: 3 req/min per IP (for sensitive operations) */
-export const STRICT_LIMIT: RateLimitConfig = {
-    maxRequests: 3,
-    windowMs: 60_000,
-};
+export function getIdentifier(req: Request, preferUserId?: string): string {
+  if (preferUserId) return `user:${preferUserId}`;
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  if (forwardedFor) return `ip:${forwardedFor.split(",")[0].trim()}`;
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp) return `ip:${realIp}`;
+  return "ip:unknown";
+}
