@@ -40,10 +40,30 @@ const InventoryPage = lazy(() => import("./features/maintenance/pages/InventoryP
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,
-      retry: 2,
-      refetchOnWindowFocus: false,
-      gcTime: 1000 * 60 * 60 * 24, // 24h
+      // PR #25: Optimized staleTime for better caching
+      // Most data is updated via Realtime subscriptions, so we can be aggressive with caching
+      staleTime: 5 * 60 * 1000, // 5 minutes - good default for most data
+
+      // Retry configuration
+      retry: 2, // Retry failed queries up to 2 times
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+
+      // Refetch behavior
+      refetchOnWindowFocus: false, // Disabled - Realtime handles updates
+      refetchOnReconnect: true, // Refetch when network reconnects
+      refetchOnMount: true, // Always refetch on component mount
+
+      // Cache time (formerly cacheTime, now gcTime in v5)
+      gcTime: 1000 * 60 * 60 * 24, // 24 hours - keep unused data in cache
+
+      // Network mode
+      networkMode: "online", // Only run queries when online
+    },
+    mutations: {
+      // Retry mutations only once
+      retry: 1,
+      retryDelay: 1000,
+      networkMode: "online",
     },
   },
 });
