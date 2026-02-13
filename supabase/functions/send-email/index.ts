@@ -1,56 +1,58 @@
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+/**
+ * Send Email Edge Function
+ *
+ * Updated with:
+ * - PR #12: CORS allowlist (withCors)
+ * - PR #13: Durable rate limiting
+ */
 
-// Simple in-memory rate limiter
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 5; // max requests
-const RATE_WINDOW = 60_000; // per minute
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { withCors } from "../_shared/cors.ts";
+import {
+  enforceRateLimit,
+  getIdentifier,
+  RateLimitError,
+  getRateLimitHeaders,
+} from "../_shared/rate-limiter.ts";
 
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW });
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT) return false;
-  entry.count++;
-  return true;
-}
-
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+const handler = async (req: Request): Promise<Response> => {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    const ip = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
-    if (!checkRateLimit(ip)) {
-      return new Response(JSON.stringify({ error: "Demasiadas solicitudes. Intenta en un minuto." }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // ✅ PR #13: Durable rate limiting (10 emails per hour per IP)
+    const identifier = getIdentifier(req);
+    await enforceRateLimit(supabase, {
+      maxRequests: 10,
+      windowMs: 60 * 60 * 1000, // 1 hour
+      identifier,
+      endpoint: "send-email",
+    });
 
     const body = await req.json();
     const { type, name, email, phone, message, subject, description } = body;
 
-    // Honeypot check
+    // Honeypot check (anti-spam)
     if (body.honeypot) {
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ success: true }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }
+      );
     }
 
     // Basic validation
     if (!name || !email) {
-      return new Response(JSON.stringify({ error: "Nombre y correo son requeridos." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Nombre y correo son requeridos." }),
+        {
+          status: 400,
+          headers: { "content-type": "application/json" },
+        }
+      );
     }
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
@@ -59,12 +61,16 @@ Deno.serve(async (req) => {
 
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY not configured");
-      return new Response(JSON.stringify({ error: "Servicio de email no configurado." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Servicio de email no configurado." }),
+        {
+          status: 500,
+          headers: { "content-type": "application/json" },
+        }
+      );
     }
 
+    // Sanitization
     const sanitize = (s: string) => s?.replace(/[<>]/g, "").trim().slice(0, 2000) || "";
     const timestamp = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
 
@@ -82,7 +88,10 @@ Deno.serve(async (req) => {
     // Send notification to team
     const teamEmail = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
       body: JSON.stringify({
         from: CONTACT_FROM_EMAIL,
         to: [CONTACT_TO_EMAIL],
@@ -109,16 +118,22 @@ Deno.serve(async (req) => {
     if (!teamEmail.ok) {
       const errText = await teamEmail.text();
       console.error("Resend team email error:", errText);
-      return new Response(JSON.stringify({ error: "Error al enviar el correo." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Error al enviar el correo." }),
+        {
+          status: 500,
+          headers: { "content-type": "application/json" },
+        }
+      );
     }
 
     // Send auto-reply to user
     await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
       body: JSON.stringify({
         from: CONTACT_FROM_EMAIL,
         to: [sanitize(email)],
@@ -132,9 +147,10 @@ Deno.serve(async (req) => {
             </div>
             <div style="padding:20px;">
               <p>Hola <strong>${sanitize(name)}</strong>,</p>
-              <p>${isPQR
-                ? "Hemos recibido tu solicitud PQR. Será atendida en un plazo máximo de 15 días hábiles según la normatividad vigente."
-                : "Gracias por contactarnos. Hemos recibido tu mensaje y nos pondremos en contacto contigo lo antes posible."
+              <p>${
+                isPQR
+                  ? "Hemos recibido tu solicitud PQR. Será atendida en un plazo máximo de 15 días hábiles según la normatividad vigente."
+                  : "Gracias por contactarnos. Hemos recibido tu mensaje y nos pondremos en contacto contigo lo antes posible."
               }</p>
               <p style="color:#999;font-size:12px;">Este es un correo automático, por favor no respondas directamente.</p>
               <hr style="border:none;border-top:1px solid #eee;margin:16px 0;" />
@@ -145,14 +161,41 @@ Deno.serve(async (req) => {
       }),
     }).catch((e) => console.error("Auto-reply error:", e));
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (err) {
-    console.error("send-email error:", err);
-    return new Response(JSON.stringify({ error: "Error interno del servidor." }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: true }),
+      {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }
+    );
+  } catch (error) {
+    // Handle rate limit errors
+    if (error instanceof RateLimitError) {
+      return new Response(
+        JSON.stringify({
+          error: "Demasiadas solicitudes. Intenta más tarde.",
+          retryAfter: error.result.retryAfter,
+        }),
+        {
+          status: 429,
+          headers: {
+            "content-type": "application/json",
+            ...getRateLimitHeaders(error.result),
+          },
+        }
+      );
+    }
+
+    console.error("send-email error:", error);
+    return new Response(
+      JSON.stringify({ error: "Error interno del servidor." }),
+      {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      }
+    );
   }
-});
+};
+
+// ✅ PR #12: Wrap with CORS middleware
+Deno.serve(withCors(handler));
