@@ -363,3 +363,82 @@ export const useTenant = () => {
     },
   });
 };
+
+// ==================== VEHICLE POSITIONS (Cache Table) ====================
+// FIX: N+1 Problem - Use vehicle_last_positions instead of querying telemetry N times
+export const useVehiclePositions = () => {
+  return useQuery({
+    queryKey: ["vehicle-positions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vehicle_last_positions")
+        .select("*");
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 30000, // 30 seconds - positions update frequently
+    refetchInterval: 30000, // Refetch every 30s (balanced with Realtime updates)
+  });
+};
+
+// ==================== DASHBOARD STATS ====================
+// FIX: N+1 Problem - Single query for all dashboard metrics
+export const useDashboardStats = () => {
+  return useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: async () => {
+      // Get tenant_id from session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (!profile?.tenant_id) return null;
+      const tenantId = profile.tenant_id;
+
+      // Execute all stats queries in parallel
+      const [vehiclesData, alertsData, tripsData, telemetryData] = await Promise.all([
+        supabase
+          .from("vehicles")
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", tenantId)
+          .eq("active", true),
+        supabase
+          .from("alerts")
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", tenantId)
+          .eq("acknowledged", false),
+        supabase
+          .from("trips")
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", tenantId)
+          .eq("status", "pending"),
+        supabase
+          .from("telemetry_events")
+          .select("speed")
+          .eq("tenant_id", tenantId)
+          .gte("ts", new Date(Date.now() - 3600000).toISOString()) // Last hour
+          .limit(1000),
+      ]);
+
+      // Calculate average speed
+      const speeds = telemetryData.data?.map(t => t.speed).filter(s => s != null) || [];
+      const avgSpeed = speeds.length > 0
+        ? speeds.reduce((a, b) => a + b, 0) / speeds.length
+        : 0;
+
+      return {
+        vehicleCount: vehiclesData.count || 0,
+        activeAlerts: alertsData.count || 0,
+        pendingTrips: tripsData.count || 0,
+        avgSpeed: Math.round(avgSpeed * 10) / 10, // Round to 1 decimal
+      };
+    },
+    staleTime: 60000, // 1 minute - dashboard stats don't change frequently
+    refetchInterval: 60000, // Refetch every minute
+  });
+};
