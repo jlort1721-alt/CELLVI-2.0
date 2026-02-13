@@ -1,6 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getPaginationRange, DEFAULT_PAGE_SIZES } from "@/lib/pagination";
 
 export function useOperationalReport(dateRange: { start: string, end: string }) {
     return useQuery({
@@ -29,12 +30,16 @@ export function useOperationalReport(dateRange: { start: string, end: string }) 
             if (inspError) throw inspError;
 
             // 3. Calculate Fuel Efficiency (Real Aggregation)
+            // NOTE: For large datasets, consider using Postgres aggregation functions
+            // For now, we limit to most recent trips to avoid unbounded queries
             const { data: trips, error: tripsError } = await supabase
                 .from("trips")
                 .select("distance_actual_km, fuel_consumed_gal")
                 .eq("status", "completed")
                 .gte("actual_end_at", dateRange.start)
-                .lte("actual_end_at", dateRange.end);
+                .lte("actual_end_at", dateRange.end)
+                .order("actual_end_at", { ascending: false })
+                .limit(DEFAULT_PAGE_SIZES.trips * 10); // Limit to 500 most recent trips
 
             if (tripsError) throw tripsError;
 
@@ -71,12 +76,15 @@ export function useSecurityReport(dateRange: { start: string, end: string }) {
     return useQuery({
         queryKey: ["security-report", dateRange],
         queryFn: async () => {
+            // Limit to most recent critical/high alerts to avoid unbounded queries
             const { data: alerts, error } = await supabase
                 .from("alerts")
                 .select("severity, type, created_at")
                 .gte("created_at", dateRange.start)
                 .lte("created_at", dateRange.end)
-                .in("severity", ["critical", "high"]);
+                .in("severity", ["critical", "high"])
+                .order("created_at", { ascending: false })
+                .limit(DEFAULT_PAGE_SIZES.alerts * 10); // Limit to 500 most recent
 
             if (error) throw error;
 

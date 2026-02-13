@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, X, Car, Cpu, Users, Building2, ShieldCheck, UserCog } from "lucide-react";
+import { Plus, X, Car, Cpu, Users, Building2, ShieldCheck, UserCog, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { getPaginationRange, buildPaginationResult, DEFAULT_PAGE_SIZES, type PaginationResult } from "@/lib/pagination";
 
 type Tab = "users" | "vehicles" | "devices" | "drivers" | "tenant";
 type AppRole = "super_admin" | "admin" | "manager" | "operator" | "driver" | "client" | "auditor";
@@ -82,17 +83,33 @@ const ROLE_COLORS: Record<AppRole, string> = {
   auditor: "bg-cyan-500/10 text-cyan-400",
 };
 
-// Hook: all users with roles (admin only)
-const useAllUsers = () => {
+// Hook: all users with roles (admin only) - NOW WITH PAGINATION
+const useAllUsers = (page: number = 1, pageSize: number = DEFAULT_PAGE_SIZES.profiles) => {
   return useQuery({
-    queryKey: ["admin-users"],
-    queryFn: async () => {
+    queryKey: ["admin-users", page, pageSize],
+    queryFn: async (): Promise<PaginationResult<AdminUser>> => {
+      const { from, to } = getPaginationRange(page, pageSize);
+
+      // Get total count
+      const { count } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true });
+
+      // Get paginated data
       const { data: profiles, error } = await supabase
         .from("profiles")
         .select("*, user_roles(role)")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
       if (error) throw error;
-      return profiles;
+
+      return buildPaginationResult(
+        profiles as AdminUser[],
+        count || 0,
+        page,
+        pageSize
+      );
     },
   });
 };
@@ -134,12 +151,13 @@ const DashboardAdmin = () => {
   const { isAdmin, profile } = useAuth();
   const [tab, setTab] = useState<Tab>("users");
   const [showForm, setShowForm] = useState(false);
+  const [usersPage, setUsersPage] = useState(1);
 
   const { data: tenant } = useTenant();
   const { data: vehicles = [], isLoading: loadingV } = useVehicles();
   const { data: devices = [], isLoading: loadingD } = useDevices();
   const { data: drivers = [], isLoading: loadingDr } = useDrivers();
-  const { data: users = [], isLoading: loadingU } = useAllUsers();
+  const { data: usersResult, isLoading: loadingU } = useAllUsers(usersPage);
 
   const createVehicle = useCreateVehicle();
   const createDevice = useCreateDevice();
@@ -183,7 +201,7 @@ const DashboardAdmin = () => {
   };
 
   const tabs = [
-    { id: "users" as Tab, label: "Usuarios & Roles", icon: UserCog, count: users.length },
+    { id: "users" as Tab, label: "Usuarios & Roles", icon: UserCog, count: usersResult?.totalCount || 0 },
     { id: "vehicles" as Tab, label: "Vehículos", icon: Car, count: vehicles.length },
     { id: "devices" as Tab, label: "Dispositivos", icon: Cpu, count: devices.length },
     { id: "drivers" as Tab, label: "Conductores", icon: Users, count: drivers.length },
@@ -241,9 +259,9 @@ const DashboardAdmin = () => {
               <TableBody>
                 {loadingU ? (
                   <TableRow><TableCell colSpan={6} className="text-center text-sidebar-foreground/30 text-xs">Cargando...</TableCell></TableRow>
-                ) : users.length === 0 ? (
+                ) : !usersResult || usersResult.data.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center text-sidebar-foreground/30 text-xs">Sin usuarios registrados</TableCell></TableRow>
-                ) : users.map((u) => {
+                ) : usersResult.data.map((u) => {
                   const roles = u.user_roles as unknown as { role: string }[] | undefined;
                   const currentRole = (roles?.[0]?.role || "operator") as AppRole;
                   return (
@@ -288,6 +306,39 @@ const DashboardAdmin = () => {
               </TableBody>
             </Table>
           </div>
+          {/* Pagination Controls */}
+          {usersResult && usersResult.totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-sidebar-border">
+              <div className="text-xs text-sidebar-foreground/60">
+                Mostrando {((usersResult.page - 1) * usersResult.pageSize) + 1} - {Math.min(usersResult.page * usersResult.pageSize, usersResult.totalCount)} de {usersResult.totalCount} usuarios
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
+                  disabled={!usersResult.hasPrev}
+                  className="h-7 text-xs"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  Anterior
+                </Button>
+                <span className="text-xs text-sidebar-foreground/60">
+                  Página {usersResult.page} de {usersResult.totalPages}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setUsersPage((p) => Math.min(usersResult.totalPages, p + 1))}
+                  disabled={!usersResult.hasNext}
+                  className="h-7 text-xs"
+                >
+                  Siguiente
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
