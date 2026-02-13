@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { Json } from "@/integrations/supabase/types";
+import { getPaginationRange, buildPaginationResult, DEFAULT_PAGE_SIZES, type PaginationResult, type PaginatedQueryOptions } from "@/lib/pagination";
 
 // ==================== VEHICLES ====================
 export const useVehicles = () => {
@@ -60,38 +61,68 @@ export const useCreateDevice = () => {
 };
 
 // ==================== TELEMETRY ====================
-export const useTelemetry = (vehicleId?: string, limit = 100) => {
+export const useTelemetry = (vehicleId?: string, options: PaginatedQueryOptions = {}) => {
+  const page = options.page || 1;
+  const pageSize = options.pageSize || DEFAULT_PAGE_SIZES.telemetry;
+
   return useQuery({
-    queryKey: ["telemetry", vehicleId, limit],
-    queryFn: async () => {
-      let query = supabase
+    queryKey: ["telemetry", vehicleId, page, pageSize],
+    queryFn: async (): Promise<PaginationResult<any>> => {
+      const { from, to } = getPaginationRange(page, pageSize);
+
+      // Get total count
+      let countQuery = supabase
+        .from("telemetry_events")
+        .select("*", { count: "exact", head: true });
+      if (vehicleId) countQuery = countQuery.eq("vehicle_id", vehicleId);
+      const { count } = await countQuery;
+
+      // Get paginated data
+      let dataQuery = supabase
         .from("telemetry_events")
         .select("*")
         .order("ts", { ascending: false })
-        .limit(limit);
-      if (vehicleId) query = query.eq("vehicle_id", vehicleId);
-      const { data, error } = await query;
+        .range(from, to);
+      if (vehicleId) dataQuery = dataQuery.eq("vehicle_id", vehicleId);
+      const { data, error } = await dataQuery;
+
       if (error) throw error;
-      return data;
+
+      return buildPaginationResult(data, count || 0, page, pageSize);
     },
     refetchInterval: 10000, // Poll every 10 seconds
+    enabled: options.enabled !== false,
   });
 };
 
 // ==================== ALERTS ====================
-export const useAlerts = (limit = 50) => {
+export const useAlerts = (options: PaginatedQueryOptions = {}) => {
+  const page = options.page || 1;
+  const pageSize = options.pageSize || DEFAULT_PAGE_SIZES.alerts;
+
   return useQuery({
-    queryKey: ["alerts", limit],
-    queryFn: async () => {
+    queryKey: ["alerts", page, pageSize],
+    queryFn: async (): Promise<PaginationResult<any>> => {
+      const { from, to } = getPaginationRange(page, pageSize);
+
+      // Get total count
+      const { count } = await supabase
+        .from("alerts")
+        .select("*", { count: "exact", head: true });
+
+      // Get paginated data
       const { data, error } = await supabase
         .from("alerts")
         .select("*, vehicles(plate), policies(name)")
         .order("created_at", { ascending: false })
-        .limit(limit);
+        .range(from, to);
+
       if (error) throw error;
-      return data;
+
+      return buildPaginationResult(data, count || 0, page, pageSize);
     },
     refetchInterval: 5000,
+    enabled: options.enabled !== false,
   });
 };
 
@@ -112,37 +143,67 @@ export const useAcknowledgeAlert = () => {
 };
 
 // ==================== EVIDENCE ====================
-export const useEvidence = (limit = 50) => {
+export const useEvidence = (options: PaginatedQueryOptions = {}) => {
+  const page = options.page || 1;
+  const pageSize = options.pageSize || DEFAULT_PAGE_SIZES.evidence;
+
   return useQuery({
-    queryKey: ["evidence", limit],
-    queryFn: async () => {
+    queryKey: ["evidence", page, pageSize],
+    queryFn: async (): Promise<PaginationResult<any>> => {
+      const { from, to } = getPaginationRange(page, pageSize);
+
+      // Get total count
+      const { count } = await supabase
+        .from("evidence_records")
+        .select("*", { count: "exact", head: true });
+
+      // Get paginated data
       const { data, error } = await supabase
         .from("evidence_records")
         .select("*, vehicles(plate)")
         .order("sealed_at", { ascending: false })
-        .limit(limit);
+        .range(from, to);
+
       if (error) throw error;
-      return data;
+
+      return buildPaginationResult(data, count || 0, page, pageSize);
     },
+    enabled: options.enabled !== false,
   });
 };
 
 // ==================== COLD CHAIN ====================
-export const useColdChainLogs = (vehicleId?: string, limit = 200) => {
+export const useColdChainLogs = (vehicleId?: string, options: PaginatedQueryOptions = {}) => {
+  const page = options.page || 1;
+  const pageSize = options.pageSize || DEFAULT_PAGE_SIZES.cold_chain;
+
   return useQuery({
-    queryKey: ["cold_chain", vehicleId, limit],
-    queryFn: async () => {
-      let query = supabase
+    queryKey: ["cold_chain", vehicleId, page, pageSize],
+    queryFn: async (): Promise<PaginationResult<any>> => {
+      const { from, to } = getPaginationRange(page, pageSize);
+
+      // Get total count
+      let countQuery = supabase
+        .from("cold_chain_logs")
+        .select("*", { count: "exact", head: true });
+      if (vehicleId) countQuery = countQuery.eq("vehicle_id", vehicleId);
+      const { count } = await countQuery;
+
+      // Get paginated data
+      let dataQuery = supabase
         .from("cold_chain_logs")
         .select("*, vehicles(plate)")
         .order("ts", { ascending: false })
-        .limit(limit);
-      if (vehicleId) query = query.eq("vehicle_id", vehicleId);
-      const { data, error } = await query;
+        .range(from, to);
+      if (vehicleId) dataQuery = dataQuery.eq("vehicle_id", vehicleId);
+      const { data, error } = await dataQuery;
+
       if (error) throw error;
-      return data;
+
+      return buildPaginationResult(data, count || 0, page, pageSize);
     },
     refetchInterval: 15000,
+    enabled: options.enabled !== false,
   });
 };
 
