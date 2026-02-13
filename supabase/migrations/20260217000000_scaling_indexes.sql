@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS public.vehicle_last_positions (
 -- RLS para la caché
 ALTER TABLE public.vehicle_last_positions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenants view own vehicle positions" ON public.vehicle_last_positions;
 CREATE POLICY "Tenants view own vehicle positions" ON public.vehicle_last_positions
     FOR SELECT USING (tenant_id = get_user_tenant_id());
 
@@ -57,21 +58,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Vincular al flujo de telemetría
+-- Vincular al flujo de telemetría (Drop first to avoid errors)
 DROP TRIGGER IF EXISTS trg_update_vehicle_cache ON public.telemetry_events;
 CREATE TRIGGER trg_update_vehicle_cache
 AFTER INSERT ON public.telemetry_events
 FOR EACH ROW EXECUTE FUNCTION public.update_vehicle_cache();
 
 -- 3. Índices Compuestos para Reportes
--- Acelerar filtros comunes en dashboards (/reportes)
 CREATE INDEX IF NOT EXISTS idx_work_orders_composite 
 ON public.work_orders(tenant_id, status, created_at DESC);
 
+-- FIX: Add next_due_date column before indexing it
+ALTER TABLE public.maintenance_plans ADD COLUMN IF NOT EXISTS next_due_date TIMESTAMPTZ;
+
+-- Backfill data (Simple calculation based on last_performed + interval)
+UPDATE public.maintenance_plans 
+SET next_due_date = last_performed_at + (interval_days || ' days')::interval
+WHERE next_due_date IS NULL AND last_performed_at IS NOT NULL AND interval_days IS NOT NULL;
+
+-- Now create the index
 CREATE INDEX IF NOT EXISTS idx_maintenance_plans_status
 ON public.maintenance_plans(tenant_id, status, next_due_date ASC);
-
--- 4. Particionamiento (Stub - Requiere migración manual de datos existentes)
--- Nota: PostgreSQL nativo no soporta convertir una tabla normal a particionada directamente.
--- Se requiere renombrar la tabla vieja, crear la nueva particionada e insertar los datos.
--- Este script solo añade el índice GIST que es seguro y no disruptivo.
