@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export type ActiveModule =
   | 'overview' | 'map' | 'alerts'
@@ -17,10 +18,17 @@ interface UIState {
   setActiveModule: (module: ActiveModule) => void;
 }
 
-export const useUIStore = create<UIState>((set) => ({
-  sidebarOpen: true,
-  activeModule: 'overview',
-  setSidebarOpen: (open) => set({ sidebarOpen: open }),
-  toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
-  setActiveModule: (module) => set({ activeModule: module }),
-}));
+export const useUIStore = create<UIState>()(
+  persist(
+    (set) => ({
+      sidebarOpen: true,
+      activeModule: 'overview',
+      setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
+      setActiveModule: (module) => set({ activeModule: module }),
+    }),
+    {
+      name: 'cellvi-ui-storage', // name of the item in the storage (must be unique)
+    }
+  )
+);
