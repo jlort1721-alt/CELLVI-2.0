@@ -1,0 +1,1517 @@
+{
+  "metadata": {
+    "report_id": "SOC2-demo-tenant-1770963387739",
+    "tenant_name": "Demo Tenant",
+    "generated_at": "2026-02-13T06:16:28.470Z",
+    "period_days": 30,
+    "compliance_standard": "SOC2 / ISO 27001 / RNDC-Col",
+    "version": "2.0.1",
+    "integrity_hash": "0a9de96cfff8306c13c848a0c78d860851045dd605a0d339d06bfd43d5827f4c"
+  },
+  "audit_logs": {
+    "rndc_transactions": [],
+    "security_alerts": [],
+    "telemetry_integrity_sample": [
+      {
+        "time": "2026-02-13T06:13:22.324+00:00",
+        "vehicle_id": "836eafc3-4d25-46ef-af27-2c5f28938775",
+        "latitude": 4.15829546784148,
+        "longitude": -73.9894038429454,
+        "speed": 68.5569229392068,
+        "heading": 125.964730266093,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000002FFF7E64527F52C0CEEF053518A21040"
+      },
+      {
+        "time": "2026-02-13T05:55:04.813+00:00",
+        "vehicle_id": "41a979ba-0321-45f5-955a-0ca172447115",
+        "latitude": 4.6,
+        "longitude": -74,
+        "speed": 0,
+        "heading": 0,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "audit": true
+        },
+        "events": [],
+        "location": "0101000020E610000000000000008052C06666666666661240"
+      },
+      {
+        "time": "2026-02-13T05:55:30.327+00:00",
+        "vehicle_id": "b7fb9ec2-862f-46af-a8df-0bcd315cb3d5",
+        "latitude": 4.6,
+        "longitude": -74,
+        "speed": 0,
+        "heading": 0,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "audit": true
+        },
+        "events": [],
+        "location": "0101000020E610000000000000008052C06666666666661240"
+      },
+      {
+        "time": "2026-02-13T05:55:51.311+00:00",
+        "vehicle_id": "f8e07bab-0704-44f8-bd3e-4811d9eaffa2",
+        "latitude": 4.6,
+        "longitude": -74,
+        "speed": 0,
+        "heading": 0,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "audit": true
+        },
+        "events": [],
+        "location": "0101000020E610000000000000008052C06666666666661240"
+      },
+      {
+        "time": "2026-02-13T05:56:17.175+00:00",
+        "vehicle_id": "0ed9115c-42dc-48fa-ae8a-cef22187a6e2",
+        "latitude": 4.6,
+        "longitude": -74,
+        "speed": 0,
+        "heading": 0,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "audit": true
+        },
+        "events": [],
+        "location": "0101000020E610000000000000008052C06666666666661240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "dddf06e3-8d3e-4642-a743-3a340b2623d4",
+        "latitude": 4.3495578716616,
+        "longitude": -73.5926862227263,
+        "speed": 44.4396764496196,
+        "heading": 122.21214195486,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000008CD93192EE6552C04262AB7FF2651140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "e661fe5f-eced-4ad7-b2cb-59137bfeb0b5",
+        "latitude": 4.23291028875229,
+        "longitude": -73.247927227145,
+        "speed": 72.649267449154,
+        "heading": 130.064827446598,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000000B18290ADE4F52C03D5FE40880EE1040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "b6b0e161-dfca-4fe0-81f4-5c89cf06dd8b",
+        "latitude": 4.4394555785814,
+        "longitude": -73.5213681056735,
+        "speed": 57.3393892872017,
+        "heading": 333.096972276975,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000E5C254185E6152C01A35A8A400C21140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "64d66fae-2812-48ff-9ccf-2b3d8f5e59e4",
+        "latitude": 4.18169561800483,
+        "longitude": -73.3894719639391,
+        "speed": 11.6898141403638,
+        "heading": 306.275153678777,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000F0F4D01BED5852C005A1846A0EBA1040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "20455db7-0c42-496e-a5c7-d10ee32d301a",
+        "latitude": 4.59543113237481,
+        "longitude": -73.8773140465821,
+        "speed": 42.2875394709481,
+        "heading": 148.212308524197,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000000E99D0E9257852C0BC47E2B2B8611240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "bafcc224-eedc-4a32-bd09-08028d802771",
+        "latitude": 4.07208479536451,
+        "longitude": -73.1322170918754,
+        "speed": 70.7798895136957,
+        "heading": 284.157927802675,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000EE64AD3E764852C08A84BA98D0491040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "8d0cc68c-fd07-4103-8678-5a95b875f576",
+        "latitude": 4.57602952995062,
+        "longitude": -73.8928922107212,
+        "speed": 74.3012095880766,
+        "heading": 276.810595651776,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000A7F95E25257952C02EAC62AFDA4D1240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "a20dcf6c-6425-4a24-bde6-570e6c8fabe1",
+        "latitude": 4.84400625663904,
+        "longitude": -73.8169907098079,
+        "speed": 64.4106664777033,
+        "heading": 319.432614780153,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000AEF06693497452C04589172D43601340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "61fa6c0d-159d-41e0-9498-6b2423b6e9be",
+        "latitude": 4.37590863181946,
+        "longitude": -73.2035517352757,
+        "speed": 98.5085885945009,
+        "heading": 88.6185136296466,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000006A83DBFD064D52C06FCB3F31EE801140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "04096595-4b6f-4602-9723-14bb98c1bea2",
+        "latitude": 4.79804111244102,
+        "longitude": -73.4043710924676,
+        "speed": 59.8584270591725,
+        "heading": 298.654310673368,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000025664A37E15952C0CA307BB031311340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "1bb18cd2-5f99-43a9-8f4e-6b540386995b",
+        "latitude": 4.27711201257714,
+        "longitude": -73.9092032286886,
+        "speed": 52.4646263339906,
+        "heading": 184.484785279239,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000A428BD62307A52C0E6635D40C31B1140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "4c50ac79-ecbf-46e4-8640-9e5fe55c8a37",
+        "latitude": 4.83349690592029,
+        "longitude": -73.3193875586497,
+        "speed": 3.10750588107933,
+        "heading": 169.158460452667,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000095C983D8705452C0B6FA803680551340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "daac2730-12b3-4ab5-901f-47c583cce1f1",
+        "latitude": 4.37349309033711,
+        "longitude": -73.6027012754309,
+        "speed": 17.5088773937914,
+        "heading": 48.3135975364538,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000ECCE5EA8926652C0971E01F9747E1140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "46391c41-faae-4036-ab3c-60c165294113",
+        "latitude": 4.18975570709601,
+        "longitude": -73.5572696460328,
+        "speed": 81.5428563151495,
+        "heading": 173.071483128737,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000EE304E4EAA6352C0AED3F0514FC21040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "a2d70732-6237-403b-9b74-83a8e4db2cb9",
+        "latitude": 4.15373489918023,
+        "longitude": -73.6137495693576,
+        "speed": 53.9104319979701,
+        "heading": 275.305287918938,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000CA1446AC476752C084EE70AE6C9D1040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "d04f1c99-34a7-48c4-97de-68df0cc3adaa",
+        "latitude": 4.88703318444424,
+        "longitude": -73.1681438739656,
+        "speed": 70.8958090570849,
+        "heading": 307.041681311972,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000001FED85DEC24A52C0729E566D528C1340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "4ed522ab-ee4b-4805-9fd0-1fc0d2ab4f2c",
+        "latitude": 4.63058207103421,
+        "longitude": -73.3009199156436,
+        "speed": 98.3553994594347,
+        "heading": 60.0937724067811,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000E2199B45425352C0C224724EB7851240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "1a839ec9-addb-4d5a-9503-ec1cb25c80fd",
+        "latitude": 4.48818930123546,
+        "longitude": -73.2611366606356,
+        "speed": 83.9530717211804,
+        "heading": 93.8356516731898,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000DA4D8A76B65052C0E8406CE5E7F31140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "3752ded2-71fa-4d5d-9f7a-9fe6b685283f",
+        "latitude": 4.04848117764089,
+        "longitude": -73.0082537293489,
+        "speed": 45.0845898537506,
+        "heading": 68.343661699002,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000E667A63A874052C0BCC1C10CA5311040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "f517e117-57d9-4639-bedc-3c6a1b046909",
+        "latitude": 4.67418955983288,
+        "longitude": -73.0516319951161,
+        "speed": 74.3905052628533,
+        "heading": 9.25955585369642,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000DB9C48F04D4352C0C2257BBF5EB21240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "6409a7be-9366-417e-a310-a60164247b19",
+        "latitude": 4.70420122735229,
+        "longitude": -73.4867157704613,
+        "speed": 25.0526006803647,
+        "heading": 159.983540894864,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000000825E759265F52C0EA1F65201AD11240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "24f57bfe-19ae-4509-8631-a75f801e1eaa",
+        "latitude": 4.38951543826481,
+        "longitude": -73.7766091622116,
+        "speed": 50.8875351753702,
+        "heading": 18.8726968890198,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000445EEAF6B37152C0AE899222DD8E1140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "a7f406c5-44a6-48bf-b6ea-c05cf30116f8",
+        "latitude": 4.1651267583583,
+        "longitude": -73.0932369460068,
+        "speed": 35.455567791434,
+        "heading": 274.568443310891,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000034781898F74552C0A05F2BFD16A91040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "53452aa9-fe56-4087-bdbe-93c5772978bb",
+        "latitude": 4.50414754122196,
+        "longitude": -73.0583837389757,
+        "speed": 47.8527908451536,
+        "heading": 239.013153133907,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000003361268FBC4352C0E9A0C7403F041240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "74dfb908-1c6d-4803-946a-ff8733d6c44f",
+        "latitude": 4.70555274556813,
+        "longitude": -73.9615858696678,
+        "speed": 7.42042882880802,
+        "heading": 295.620193810213,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000037A1759F8A7D52C0C8453F6B7CD21240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "a11ec232-ca61-4ba1-b998-47e3aace75ba",
+        "latitude": 4.81121075871656,
+        "longitude": -73.3532057143607,
+        "speed": 97.5773522607962,
+        "heading": 272.11352133427,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000020FC23EC9A5652C064677B08AE3E1340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "1c4174c4-4158-4f07-aea5-128347118e6b",
+        "latitude": 4.38162736315055,
+        "longitude": -73.1085850875806,
+        "speed": 19.9922169878474,
+        "heading": 287.974452870117,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000080FFDD0EF34652C016F6CF52C9861140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "469bcf13-06a5-4512-931e-1c96b9bf8b4c",
+        "latitude": 4.44873387228013,
+        "longitude": -73.5511374712207,
+        "speed": 26.9740256024619,
+        "heading": 259.387531505859,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000008C9F19D6456352C0CC3368E480CB1140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "23e9e3f8-ac29-43a6-b554-2d99d7253894",
+        "latitude": 4.54280370080401,
+        "longitude": -73.16420234392,
+        "speed": 74.8018965354272,
+        "heading": 299.730495159819,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000009448C4A824A52C06F67BCBBD42B1240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "23cc2c70-8af5-4d10-b573-b5edfcc24b82",
+        "latitude": 4.69235680782742,
+        "longitude": -73.285384079945,
+        "speed": 49.5169695954538,
+        "heading": 161.906793482062,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000698A96BB435252C08020DB2EF9C41240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "a0ca33a4-1a6e-4036-a99f-2e5efab75361",
+        "latitude": 4.96177769571634,
+        "longitude": -73.0444952422191,
+        "speed": 84.6123439360662,
+        "heading": 154.700042346023,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000268A9202D94252C0E47E9440DCD81340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "d879d6d5-27bf-4e67-bcbe-04287f7e9c85",
+        "latitude": 4.0923428094145,
+        "longitude": -73.8460664307758,
+        "speed": 80.6523441664001,
+        "heading": 190.346993816189,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000003E9BD0F3257652C0F9D2091D8F5E1040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "2a27a6f1-537d-414d-bc45-a3c6d43ac59c",
+        "latitude": 4.8238340149494,
+        "longitude": -73.351752288496,
+        "speed": 53.9642451890334,
+        "heading": 260.816141592477,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000088D8071C835652C00529DE249B4B1340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "f27a37b0-1a3e-499b-b752-e00239e764f1",
+        "latitude": 4.49210242118776,
+        "longitude": -73.3151175473643,
+        "speed": 73.6633113697379,
+        "heading": 250.650871727475,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000D214CAE22A5452C0AE2275B2E9F71140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "6bfa04e1-028f-42fe-bcce-0336791de12d",
+        "latitude": 4.85139451518375,
+        "longitude": -73.768123231557,
+        "speed": 42.8052849711245,
+        "heading": 225.217579275519,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000074B557EE287152C0FAD4BAF6D3671340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "95b173af-5296-48b0-86a5-e70316618896",
+        "latitude": 4.02662548953196,
+        "longitude": -73.4831753807489,
+        "speed": 90.4521631572667,
+        "heading": 60.0863866005965,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000022A36E58EC5E52C07C1E5BB6431B1040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "738264b1-34df-49a6-b676-5cf0ad93d3a0",
+        "latitude": 4.23831176022446,
+        "longitude": -73.1972741061966,
+        "speed": 88.2250317208434,
+        "heading": 164.849396469858,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000008F9D9223A04C52C039AA81FF07F41040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "d8a75643-267e-4f35-9926-3080afb1c605",
+        "latitude": 4.32861623203412,
+        "longitude": -73.3750040834303,
+        "speed": 73.3144574072326,
+        "heading": 293.977573518387,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000C88C2011005852C0CC1506C680501140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "653e048c-8344-4c5c-8eef-a909dd22c9d7",
+        "latitude": 4.79440184030404,
+        "longitude": -73.2700732198766,
+        "speed": 79.8526971568063,
+        "heading": 135.310753785097,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000004DB92FE1485152C0C9F30FAD772D1340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "d64a2600-7656-4bee-931b-9206535aafab",
+        "latitude": 4.85108130690959,
+        "longitude": -73.8309315952635,
+        "speed": 87.9987725957098,
+        "heading": 243.957269846118,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000ABB7B6FB2D7552C08CA7ADDB81671340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "eee86a78-5aeb-4be9-b689-c92fc6b3f9a1",
+        "latitude": 4.61272010994241,
+        "longitude": -73.3690894170951,
+        "speed": 83.4187735259887,
+        "heading": 331.967980136824,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000004BEE37299F5752C07C3787E66C731240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "ecfb7248-420c-47ee-b938-a4fa1b77a70a",
+        "latitude": 4.48070207358052,
+        "longitude": -73.9002574018244,
+        "speed": 84.576984961245,
+        "heading": 84.3005410388737,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000054B438D19D7952C04497142A3DEC1140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "ae833c38-9ee5-4bd4-b5b2-a330067de355",
+        "latitude": 4.63128224151644,
+        "longitude": -73.8968470692604,
+        "speed": 5.19495861358412,
+        "heading": 109.173818505208,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000027FF3FF1657952C04E6F17DA6E861240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "fbaa3b60-ca5c-4400-901c-d186ddce4c2a",
+        "latitude": 4.95893010011557,
+        "longitude": -73.8253576064398,
+        "speed": 91.9428848936042,
+        "heading": 353.024464322226,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000007ACAB5A8D27452C0E695ACC5F1D51340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "a85bf1f6-a3f0-42f5-a25e-5e9eb51854c3",
+        "latitude": 4.33890155264791,
+        "longitude": -73.8109695177181,
+        "speed": 19.6886936553826,
+        "heading": 323.961062566202,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000C029B1ECE67352C0E4BE3402095B1140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "8963a1c4-6161-4b9e-aec8-3edf3e4893dc",
+        "latitude": 4.57901468873437,
+        "longitude": -73.8992224430372,
+        "speed": 87.1743121584643,
+        "heading": 76.5308020425054,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000252B4ADC8C7952C02E12003AE9501240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "8216f05f-474a-485f-8d0d-dfc09bcc18bc",
+        "latitude": 4.0799724579981,
+        "longitude": -73.6773335431369,
+        "speed": 23.9984927489462,
+        "heading": 109.509707456324,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000006E10CA6E596B52C0F6BACE4CE4511040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "70b81066-d45f-4c05-bca9-1a6487f63c4e",
+        "latitude": 4.87437554421046,
+        "longitude": -73.4576754454225,
+        "speed": 46.9988128788526,
+        "heading": 5.22867431498165,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000006891F38D4A5D52C07D397B4D5C7F1340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "41e2856b-4ad4-47a4-8a57-2f6ccfbaaf75",
+        "latitude": 4.03282457008379,
+        "longitude": -73.3133460711244,
+        "speed": 72.5715293737412,
+        "heading": 48.7755291569231,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000CFF3ADDC0D5452C0850F9CC39C211040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "2436b7f8-df6b-4879-9d5a-89846b0fe25b",
+        "latitude": 4.58432090978279,
+        "longitude": -73.0177505853104,
+        "speed": 67.7256675208314,
+        "heading": 10.5179637090786,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000024D959D3224152C0508B773858561240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "cbcf2c9d-9c89-4c52-a46e-fe67a6341730",
+        "latitude": 4.22331494986692,
+        "longitude": -73.6771524637158,
+        "speed": 36.6224910274171,
+        "heading": 22.546225094979,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000002B844977566B52C0988B99ACACE41040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "21bd57e4-f37c-409b-bd06-4662102d3d19",
+        "latitude": 4.26010061025831,
+        "longitude": -73.3170374649142,
+        "speed": 56.9424210827343,
+        "heading": 322.677248373977,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000075DA81574A5452C095EA7AD0570A1140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "b7fe38e8-2fd1-44d8-81ba-e2978901603e",
+        "latitude": 4.66985081126629,
+        "longitude": -73.2602218448066,
+        "speed": 29.3229384828591,
+        "heading": 338.249303080671,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000088498679A75052C0E459FE5EEDAD1240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "e4c962b6-9cfa-4890-a7e2-896fc274c9e8",
+        "latitude": 4.68399346829951,
+        "longitude": -73.1659613204793,
+        "speed": 90.2428223569654,
+        "heading": 145.829958894926,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000003F73A1C9F4A52C09B18A4C868BC1240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "99559760-dc7f-4abe-9002-f6868ea91b13",
+        "latitude": 4.81335607942011,
+        "longitude": -73.0394558597219,
+        "speed": 14.4384384694269,
+        "heading": 319.049071436352,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000007C9DE71864252C0DC72846AE0401340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "17b0f774-2d41-4c08-802a-5424466daa86",
+        "latitude": 4.19269311021215,
+        "longitude": -73.7711660968453,
+        "speed": 50.6608312224889,
+        "heading": 165.04644040449,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000026F0BC95A7152C0561ABA5751C51040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "17917619-2ff1-4448-9179-871c5f4e6eb4",
+        "latitude": 4.41114254187418,
+        "longitude": -73.4725149147777,
+        "speed": 47.1486996384159,
+        "heading": 58.2636239656511,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000EC7532AF3D5E52C02F60ED8C02A51140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "50742c16-5a9c-4922-905a-2c5eb78dd26b",
+        "latitude": 4.81084962110288,
+        "longitude": -73.6059191813123,
+        "speed": 23.1844849964252,
+        "heading": 256.058946682706,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000059F03E61C76652C08B71F25C4F3E1340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "295ec6d8-6f25-4639-863b-4e339781a9ed",
+        "latitude": 4.3308006347564,
+        "longitude": -73.7525009075668,
+        "speed": 43.5696127116429,
+        "heading": 280.23323215865,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000006B0D91F9287052C05E19CF66BD521140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "84a3d436-f87e-4727-a0db-63b16815488c",
+        "latitude": 4.84673839064751,
+        "longitude": -73.7463726553096,
+        "speed": 53.8626083080618,
+        "heading": 277.495982333431,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000BC4BD091C46F52C01C6580630F631340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "c5099689-93f4-4ab2-b8fa-8879a2814f64",
+        "latitude": 4.853492210986,
+        "longitude": -73.6806447138449,
+        "speed": 21.0072248461508,
+        "heading": 105.994470904541,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000002D8AD8AE8F6B52C06C4DB6DCF9691340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "525289b0-dd56-4a05-9ca2-6b2fa6fbe1e9",
+        "latitude": 4.75337013521514,
+        "longitude": -73.8826356429913,
+        "speed": 23.8281236104477,
+        "heading": 304.141429966329,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000A23B351A7D7852C0E820F27573031340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "b1e6989b-901a-4169-9c9c-505baf56f00b",
+        "latitude": 4.05755446011903,
+        "longitude": -73.0986700977943,
+        "speed": 74.8007695880854,
+        "heading": 293.583506666294,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000AAC7629C504652C0F9CC6F8EEF3A1040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "68532687-ea70-4f06-92b6-dd59a88dcb11",
+        "latitude": 4.08392053598748,
+        "longitude": -73.7895776106149,
+        "speed": 23.5297097172544,
+        "heading": 118.252388492739,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000A8CF8770887252C0B51DD643EF551040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "1fd289b3-022b-44e0-beeb-d194843de421",
+        "latitude": 4.09542613489374,
+        "longitude": -73.9436268498744,
+        "speed": 69.9645596134944,
+        "heading": 325.776616069233,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000A5F5DE61647C52C093358263B7611040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "81bfda30-c781-40e7-b37c-e8472a8cf468",
+        "latitude": 4.73707603291224,
+        "longitude": -73.962411722853,
+        "speed": 46.6414661279091,
+        "heading": 168.038422274884,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000031BC5627987D52C01218400FC4F21240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "26eedc21-3ae6-402d-8a50-159780b93226",
+        "latitude": 4.47645157290435,
+        "longitude": -73.6602580135229,
+        "speed": 48.8205352789005,
+        "heading": 304.23215160158,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000030C0D3AA416A52C0FC01CFEBE2E71140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "ba709695-3de4-4d18-9342-991e912fc0d5",
+        "latitude": 4.7697580315331,
+        "longitude": -73.1933909863492,
+        "speed": 72.4781358135157,
+        "heading": 252.962727038838,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000836D9684604C52C06F120D733B141340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "e7022b59-64a2-48c0-baf6-8596adb99142",
+        "latitude": 4.58396251457387,
+        "longitude": -73.6674603876933,
+        "speed": 74.5070516545305,
+        "heading": 163.925698239822,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000002C21C6ABB76A52C026BDF844FA551240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "fae5a59d-c00f-4418-be31-ded554d284ff",
+        "latitude": 4.47708674522992,
+        "longitude": -73.3325113484987,
+        "speed": 88.5111355375685,
+        "heading": 190.940314778013,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000075D6ADDD475552C06D78806D89E81140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "3d803e37-a437-4490-9cda-ea9bb93f59eb",
+        "latitude": 4.16182533476314,
+        "longitude": -73.9821254414387,
+        "speed": 33.8311729671672,
+        "heading": 200.550049567001,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000001CE3AA24DB7E52C03FE3618AB5A51040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "6c5f98c5-c270-4ee7-ba2e-747aa1bf19ff",
+        "latitude": 4.70597570237467,
+        "longitude": -73.2890626714357,
+        "speed": 17.0285602483951,
+        "heading": 168.483878204658,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000E413B800805252C01EE1654BEBD21240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "1d627d86-39f5-45d9-a9b4-4f4dd7cf168a",
+        "latitude": 4.88711890543764,
+        "longitude": -73.7909143411901,
+        "speed": 0.0799875081801904,
+        "heading": 339.965519458221,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000051562F579E7252C06612FAE5688C1340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "c616cadf-5485-44e7-9ede-ba16bded7692",
+        "latitude": 4.10316049103221,
+        "longitude": -73.6395098306802,
+        "speed": 75.657564753691,
+        "heading": 216.181712882038,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000007A0FA4BAED6852C0FAE35CE7A2691040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "bc8f060d-e27d-4fe1-a08c-c74c16229d91",
+        "latitude": 4.37078225938584,
+        "longitude": -73.0387779244848,
+        "speed": 43.4740278728495,
+        "heading": 149.90024838215,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000015E67567B4252C029FF3758AE7B1140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "2fc3e28d-9d77-4610-928e-da05682b11f6",
+        "latitude": 4.66533049172854,
+        "longitude": -73.5653252976241,
+        "speed": 92.8715009631395,
+        "heading": 222.184758694194,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000006839284A2E6452C0CE057C654CA91240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "e6fb7acc-d701-4d17-b7e1-358a251c0c26",
+        "latitude": 4.90377635852587,
+        "longitude": -73.0417184159384,
+        "speed": 77.5491217403304,
+        "heading": 180.843659895925,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000002806B883AB4252C0FC10BB8C779D1340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "7caffd26-ae40-4f9c-9127-190926051eb4",
+        "latitude": 4.69991766903499,
+        "longitude": -73.9278774104261,
+        "speed": 62.7233744499513,
+        "heading": 63.6132269841992,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000008F1EEF57627B52C06097A937B7CC1240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "45d8c8b1-e3b3-4549-8eec-6b9e881f123b",
+        "latitude": 4.69987239894581,
+        "longitude": -73.2164120956319,
+        "speed": 74.6370407116029,
+        "heading": 103.771458570952,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000AB4C1EB2D94D52C09B61A359ABCC1240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "cb979e30-814f-41be-aca1-294964925ec0",
+        "latitude": 4.61613135570149,
+        "longitude": -73.6291400741301,
+        "speed": 98.1724765195992,
+        "heading": 316.566078266873,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000007ABFBAD4436852C0B31C5B23EB761240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "4ccc215c-af9d-4867-bd8e-eccfe9a43e9b",
+        "latitude": 4.20900704702622,
+        "longitude": -73.2876809375475,
+        "speed": 24.1154520961531,
+        "heading": 326.650416872115,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000BE9C4E5D695252C0CE717EF105D61040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "96927a9f-8824-4a87-8fe7-6f1a61e1b202",
+        "latitude": 4.03990350652724,
+        "longitude": -73.4600904694379,
+        "speed": 61.7128862993862,
+        "heading": 283.869289435899,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000FBDB4B1F725D52C0F61EFE76DC281040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "f3672540-2b35-48e6-8a31-2d7532cfdf1b",
+        "latitude": 4.96059651756052,
+        "longitude": -73.9236271159165,
+        "speed": 28.7695370502884,
+        "heading": 68.7109601998041,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000DD23E8B41C7B52C0B74B0E9DA6D71340"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "6d3a146d-094c-497d-97ec-1ec84e2711c7",
+        "latitude": 4.44944584856565,
+        "longitude": -73.4142761425404,
+        "speed": 97.7358593043866,
+        "heading": 220.746915584839,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000059EE1480835A52C059A653883BCC1140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "6dc624b4-a26c-4e86-9b37-35cc3a2c79a0",
+        "latitude": 4.67863330778943,
+        "longitude": -73.197711946381,
+        "speed": 72.7028233360922,
+        "heading": 56.9899624551455,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000008EF0150A74C52C048BA5BA6EBB61240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "b91701a7-5de5-4eae-b7aa-71d52ee7edfc",
+        "latitude": 4.00211972839784,
+        "longitude": -73.0811066910667,
+        "speed": 97.6799257902807,
+        "heading": 62.1797520882266,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E610000092671EDA304552C09B9490AC2B021040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "b494d2ab-e087-404a-9690-f6564d3d3694",
+        "latitude": 4.11484179430193,
+        "longitude": -73.538489427671,
+        "speed": 87.2800791716385,
+        "heading": 146.285265901817,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000AB455C9C766252C087F65A1699751040"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "9e7fbf2d-a84e-465d-855a-e372110e03f9",
+        "latitude": 4.7140347965234,
+        "longitude": -73.1202902496001,
+        "speed": 54.7443849899025,
+        "heading": 201.205024462133,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000D803E0D5B24752C09A180DF02BDB1240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "449c90fd-6ab6-4bb2-997c-3f79f7459717",
+        "latitude": 4.6937235233615,
+        "longitude": -73.4063181087985,
+        "speed": 70.5985018443528,
+        "heading": 48.6791756893768,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000FB43AB1D015A52C0D53695755FC61240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "44587d11-a2a8-4e00-8311-3045ad19851d",
+        "latitude": 4.67395093789479,
+        "longitude": -73.1476398314666,
+        "speed": 65.7992466728047,
+        "heading": 1.07951176535685,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000001AEF55EE724952C07277D53120B21240"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "70acd084-6455-44b6-a393-70280286985c",
+        "latitude": 4.39440128777934,
+        "longitude": -73.0236751298587,
+        "speed": 95.937590702477,
+        "heading": 117.918292830038,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000301EB1E4834152C0D50C62EEDD931140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "d4d64c7b-507f-4f92-a226-25eb59392138",
+        "latitude": 4.27367149307418,
+        "longitude": -73.0321440836116,
+        "speed": 25.5991451563753,
+        "heading": 267.256852580109,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000CDF70EA60E4252C0856702573D181140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "c25b27c6-db90-42a8-b369-3e41d472f61c",
+        "latitude": 4.34547980500273,
+        "longitude": -73.1587272653703,
+        "speed": 78.7832650595831,
+        "heading": 53.5334682465663,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E6100000EC6F6796284A52C02AA93F75C5611140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "2140f01e-9100-42a4-8b80-9a7324ec148f",
+        "latitude": 4.34686478574128,
+        "longitude": -73.5973164915138,
+        "speed": 6.72103385127865,
+        "heading": 295.964454542224,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000006F1AF36E3A6652C04292BB8530631140"
+      },
+      {
+        "time": "2026-02-13T05:56:21.592+00:00",
+        "vehicle_id": "e946ff6f-88ae-44e4-9fbe-59c752979ea5",
+        "latitude": 4.54244042077678,
+        "longitude": -73.6985232960921,
+        "speed": 51.5638979123613,
+        "heading": 359.904565455048,
+        "altitude": null,
+        "accuracy": null,
+        "metadata": {
+          "load_test": true
+        },
+        "events": [],
+        "location": "0101000020E61000006C0D0E9BB46C52C0160F6D80752B1240"
+      }
+    ]
+  }
+}

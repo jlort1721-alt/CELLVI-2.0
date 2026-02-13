@@ -1,0 +1,57 @@
+project_id = "ydejpsvpcgjpokgbiulw"
+
+# ── Public Functions (no JWT required) ──────────────────
+
+# Public contact/PQR form — no auth needed
+[functions.send-email]
+verify_jwt = false
+
+# IoT devices authenticate via API key, not JWT
+[functions.telemetry-ingest]
+verify_jwt = false
+
+# IoT device gateway — uses API key authentication
+[functions.device-gateway]
+verify_jwt = false
+
+# Internal retry mechanism — called by device-gateway
+[functions.gateway-retry]
+verify_jwt = false
+
+# Stripe webhook — uses Stripe signature verification, not JWT
+[functions.stripe-webhook]
+verify_jwt = false
+
+# Checkout creation — called from frontend before auth
+[functions.create-checkout]
+verify_jwt = false
+
+# Checkout verification — called post-redirect, may not have session
+[functions.verify-checkout]
+verify_jwt = false
+
+# GNSS anomaly detection — can be called by cron or IoT pipeline
+[functions.gnss-anomaly-detect]
+verify_jwt = false
+
+# Evidence sealing — called from IoT pipeline
+[functions.evidence-seal]
+verify_jwt = false
+
+# ── Authenticated Functions (JWT required) ──────────────
+
+# Customer portal — requires authenticated user to manage subscription
+[functions.customer-portal]
+verify_jwt = true
+
+# Evidence export — sensitive data, requires authentication
+[functions.evidence-export]
+verify_jwt = true
+
+# Tenant management — admin operations require authentication
+[functions.tenant-manager]
+verify_jwt = true
+
+# API gateway — uses its own OAuth2 authentication layer
+[functions.api-gateway]
+verify_jwt = false

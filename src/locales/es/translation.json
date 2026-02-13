@@ -1,0 +1,102 @@
+{
+    "nav": {
+        "dashboard": "Operación",
+        "tracking": "Tracking GPS",
+        "planning": "Planificación",
+        "maintenance": "Control de Combustible",
+        "admin": "Administración",
+        "inicio": "Inicio",
+        "nosotros": "Nosotros",
+        "servicios": "Servicios",
+        "plataforma": "Plataforma",
+        "planes": "Planes",
+        "politicas": "Políticas",
+        "pqr": "PQR",
+        "blog": "Blog",
+        "contacto": "Contacto",
+        "demoCellvi": "Demo CELLVI",
+        "rastreaTuActivo": "Rastrea tu Activo"
+    },
+    "dashboard": {
+        "welcome": "Bienvenido, {{name}}",
+        "kpi_active": "Flota Activa",
+        "kpi_alert": "Alertas Críticas",
+        "kpi_fuel": "Eficiencia Combustible",
+        "kpi_co2": "Emisiones CO2"
+    },
+    "tracking": {
+        "title": "Torre de Control",
+        "subtitle": "Monitoreo satelital en tiempo real de flota activa.",
+        "status_active": "EN RUTA",
+        "status_stopped": "DETENIDOS",
+        "status_offline": "OFFLINE",
+        "last_update": "Actualizado: {{time}}",
+        "gps_gateway": "📡 Pasarela GPS: {{status}}",
+        "view_satellite": "Vista Satelital",
+        "view_history": "Historial de Rutas"
+    },
+    "planning": {
+        "title": "Planificador IA",
+        "subtitle": "Algoritmo VRP (2-Opt Heuristic)",
+        "optimize_btn": "OPTIMIZAR RUTA",
+        "reset_btn": "Reiniciar",
+        "total_dist": "DISTANCIA TOTAL",
+        "comp_time": "TIEMPO CÁLCULO"
+    },
+    "maintenance": {
+        "title": "Control de Combustible & Eficiencia",
+        "subtitle": "Análisis predictivo de consumo basado en IA (Fase 3)."
+    },
+    "common": {
+        "loading": "Cargando...",
+        "error": "Error",
+        "online": "ONLINE",
+        "offline": "OFFLINE"
+    },
+    "hero": {
+        "badge": "LÍDERES EN RASTREO SATELITAL",
+        "title1": "Control Total de tu",
+        "titleHighlight": "Flota Vehicular",
+        "title2": "en Tiempo Real",
+        "subtitle": "Optimiza rutas, reduce costos y garantiza la seguridad de tus activos con nuestra plataforma de telemetría avanzada e inteligencia artificial.",
+        "cta1": "Ver Planes",
+        "cta2": "Solicitar Demo",
+        "stat1": "+23",
+        "stat1Label": "Años de Experiencia",
+        "stat2": "+5k",
+        "stat2Label": "Vehículos Conectados",
+        "stat3": "99.9%",
+        "stat3Label": "Uptime Garantizado",
+        "stat4": "24/7",
+        "stat4Label": "Soporte Especializado"
+    },
+    "about": {
+        "badge": "NOSOTROS",
+        "title": "Expertos en Seguridad y Logística",
+        "subtitle": "Más de dos décadas brindando soluciones tecnológicas para el transporte en Colombia.",
+        "mission": "Misión",
+        "missionText": "Proveer soluciones integrales de seguridad y logística vehicular que generen valor y tranquilidad a nuestros clientes.",
+        "vision": "Visión",
+        "visionText": "Ser referentes nacionales en innovación tecnológica para el control y monitoreo de activos móviles.",
+        "legality": "Respaldo Legal",
+        "legalityText": "Contamos con todos los permisos del Ministerio de TIC y Superintendencia de Vigilancia y Seguridad Privada.",
+        "headquarters": "Sede Principal",
+        "headquartersAddr": "Pasto, Nariño, Colombia",
+        "fleet": "Infraestructura",
+        "fleetDesc": "Centro de control de última generación operativo 24 horas al día, 365 días al año."
+    },
+    "platform": {
+        "badge": "PLATAFORMA",
+        "title": "CELLVI 2.0: Ecosistema Integral",
+        "subtitle": "Una suite completa de herramientas para la gestión inteligente de flotas.",
+        "feat1": "Seguridad",
+        "feat2": "Alertas",
+        "feat3": "Telemetría",
+        "feat4": "Rastreo",
+        "feat5": "Rutas",
+        "feat6": "Combustible",
+        "feat7": "Horarios",
+        "feat8": "Reportes",
+        "feat9": "Control Remoto"
+    }
+}

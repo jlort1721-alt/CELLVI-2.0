@@ -1,0 +1,15 @@
+{
+  "backup_id": "DR-20260213-011645",
+  "timestamp": "2026-02-13T06:16:45Z",
+  "project_ref": "",
+  "contents": [
+    "database_schema_migrations",
+    "edge_functions_inventory",
+    "platform_config_toml"
+  ],
+  "recovery_steps": [
+    "1. Re-vincular proyecto: supabase link --project-ref <REF>",
+    "2. Restaurar DB: supabase db push",
+    "3. Re-desplegar funciones: supabase functions deploy <name>"
+  ]
+}

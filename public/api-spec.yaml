@@ -1,0 +1,2573 @@
+openapi: "3.1.0"
+info:
+  title: ASEGURAR LTDA — CELLVI 2.0 API
+  version: "2.0.0"
+  description: |
+    API de telemetría, gestión de flotas, cadena de frío, auditoría y facturación
+    para la plataforma CELLVI 2.0 de ASEGURAR LTDA.
+
+    ## Autenticación
+    Todos los endpoints requieren Bearer token JWT excepto los marcados como públicos.
+    Los tokens se obtienen vía `/v2/auth/login` o flujo OAuth2.
+
+    ## Versionado
+    La API usa versionado en URL: `/v2/...`. Versiones anteriores se mantienen por 12 meses.
+
+    ## Paginación
+    Endpoints de listado soportan `page`, `page_size` (máx 100), y retornan `X-Total-Count`.
+
+    ## Rate Limits
+    - Autenticados: 1000 req/min
+    - Ingesta telemetría: 5000 req/min
+    - No autenticados: 60 req/min
+    Headers de respuesta: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+
+    ## Webhooks
+    Configura webhooks en `/v2/integrations/webhooks` para recibir eventos en tiempo real.
+    Cada entrega incluye firma HMAC-SHA256 en header `X-Webhook-Signature`.
+  contact:
+    name: ASEGURAR LTDA — Equipo API
+    email: api@asegurar.co
+    url: https://asegurar.co
+  license:
+    name: Propietaria
+    url: https://asegurar.co/licencia
+
+servers:
+  - url: https://ydejpsvpcgjpokgbiulw.supabase.co/functions/v1
+    description: Producción (Lovable Cloud)
+  - url: http://localhost:54321/functions/v1
+    description: Desarrollo local
+
+tags:
+  - name: Auth
+    description: Autenticación, registro y gestión de sesiones
+  - name: Organizaciones
+    description: Gestión multi-tenant de organizaciones
+  - name: Usuarios
+    description: Gestión de usuarios y roles RBAC
+  - name: Activos
+    description: Vehículos y su ciclo de vida
+  - name: Dispositivos
+    description: Dispositivos GPS/IoT y configuración
+  - name: Eventos
+    description: Ingesta y consulta de telemetría
+  - name: Viajes
+    description: Rutas, viajes y manifiestos de carga
+  - name: Geocercas
+    description: Zonas geográficas y reglas asociadas
+  - name: Alertas
+    description: Sistema de alertas y notificaciones
+  - name: Evidencias
+    description: Truth Layer — registro inmutable y auditoría
+  - name: Reportes
+    description: Generación y descarga de reportes
+  - name: Integraciones
+    description: Webhooks y conectores externos
+  - name: Billing
+    description: Facturación, planes y medición de uso
+
+security:
+  - BearerAuth: []
+  - OAuth2:
+      - read
+      - write
+      - admin
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtenido via login o OAuth2
+
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://asegurar.co/oauth/authorize
+          tokenUrl: https://asegurar.co/oauth/token
+          refreshUrl: https://asegurar.co/oauth/refresh
+          scopes:
+            read: Lectura de datos
+            write: Escritura de datos
+            admin: Administración completa
+            telemetry:write: Ingesta de telemetría
+            evidence:read: Lectura de evidencias
+            billing:read: Lectura de facturación
+            billing:write: Gestión de facturación
+            webhooks:manage: Gestión de webhooks
+
+  headers:
+    X-RateLimit-Limit:
+      schema:
+        type: integer
+      description: Límite de requests por ventana
+    X-RateLimit-Remaining:
+      schema:
+        type: integer
+      description: Requests restantes en ventana actual
+    X-RateLimit-Reset:
+      schema:
+        type: integer
+      description: Timestamp UNIX de reset de ventana
+    X-Total-Count:
+      schema:
+        type: integer
+      description: Total de registros para paginación
+    X-Request-Id:
+      schema:
+        type: string
+        format: uuid
+      description: ID único de la request para trazabilidad
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Número de página
+    PageSizeParam:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Elementos por página
+    TenantHeader:
+      name: X-Tenant-Id
+      in: header
+      schema:
+        type: string
+        format: uuid
+      description: ID del tenant (opcional, se infiere del token)
+    SortParam:
+      name: sort
+      in: query
+      schema:
+        type: string
+        example: "-created_at"
+      description: Campo de ordenamiento. Prefijo `-` para descendente
+
+  schemas:
+    Error:
+      type: object
+      required: [error, code]
+      properties:
+        error:
+          type: string
+          example: "Recurso no encontrado"
+        code:
+          type: string
+          example: "NOT_FOUND"
+        details:
+          type: object
+          additionalProperties: true
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        page_size:
+          type: integer
+          example: 20
+        total_count:
+          type: integer
+          example: 150
+        total_pages:
+          type: integer
+          example: 8
+
+    # ===== AUTH =====
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "admin@asegurar.co"
+        password:
+          type: string
+          format: password
+          example: "S3cur3P@ss!"
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIs..."
+        refresh_token:
+          type: string
+          example: "v1.MjAyNi0wMi..."
+        expires_in:
+          type: integer
+          example: 3600
+        token_type:
+          type: string
+          example: "bearer"
+        user:
+          $ref: "#/components/schemas/User"
+
+    RegisterRequest:
+      type: object
+      required: [email, password, display_name]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        display_name:
+          type: string
+          example: "Carlos Muñoz"
+        company:
+          type: string
+          example: "ASEGURAR LTDA"
+
+    # ===== TENANT =====
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "ASEGURAR LTDA"
+        slug:
+          type: string
+          example: "asegurar-ltda"
+        plan:
+          type: string
+          enum: [basic, professional, enterprise]
+          example: "enterprise"
+        config:
+          type: object
+          additionalProperties: true
+        limits:
+          $ref: "#/components/schemas/TenantLimits"
+        features:
+          $ref: "#/components/schemas/TenantFeatures"
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TenantLimits:
+      type: object
+      properties:
+        events_per_day:
+          type: integer
+          example: 100000
+        retention_days:
+          type: integer
+          example: 90
+        max_vehicles:
+          type: integer
+          example: 50
+        max_users:
+          type: integer
+          example: 10
+
+    TenantFeatures:
+      type: object
+      properties:
+        cold_chain:
+          type: boolean
+        satellite:
+          type: boolean
+        evidence_export:
+          type: boolean
+        policy_engine:
+          type: boolean
+
+    TenantCreate:
+      type: object
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        plan:
+          type: string
+          enum: [basic, professional, enterprise]
+
+    # ===== USER =====
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+        phone:
+          type: string
+        company:
+          type: string
+        tenant_id:
+          type: string
+          format: uuid
+        role:
+          $ref: "#/components/schemas/AppRole"
+        created_at:
+          type: string
+          format: date-time
+
+    AppRole:
+      type: string
+      enum: [super_admin, admin, manager, operator, driver, client, auditor]
+      example: "operator"
+
+    RoleAssignment:
+      type: object
+      required: [user_id, role]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        role:
+          $ref: "#/components/schemas/AppRole"
+
+    # ===== VEHICLE =====
+    Vehicle:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        plate:
+          type: string
+          example: "NAR-123"
+        vin:
+          type: string
+          example: "1HGBH41JXMN109186"
+        type:
+          type: string
+          enum: [truck, tanker, van, bus, dump_truck, car]
+          example: "truck"
+        brand:
+          type: string
+          example: "Kenworth"
+        model:
+          type: string
+          example: "T800"
+        year:
+          type: integer
+          example: 2024
+        active:
+          type: boolean
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+    VehicleCreate:
+      type: object
+      required: [plate]
+      properties:
+        plate:
+          type: string
+        vin:
+          type: string
+        type:
+          type: string
+          default: "truck"
+        brand:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+
+    # ===== DEVICE =====
+    Device:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        imei:
+          type: string
+          example: "350612071234567"
+        vehicle_id:
+          type: string
+          format: uuid
+        protocol:
+          type: string
+          enum: [teltonika, queclink, calamp, meitrack, gt06, nmea, sbd_iridium]
+        connectivity:
+          type: string
+          enum: ["4g", "3g", satellite, dual]
+        firmware_version:
+          type: string
+        last_seen_at:
+          type: string
+          format: date-time
+        active:
+          type: boolean
+        config:
+          type: object
+
+    DeviceCreate:
+      type: object
+      required: [imei]
+      properties:
+        imei:
+          type: string
+        vehicle_id:
+          type: string
+          format: uuid
+        protocol:
+          type: string
+          default: "teltonika"
+        connectivity:
+          type: string
+          default: "4g"
+
+    # ===== TELEMETRY =====
+    TelemetryEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vehicle_id:
+          type: string
+          format: uuid
+        device_id:
+          type: string
+          format: uuid
+        ts:
+          type: string
+          format: date-time
+        latitude:
+          type: number
+          format: double
+          example: 1.2136
+        longitude:
+          type: number
+          format: double
+          example: -77.2811
+        speed:
+          type: number
+          example: 72.5
+        heading:
+          type: number
+          example: 180
+        altitude:
+          type: number
+        fuel_level:
+          type: number
+          example: 68.0
+        engine_on:
+          type: boolean
+        odometer:
+          type: number
+        satellites:
+          type: integer
+          example: 12
+        hdop:
+          type: number
+          example: 0.8
+        extras:
+          type: object
+        source:
+          type: string
+          enum: [gnss, ntp, manual, satellite]
+
+    TelemetryIngest:
+      type: object
+      required: [imei, events]
+      properties:
+        imei:
+          type: string
+          example: "350612071234567"
+        protocol:
+          type: string
+          default: "gnss"
+        events:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            type: object
+            required: [latitude, longitude]
+            properties:
+              ts:
+                type: string
+                format: date-time
+              latitude:
+                type: number
+              longitude:
+                type: number
+              speed:
+                type: number
+              heading:
+                type: number
+              altitude:
+                type: number
+              fuel_level:
+                type: number
+              engine_on:
+                type: boolean
+              odometer:
+                type: number
+              satellites:
+                type: integer
+              hdop:
+                type: number
+              temperature:
+                type: number
+              humidity:
+                type: number
+              extras:
+                type: object
+
+    TelemetryIngestResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        events_processed:
+          type: integer
+          example: 10
+        alerts_triggered:
+          type: integer
+          example: 2
+
+    # ===== TRIP =====
+    Trip:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vehicle_id:
+          type: string
+          format: uuid
+        driver_id:
+          type: string
+          format: uuid
+        origin:
+          type: string
+          example: "Pasto"
+        destination:
+          type: string
+          example: "Cali"
+        status:
+          type: string
+          enum: [planned, in_progress, completed, cancelled]
+        distance_km:
+          type: number
+        duration_min:
+          type: integer
+        fuel_used_l:
+          type: number
+        stops:
+          type: integer
+        cargo_manifest:
+          $ref: "#/components/schemas/CargoManifest"
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/TripEvent"
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    CargoManifest:
+      type: object
+      properties:
+        manifest_number:
+          type: string
+          example: "MAN-2026-0001"
+        cargo_type:
+          type: string
+          example: "Refrigerado"
+        weight_kg:
+          type: number
+        temp_min:
+          type: number
+        temp_max:
+          type: number
+        client:
+          type: string
+        origin_address:
+          type: string
+        destination_address:
+          type: string
+
+    TripEvent:
+      type: object
+      properties:
+        time:
+          type: string
+          format: date-time
+        type:
+          type: string
+          enum: [start, stop, speeding, geofence_enter, geofence_exit, fuel_drop, temp_violation, end]
+        description:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+
+    TripCreate:
+      type: object
+      required: [vehicle_id, origin, destination]
+      properties:
+        vehicle_id:
+          type: string
+          format: uuid
+        driver_id:
+          type: string
+          format: uuid
+        origin:
+          type: string
+        destination:
+          type: string
+        cargo_manifest:
+          $ref: "#/components/schemas/CargoManifest"
+
+    # ===== GEOFENCE =====
+    Geofence:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Base Pasto"
+        description:
+          type: string
+        type:
+          type: string
+          enum: [circle, polygon]
+        coordinates:
+          type: array
+          items:
+            type: object
+            properties:
+              lat:
+                type: number
+              lng:
+                type: number
+        radius:
+          type: number
+          description: Radio en metros (solo para tipo circle)
+        active:
+          type: boolean
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+    GeofenceCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          default: "circle"
+        coordinates:
+          type: array
+          items:
+            type: object
+        radius:
+          type: number
+
+    # ===== ALERT =====
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vehicle_id:
+          type: string
+          format: uuid
+        policy_id:
+          type: string
+          format: uuid
+        severity:
+          type: string
+          enum: [critical, high, medium, low, info]
+        type:
+          type: string
+          example: "speed_violation"
+        message:
+          type: string
+        data:
+          type: object
+        acknowledged:
+          type: boolean
+        acknowledged_by:
+          type: string
+          format: uuid
+        acknowledged_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    AlertAcknowledge:
+      type: object
+      properties:
+        note:
+          type: string
+          example: "Revisado y notificado al conductor"
+
+    # ===== EVIDENCE =====
+    EvidenceRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        event_id:
+          type: string
+          format: uuid
+        vehicle_id:
+          type: string
+          format: uuid
+        sha256_hash:
+          type: string
+          example: "a3f8c2d1e9b04f7a..."
+        description:
+          type: string
+        data:
+          type: object
+        source:
+          type: string
+          enum: [gnss, ntp, manual, gnss+ntp]
+        sealed_at:
+          type: string
+          format: date-time
+        access_log:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccessLogEntry"
+        verified:
+          type: boolean
+
+    AccessLogEntry:
+      type: object
+      properties:
+        user:
+          type: string
+        action:
+          type: string
+          enum: [created, viewed, exported, verified]
+        timestamp:
+          type: string
+          format: date-time
+
+    EvidenceSeal:
+      type: object
+      required: [event_type, description]
+      properties:
+        event_type:
+          type: string
+        vehicle_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        data:
+          type: object
+        source:
+          type: string
+          default: "manual"
+
+    EvidenceVerifyResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        verified:
+          type: boolean
+        sha256_hash:
+          type: string
+        computed_hash:
+          type: string
+        sealed_at:
+          type: string
+          format: date-time
+        access_count:
+          type: integer
+
+    # ===== POLICY =====
+    Policy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        conditions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PolicyCondition"
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PolicyAction"
+        logic:
+          type: string
+          enum: [AND, OR]
+        status:
+          type: string
+          enum: [active, inactive, draft]
+        category:
+          type: string
+          enum: [safety, compliance, operational, custom]
+        trigger_count:
+          type: integer
+        last_triggered_at:
+          type: string
+          format: date-time
+
+    PolicyCondition:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [speed, geofence, temperature, fuel, time, engine, sensor]
+        operator:
+          type: string
+          enum: [">", "<", "==", "!=", enter, exit]
+        value:
+          type: string
+        label:
+          type: string
+
+    PolicyAction:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [alert, notification, engine_block, evidence_log, webhook]
+        config:
+          type: object
+        label:
+          type: string
+
+    # ===== REPORT =====
+    ReportRequest:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [fleet_summary, route_detail, fuel_analysis, cold_chain_certificate, driver_scorecard, compliance_audit]
+        format:
+          type: string
+          enum: [pdf, xlsx, csv]
+          default: "pdf"
+        vehicle_id:
+          type: string
+          format: uuid
+        date_from:
+          type: string
+          format: date
+        date_to:
+          type: string
+          format: date
+        filters:
+          type: object
+
+    ReportResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, generating, completed, failed]
+        download_url:
+          type: string
+          format: uri
+        expires_at:
+          type: string
+          format: date-time
+
+    # ===== WEBHOOK =====
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+            enum: [alert.created, evidence.sealed, trip.started, trip.completed, geofence.enter, geofence.exit, vehicle.offline, cold_chain.violation]
+        secret:
+          type: string
+          description: HMAC secret para verificar firmas
+        active:
+          type: boolean
+        last_delivery_at:
+          type: string
+          format: date-time
+        failure_count:
+          type: integer
+
+    WebhookCreate:
+      type: object
+      required: [url, events]
+      properties:
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+
+    WebhookDelivery:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        webhook_id:
+          type: string
+          format: uuid
+        event:
+          type: string
+        payload:
+          type: object
+        response_status:
+          type: integer
+        delivered_at:
+          type: string
+          format: date-time
+        success:
+          type: boolean
+
+    # ===== BILLING =====
+    BillingPlan:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          example: "Enterprise"
+        price_monthly_usd:
+          type: number
+          example: 499.00
+        price_yearly_usd:
+          type: number
+          example: 4990.00
+        limits:
+          $ref: "#/components/schemas/TenantLimits"
+        features:
+          $ref: "#/components/schemas/TenantFeatures"
+
+    UsageSummary:
+      type: object
+      properties:
+        period:
+          type: string
+          example: "2026-02"
+        events_ingested:
+          type: integer
+          example: 2450000
+        events_limit:
+          type: integer
+          example: 3000000
+        storage_used_gb:
+          type: number
+          example: 12.5
+        active_vehicles:
+          type: integer
+          example: 42
+        active_devices:
+          type: integer
+          example: 45
+        api_calls:
+          type: integer
+          example: 185000
+        satellite_messages:
+          type: integer
+          example: 320
+        cost_breakdown:
+          type: object
+          properties:
+            base:
+              type: number
+            overage_events:
+              type: number
+            satellite:
+              type: number
+            storage:
+              type: number
+            total:
+              type: number
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        period:
+          type: string
+        amount_usd:
+          type: number
+        status:
+          type: string
+          enum: [draft, pending, paid, overdue]
+        due_date:
+          type: string
+          format: date
+        pdf_url:
+          type: string
+          format: uri
+
+    # ===== DRIVER =====
+    Driver:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        license_number:
+          type: string
+        license_expiry:
+          type: string
+          format: date
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+        assigned_vehicle_id:
+          type: string
+          format: uuid
+        metadata:
+          type: object
+
+    # ===== COLD CHAIN =====
+    ColdChainLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vehicle_id:
+          type: string
+          format: uuid
+        sensor_id:
+          type: string
+        temperature:
+          type: number
+        humidity:
+          type: number
+        ts:
+          type: string
+          format: date-time
+        in_range:
+          type: boolean
+        latitude:
+          type: number
+        longitude:
+          type: number
+
+paths:
+  # ============================
+  # AUTH
+  # ============================
+  /api-gateway/auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: "admin@asegurar.co"
+              password: "S3cur3P@ss!"
+      responses:
+        "200":
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+              example:
+                access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                refresh_token: "v1.MjAyNi0wMi0xMQ..."
+                expires_in: 3600
+                token_type: "bearer"
+                user:
+                  id: "550e8400-e29b-41d4-a716-446655440000"
+                  email: "admin@asegurar.co"
+                  display_name: "Admin ASEGURAR"
+                  role: "admin"
+        "401":
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api-gateway/auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrar nuevo usuario
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+            example:
+              email: "nuevo@empresa.co"
+              password: "M1Clave$ecur4"
+              display_name: "Carlos Muñoz"
+              company: "Transportes XYZ"
+      responses:
+        "201":
+          description: Usuario registrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+              example:
+                success: true
+                message: "Usuario registrado. Verifica tu email."
+
+  /api-gateway/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refrescar token de acceso
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        "200":
+          description: Token refrescado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+
+  /api-gateway/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Cerrar sesión
+      responses:
+        "200":
+          description: Sesión cerrada
+
+  # ============================
+  # ORGANIZACIONES
+  # ============================
+  /api-gateway/tenants:
+    get:
+      tags: [Organizaciones]
+      summary: Listar organizaciones (super_admin)
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Lista de tenants
+          headers:
+            X-Total-Count:
+              $ref: "#/components/headers/X-Total-Count"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Tenant"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+    post:
+      tags: [Organizaciones]
+      summary: Crear organización
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TenantCreate"
+            example:
+              name: "Transportes del Sur"
+              slug: "transportes-sur"
+              plan: "professional"
+      responses:
+        "201":
+          description: Tenant creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+
+  /api-gateway/tenants/{tenantId}:
+    get:
+      tags: [Organizaciones]
+      summary: Obtener organización
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Detalle del tenant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+    put:
+      tags: [Organizaciones]
+      summary: Actualizar organización
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TenantCreate"
+      responses:
+        "200":
+          description: Tenant actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+
+  # ============================
+  # USUARIOS Y ROLES
+  # ============================
+  /api-gateway/users:
+    get:
+      tags: [Usuarios]
+      summary: Listar usuarios del tenant
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: role
+          in: query
+          schema:
+            $ref: "#/components/schemas/AppRole"
+      responses:
+        "200":
+          description: Lista de usuarios
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+  /api-gateway/users/{userId}/role:
+    put:
+      tags: [Usuarios]
+      summary: Asignar rol a usuario
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleAssignment"
+            example:
+              user_id: "550e8400-e29b-41d4-a716-446655440000"
+              role: "manager"
+      responses:
+        "200":
+          description: Rol asignado
+          content:
+            application/json:
+              example:
+                success: true
+                user_id: "550e8400-e29b-41d4-a716-446655440000"
+                role: "manager"
+
+  # ============================
+  # ACTIVOS (VEHÍCULOS)
+  # ============================
+  /api-gateway/vehicles:
+    get:
+      tags: [Activos]
+      summary: Listar vehículos
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: active
+          in: query
+          schema:
+            type: boolean
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de vehículos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Vehicle"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+              example:
+                data:
+                  - id: "a1b2c3d4-..."
+                    plate: "NAR-123"
+                    type: "truck"
+                    brand: "Kenworth"
+                    model: "T800"
+                    year: 2024
+                    active: true
+                meta:
+                  page: 1
+                  page_size: 20
+                  total_count: 42
+    post:
+      tags: [Activos]
+      summary: Crear vehículo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VehicleCreate"
+            example:
+              plate: "CAU-999"
+              type: "tanker"
+              brand: "International"
+              model: "ProStar"
+              year: 2025
+      responses:
+        "201":
+          description: Vehículo creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vehicle"
+
+  /api-gateway/vehicles/{vehicleId}:
+    get:
+      tags: [Activos]
+      summary: Obtener vehículo
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Detalle del vehículo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vehicle"
+    put:
+      tags: [Activos]
+      summary: Actualizar vehículo
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VehicleCreate"
+      responses:
+        "200":
+          description: Vehículo actualizado
+    delete:
+      tags: [Activos]
+      summary: Desactivar vehículo
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Vehículo desactivado
+
+  /api-gateway/vehicles/{vehicleId}/position:
+    get:
+      tags: [Activos]
+      summary: Última posición conocida del vehículo
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Posición actual
+          content:
+            application/json:
+              example:
+                vehicle_id: "a1b2c3d4-..."
+                latitude: 1.2136
+                longitude: -77.2811
+                speed: 72
+                heading: 180
+                engine_on: true
+                ts: "2026-02-11T14:30:00Z"
+                ttl_seconds: 60
+
+  # ============================
+  # DISPOSITIVOS
+  # ============================
+  /api-gateway/devices:
+    get:
+      tags: [Dispositivos]
+      summary: Listar dispositivos
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: protocol
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de dispositivos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Device"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+    post:
+      tags: [Dispositivos]
+      summary: Registrar dispositivo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceCreate"
+            example:
+              imei: "350612071234567"
+              vehicle_id: "a1b2c3d4-..."
+              protocol: "teltonika"
+              connectivity: "4g"
+      responses:
+        "201":
+          description: Dispositivo registrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Device"
+
+  # ============================
+  # EVENTOS (TELEMETRÍA)
+  # ============================
+  /telemetry-ingest:
+    post:
+      tags: [Eventos]
+      summary: Ingestar eventos de telemetría
+      description: |
+        Endpoint de alta frecuencia para ingesta masiva. 
+        Rate limit: 5000 req/min.
+        Acepta hasta 500 eventos por request.
+        Evalúa políticas activas y genera alertas/evidencia automáticamente.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelemetryIngest"
+            example:
+              imei: "350612071234567"
+              protocol: "teltonika"
+              events:
+                - ts: "2026-02-11T14:30:00Z"
+                  latitude: 1.2136
+                  longitude: -77.2811
+                  speed: 85
+                  heading: 180
+                  fuel_level: 68
+                  engine_on: true
+                  satellites: 12
+                  hdop: 0.8
+                - ts: "2026-02-11T14:30:10Z"
+                  latitude: 1.2140
+                  longitude: -77.2805
+                  speed: 88
+                  temperature: 4.5
+                  humidity: 65
+      responses:
+        "200":
+          description: Eventos procesados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelemetryIngestResponse"
+              example:
+                success: true
+                events_processed: 2
+                alerts_triggered: 1
+        "400":
+          description: Payload inválido
+        "404":
+          description: Dispositivo no encontrado
+        "429":
+          description: Rate limit excedido
+          headers:
+            X-RateLimit-Reset:
+              $ref: "#/components/headers/X-RateLimit-Reset"
+
+  /api-gateway/events:
+    get:
+      tags: [Eventos]
+      summary: Consultar eventos de telemetría
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: vehicle_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: "#/components/parameters/SortParam"
+      responses:
+        "200":
+          description: Eventos de telemetría
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TelemetryEvent"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+  # ============================
+  # VIAJES Y MANIFIESTOS
+  # ============================
+  /api-gateway/trips:
+    get:
+      tags: [Viajes]
+      summary: Listar viajes
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: vehicle_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [planned, in_progress, completed, cancelled]
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Lista de viajes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Trip"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+    post:
+      tags: [Viajes]
+      summary: Crear viaje con manifiesto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TripCreate"
+            example:
+              vehicle_id: "a1b2c3d4-..."
+              driver_id: "e5f6g7h8-..."
+              origin: "Pasto"
+              destination: "Cali"
+              cargo_manifest:
+                manifest_number: "MAN-2026-0042"
+                cargo_type: "Refrigerado"
+                weight_kg: 12000
+                temp_min: 2
+                temp_max: 8
+                client: "Alpina S.A."
+      responses:
+        "201":
+          description: Viaje creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+
+  /api-gateway/trips/{tripId}:
+    get:
+      tags: [Viajes]
+      summary: Obtener detalle de viaje
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Detalle del viaje con timeline de eventos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+
+  # ============================
+  # GEOCERCAS
+  # ============================
+  /api-gateway/geofences:
+    get:
+      tags: [Geocercas]
+      summary: Listar geocercas
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Lista de geocercas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Geofence"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+    post:
+      tags: [Geocercas]
+      summary: Crear geocerca
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GeofenceCreate"
+            example:
+              name: "Base Pasto"
+              type: "circle"
+              coordinates:
+                - lat: 1.2136
+                  lng: -77.2811
+              radius: 500
+      responses:
+        "201":
+          description: Geocerca creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Geofence"
+
+  /api-gateway/geofences/{geofenceId}:
+    put:
+      tags: [Geocercas]
+      summary: Actualizar geocerca
+      parameters:
+        - name: geofenceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GeofenceCreate"
+      responses:
+        "200":
+          description: Geocerca actualizada
+    delete:
+      tags: [Geocercas]
+      summary: Eliminar geocerca
+      parameters:
+        - name: geofenceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Geocerca eliminada
+
+  # ============================
+  # ALERTAS
+  # ============================
+  /api-gateway/alerts:
+    get:
+      tags: [Alertas]
+      summary: Listar alertas
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [critical, high, medium, low, info]
+        - name: acknowledged
+          in: query
+          schema:
+            type: boolean
+        - name: vehicle_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Lista de alertas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Alert"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+              example:
+                data:
+                  - id: "alert-001"
+                    severity: "critical"
+                    type: "speed_violation"
+                    message: "PUT-321 — Exceso de velocidad: 110 km/h (límite: 80)"
+                    acknowledged: false
+                    created_at: "2026-02-11T14:15:00Z"
+                meta:
+                  page: 1
+                  page_size: 20
+                  total_count: 47
+
+  /api-gateway/alerts/{alertId}/acknowledge:
+    post:
+      tags: [Alertas]
+      summary: Reconocer alerta
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertAcknowledge"
+      responses:
+        "200":
+          description: Alerta reconocida
+          content:
+            application/json:
+              example:
+                success: true
+                acknowledged_at: "2026-02-11T14:20:00Z"
+
+  # ============================
+  # EVIDENCIAS
+  # ============================
+  /evidence-seal:
+    post:
+      tags: [Evidencias]
+      summary: Sellar evidencia con hash SHA-256
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvidenceSeal"
+            example:
+              tenant_id: "t1-uuid"
+              event_type: "speed_violation"
+              vehicle_id: "v1-uuid"
+              description: "Exceso de velocidad: 110 km/h en zona 80 km/h"
+              data:
+                speed: 110
+                limit: 80
+                lat: 2.4392
+                lng: -76.6122
+              source: "gnss+ntp"
+      responses:
+        "200":
+          description: Evidencia sellada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  record:
+                    $ref: "#/components/schemas/EvidenceRecord"
+              example:
+                success: true
+                record:
+                  id: "ev-uuid"
+                  sha256_hash: "a3f8c2d1e9b0..."
+                  sealed_at: "2026-02-11T14:15:32Z"
+                  verified: true
+    get:
+      tags: [Evidencias]
+      summary: Verificar integridad de evidencia
+      security: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Resultado de verificación
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceVerifyResponse"
+              example:
+                id: "ev-uuid"
+                verified: true
+                sha256_hash: "a3f8c2d1e9b0..."
+                computed_hash: "a3f8c2d1e9b0..."
+                sealed_at: "2026-02-11T14:15:32Z"
+                access_count: 4
+
+  /api-gateway/evidence:
+    get:
+      tags: [Evidencias]
+      summary: Listar registros de evidencia
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: vehicle_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de evidencias
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/EvidenceRecord"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+  /api-gateway/evidence/{evidenceId}/export:
+    get:
+      tags: [Evidencias]
+      summary: Exportar evidencia forense (PDF con cadena de custodia)
+      parameters:
+        - name: evidenceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Archivo PDF de evidencia
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  # ============================
+  # REPORTES
+  # ============================
+  /api-gateway/reports:
+    post:
+      tags: [Reportes]
+      summary: Solicitar generación de reporte
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportRequest"
+            example:
+              type: "fleet_summary"
+              format: "pdf"
+              date_from: "2026-02-01"
+              date_to: "2026-02-11"
+      responses:
+        "202":
+          description: Reporte en cola de generación
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+              example:
+                id: "rpt-uuid"
+                status: "queued"
+
+  /api-gateway/reports/{reportId}:
+    get:
+      tags: [Reportes]
+      summary: Obtener estado/descarga de reporte
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Estado del reporte
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+              example:
+                id: "rpt-uuid"
+                status: "completed"
+                download_url: "https://storage.asegurar.co/reports/rpt-uuid.pdf"
+                expires_at: "2026-02-12T14:00:00Z"
+
+  # ============================
+  # INTEGRACIONES / WEBHOOKS
+  # ============================
+  /api-gateway/webhooks:
+    get:
+      tags: [Integraciones]
+      summary: Listar webhooks configurados
+      responses:
+        "200":
+          description: Lista de webhooks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Webhook"
+    post:
+      tags: [Integraciones]
+      summary: Crear webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookCreate"
+            example:
+              url: "https://mi-sistema.co/webhooks/cellvi"
+              events:
+                - "alert.created"
+                - "evidence.sealed"
+                - "geofence.enter"
+                - "geofence.exit"
+                - "cold_chain.violation"
+      responses:
+        "201":
+          description: Webhook creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Webhook"
+              example:
+                id: "wh-uuid"
+                url: "https://mi-sistema.co/webhooks/cellvi"
+                events: ["alert.created", "evidence.sealed"]
+                secret: "whsec_abc123..."
+                active: true
+
+  /api-gateway/webhooks/{webhookId}:
+    delete:
+      tags: [Integraciones]
+      summary: Eliminar webhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Webhook eliminado
+
+  /api-gateway/webhooks/{webhookId}/deliveries:
+    get:
+      tags: [Integraciones]
+      summary: Historial de entregas del webhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Historial de entregas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WebhookDelivery"
+
+  /api-gateway/webhooks/{webhookId}/test:
+    post:
+      tags: [Integraciones]
+      summary: Enviar evento de prueba al webhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Evento de prueba enviado
+          content:
+            application/json:
+              example:
+                success: true
+                response_status: 200
+                delivered_at: "2026-02-11T14:00:00Z"
+
+  # ============================
+  # BILLING
+  # ============================
+  /api-gateway/billing/plans:
+    get:
+      tags: [Billing]
+      summary: Listar planes disponibles
+      security: []
+      responses:
+        "200":
+          description: Planes disponibles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BillingPlan"
+              example:
+                - id: "basic"
+                  name: "Basic"
+                  price_monthly_usd: 99
+                  limits:
+                    events_per_day: 50000
+                    max_vehicles: 20
+                    max_users: 5
+                  features:
+                    cold_chain: false
+                    satellite: false
+                    policy_engine: true
+                - id: "enterprise"
+                  name: "Enterprise"
+                  price_monthly_usd: 499
+                  limits:
+                    events_per_day: 500000
+                    max_vehicles: 200
+                    max_users: 50
+                  features:
+                    cold_chain: true
+                    satellite: true
+                    evidence_export: true
+                    policy_engine: true
+
+  /api-gateway/billing/usage:
+    get:
+      tags: [Billing]
+      summary: Resumen de uso del período actual
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            example: "2026-02"
+      responses:
+        "200":
+          description: Resumen de uso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageSummary"
+              example:
+                period: "2026-02"
+                events_ingested: 2450000
+                events_limit: 3000000
+                storage_used_gb: 12.5
+                active_vehicles: 42
+                active_devices: 45
+                api_calls: 185000
+                satellite_messages: 320
+                cost_breakdown:
+                  base: 499
+                  overage_events: 0
+                  satellite: 32
+                  storage: 15
+                  total: 546
+
+  /api-gateway/billing/invoices:
+    get:
+      tags: [Billing]
+      summary: Listar facturas
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: Lista de facturas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Invoice"
+              example:
+                data:
+                  - id: "inv-001"
+                    period: "2026-01"
+                    amount_usd: 531.00
+                    status: "paid"
+                    due_date: "2026-02-15"
+                  - id: "inv-002"
+                    period: "2026-02"
+                    amount_usd: 546.00
+                    status: "pending"
+                    due_date: "2026-03-15"
+
+  /api-gateway/billing/invoices/{invoiceId}/pdf:
+    get:
+      tags: [Billing]
+      summary: Descargar factura en PDF
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Factura PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  # ============================
+  # CADENA DE FRÍO
+  # ============================
+  /api-gateway/cold-chain:
+    get:
+      tags: [Eventos]
+      summary: Consultar logs de cadena de frío
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: vehicle_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: in_range
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Logs de temperatura
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ColdChainLog"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+  /api-gateway/cold-chain/certificate/{vehicleId}:
+    get:
+      tags: [Eventos]
+      summary: Generar certificado de cadena de frío para un viaje
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Certificado PDF de cadena de frío
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  # ============================
+  # CONDUCTORES
+  # ============================
+  /api-gateway/drivers:
+    get:
+      tags: [Usuarios]
+      summary: Listar conductores
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, suspended]
+      responses:
+        "200":
+          description: Lista de conductores
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Driver"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+    post:
+      tags: [Usuarios]
+      summary: Crear conductor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                license_number:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                assigned_vehicle_id:
+                  type: string
+                  format: uuid
+            example:
+              name: "Carlos Muñoz"
+              license_number: "C-123456789"
+              phone: "+573001234567"
+              assigned_vehicle_id: "a1b2c3d4-..."
+      responses:
+        "201":
+          description: Conductor creado
+
+  /api-gateway/drivers/{driverId}/scorecard:
+    get:
+      tags: [Usuarios]
+      summary: Scorecard del conductor
+      parameters:
+        - name: driverId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Scorecard detallado
+          content:
+            application/json:
+              example:
+                driver_id: "dr-uuid"
+                name: "Carlos Muñoz"
+                overall_score: 87
+                metrics:
+                  acceleration: 90
+                  braking: 85
+                  speed_compliance: 80
+                  driving_hours: 92
+                  cornering: 88
+                  seatbelt: 95
+                badges: ["🏆 Top Driver", "🛡️ Safe Driver"]
+                trend: "up"
+                period: "2026-02"
+
+  # ============================
+  # POLICIES (RULE ENGINE)
+  # ============================
+  /api-gateway/policies:
+    get:
+      tags: [Alertas]
+      summary: Listar políticas del rule engine
+      responses:
+        "200":
+          description: Lista de políticas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Policy"
+    post:
+      tags: [Alertas]
+      summary: Crear política
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, conditions, actions]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                conditions:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/PolicyCondition"
+                actions:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/PolicyAction"
+                logic:
+                  type: string
+                  enum: [AND, OR]
+                category:
+                  type: string
+            example:
+              name: "Exceso de velocidad > 80 km/h"
+              description: "Alerta cuando un vehículo supera 80 km/h"
+              conditions:
+                - type: "speed"
+                  operator: ">"
+                  value: "80"
+                  label: "Velocidad > 80 km/h"
+              actions:
+                - type: "alert"
+                  config:
+                    severity: "high"
+                    channel: "push"
+                  label: "Alerta alta por push"
+                - type: "evidence_log"
+                  config: {}
+                  label: "Registrar en Truth Layer"
+              logic: "AND"
+              category: "safety"
+      responses:
+        "201":
+          description: Política creada

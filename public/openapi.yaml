@@ -1,0 +1,181 @@
+openapi: 3.1.0
+info:
+  title: CELLVI 2.0 API
+  description: >
+    API RESTful para la plataforma de telemática y monitoreo satelital ASEGURAR LTDA.
+    Provee acceso programático a flotas, dispositivos, evidencias y reportes.
+  version: 1.0.0
+  contact:
+    name: Soporte API
+    email: api-support@asegurar.com.co
+servers:
+  - url: https://api.cellvi.com/v1
+    description: Servidor de Producción
+  - url: https://sandbox-api.cellvi.com/v1
+    description: Sandbox de Pruebas
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Vehicle:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "VH-123456"
+        plate:
+          type: string
+          example: "ABC-123"
+        status:
+          type: string
+          enum: [active, maintenance, inactive]
+        last_position:
+          $ref: '#/components/schemas/Position'
+    
+    Position:
+      type: object
+      properties:
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+        speed:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [speeding, geofence, panic, sensor]
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        timestamp:
+          type: string
+          format: date-time
+
+paths:
+  /fleet/vehicles:
+    get:
+      summary: Listar vehículos
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [active, inactive]
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Lista de vehículos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehicle'
+
+  /fleet/vehicles/{id}/telemetry:
+    get:
+      summary: Obtener historial de telemetría y eventos
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: from
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: to
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Stream de telemetría histórico
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                   $ref: '#/components/schemas/Position'
+
+  /compliance/evidence/{trip_id}:
+    get:
+      summary: Descargar paquete de evidencia inmutable
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: trip_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bundle JSON firmado criptográficamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                   signed_bundle:
+                      type: string
+                      format: base64
+                   public_key_url:
+                      type: string
+
+  /webhooks/register:
+    post:
+      summary: Registrar un nuevo webhook
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                events:
+                  type: array
+                  items:
+                    type: string
+                    enum: [alert.created, geofence.enter, trip.end]
+      responses:
+        '201':
+          description: Webhook registrado exitosamente

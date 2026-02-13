@@ -1,0 +1,43 @@
+{
+    "nav": {
+        "dashboard": "Operations",
+        "tracking": "GPS Tracking",
+        "planning": "Route Planning",
+        "maintenance": "Fuel Control",
+        "admin": "Administration"
+    },
+    "dashboard": {
+        "welcome": "Welcome, {{name}}",
+        "kpi_active": "Active Fleet",
+        "kpi_alert": "Critical Alerts",
+        "kpi_fuel": "Fuel Efficiency",
+        "kpi_co2": "CO2 Emissions"
+    },
+    "tracking": {
+        "title": "Control Tower",
+        "subtitle": "Real-time satellite fleet monitoring.",
+        "status_active": "EN ROUTE",
+        "status_stopped": "STOPPED",
+        "status_offline": "OFFLINE",
+        "last_update": "Updated: {{time}}",
+        "gps_gateway": "📡 GPS Gateway: {{status}}"
+    },
+    "planning": {
+        "title": "AI Planner",
+        "subtitle": "VRP Algorithm (2-Opt Heuristic)",
+        "optimize_btn": "OPTIMIZE ROUTE",
+        "reset_btn": "Reset",
+        "total_dist": "TOTAL DISTANCE",
+        "comp_time": "COMPUTATION TIME"
+    },
+    "maintenance": {
+        "title": "Fuel Efficiency & Control",
+        "subtitle": "AI-based predictive fuel analysis (Phase 3)."
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "Error",
+        "online": "ONLINE",
+        "offline": "OFFLINE"
+    }
+}

@@ -1,0 +1,67 @@
+{
+  "version": "1.0",
+  "exported_at": "2026-02-12T02:05:42.072Z",
+  "vehicle_id": "VH-2026",
+  "records": [
+    {
+      "id": "evt_1001",
+      "chain_index": 0,
+      "sealed_at": "2026-02-12T08:00:00Z",
+      "event_type": "TRIP_START",
+      "description": "Inicio de viaje en Bogotá DC",
+      "data": {
+        "lat": 4.6097,
+        "lng": -74.0817,
+        "speed": 0,
+        "engine": "ON"
+      },
+      "prev_hash": null,
+      "sha256_hash": "629e18a0ce9bcf6ff2749c647e301e58151b9ef3c99daa622ed6efc8d81bc0f1"
+    },
+    {
+      "id": "evt_1002",
+      "chain_index": 1,
+      "sealed_at": "2026-02-12T08:15:00Z",
+      "event_type": "GEOFENCE_EXIT",
+      "description": "Salida de Base Central",
+      "data": {
+        "lat": 4.615,
+        "lng": -74.085,
+        "speed": 45,
+        "engine": "ON"
+      },
+      "prev_hash": "629e18a0ce9bcf6ff2749c647e301e58151b9ef3c99daa622ed6efc8d81bc0f1",
+      "sha256_hash": "e8ad6756089bb4c69738612c5efadacd62ced0f266c7281570fba6c7aa0d79b2"
+    },
+    {
+      "id": "evt_1003",
+      "chain_index": 2,
+      "sealed_at": "2026-02-12T09:30:00Z",
+      "event_type": "ALERT_SPEEDING",
+      "description": "Exceso de velocidad (85 km/h)",
+      "data": {
+        "lat": 4.815,
+        "lng": -74.05,
+        "speed": 85,
+        "engine": "ON"
+      },
+      "prev_hash": "e8ad6756089bb4c69738612c5efadacd62ced0f266c7281570fba6c7aa0d79b2",
+      "sha256_hash": "69b2b74df01e2f9a2225028a05d459fc81466d71bb7427ac4b4172b358358e5e"
+    },
+    {
+      "id": "evt_1004",
+      "chain_index": 3,
+      "sealed_at": "2026-02-12T10:00:00Z",
+      "event_type": "TRIP_END",
+      "description": "Fin de viaje en Tunja",
+      "data": {
+        "lat": 5.5353,
+        "lng": -73.3678,
+        "speed": 0,
+        "engine": "OFF"
+      },
+      "prev_hash": "69b2b74df01e2f9a2225028a05d459fc81466d71bb7427ac4b4172b358358e5e",
+      "sha256_hash": "9a9cdc2d37bcff8b4c3768613f14db3d95b3695f3df9b293ca0774efe8a04688"
+    }
+  ]
+}

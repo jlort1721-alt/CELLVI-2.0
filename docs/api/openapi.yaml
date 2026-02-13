@@ -1,0 +1,113 @@
+openapi: 3.0.0
+info:
+  title: CELLVI 2.0 Logistics API
+  description: API pública para integrations de ERPs y Sistemas Logísticos.
+  version: 1.0.0
+servers:
+  - url: https://api.cellvi.com/v1
+    description: Production Server
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /orders:
+    post:
+      summary: Crear un nuevo pedido de transporte.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                client_ref:
+                  type: string
+                  example: "PED-2026-001"
+                destination:
+                  type: object
+                  properties:
+                    lat:
+                      type: number
+                    lng:
+                      type: number
+                    address:
+                      type: string
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      sku:
+                        type: string
+                      quantity:
+                        type: integer
+      responses:
+        '201':
+          description: Pedido Creado Exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  tracking_url:
+                    type: string
+
+  /tracking/{tracking_number}:
+    get:
+      summary: Consultar estado de un envío (Público).
+      security: [] # No requiere Auth si se tiene el tracking number
+      parameters:
+        - name: tracking_number
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Estado actual del envío.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [PENDING, MOVING, DELIVERED, EXCEPTION]
+                  lat:
+                    type: number
+                  lng:
+                    type: number
+                  eta:
+                    type: string
+                    format: date-time
+
+  /webhooks:
+    post:
+      summary: Registrar una URL para recibir eventos (Webhooks).
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                events:
+                  type: array
+                  items:
+                    type: string
+                    enum: [ORDER_CREATED, DELIVERED, EXCEPTION]
+      responses:
+        '200':
+          description: Webhook registrado.
