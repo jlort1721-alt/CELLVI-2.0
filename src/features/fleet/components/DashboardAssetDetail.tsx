@@ -3,6 +3,7 @@ import { Car, MapPin, Fuel, Gauge, Clock, Shield, Thermometer, Signal, ChevronRi
 import { vehicles } from "@/lib/demoData";
 import { Button } from "@/components/ui/button";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area } from "recharts";
+import { DigitalTwinViewer } from "./DigitalTwinViewer";
 
 /* ── Mock telemetry timeline for selected vehicle ──── */
 const generateTimeline = (vehicleId: string) => {
@@ -79,33 +80,14 @@ const DashboardAssetDetail = () => {
 
         {/* ── Detail panel ──────────────────────────── */}
         <div className="lg:col-span-3 space-y-4">
-          {/* Vehicle header card */}
-          <div className="rounded-xl border bg-sidebar border-sidebar-border p-5">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center">
-                  <Car className="w-7 h-7 text-gold" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-heading font-bold text-sidebar-foreground text-xl">{selectedVehicle.plate}</h3>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${st.bg} ${st.color}`}>{st.label}</span>
-                  </div>
-                  <div className="text-xs text-sidebar-foreground/50">{selectedVehicle.type} • {selectedVehicle.driver} • {selectedVehicle.route}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" className="text-[10px] h-8 border-sidebar-border text-sidebar-foreground/60">
-                  <MapPin className="w-3 h-3 mr-1" /> Ver en Mapa
-                </Button>
-                <Button size="sm" variant="outline" className="text-[10px] h-8 border-sidebar-border text-sidebar-foreground/60">
-                  <Shield className="w-3 h-3 mr-1" /> Evidencias
-                </Button>
-              </div>
-            </div>
+          {/* Digital Twin Viewer (NEW) replaces basic header */}
+          <div className="rounded-xl border bg-sidebar border-sidebar-border h-[400px] overflow-hidden relative">
+            <DigitalTwinViewer vehicleData={selectedVehicle} />
+          </div>
 
-            {/* Quick metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mt-5 pt-4 border-t border-sidebar-border">
+          {/* Quick metrics */}
+          <div className="rounded-xl border bg-sidebar border-sidebar-border p-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
               {[
                 { icon: Gauge, label: "Velocidad", value: `${selectedVehicle.speed} km/h`, color: "#3b82f6" },
                 { icon: Fuel, label: "Combustible", value: `${selectedVehicle.fuel}%`, color: selectedVehicle.fuel > 30 ? "#22c55e" : "#ef4444" },
