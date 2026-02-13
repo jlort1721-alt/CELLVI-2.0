@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Truck, MapPin, CheckCircle, Search, WifiOff } from 'lucide-react';
+import { DriverFatigueMonitor } from '../components/DriverFatigueMonitor';
 
 interface Stop {
     id: string;
@@ -77,12 +78,20 @@ const DriverRoute = () => {
                 )}
             </div>
 
+            {/* Vision Guard (Copiloto Biométrico) */}
+            <div className="p-4 bg-slate-100 border-b border-slate-200">
+                <h2 className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Seguridad Activa</h2>
+                <div className="relative h-48 w-full bg-slate-900 rounded-xl overflow-hidden shadow-inner">
+                    <DriverFatigueMonitor />
+                </div>
+            </div>
+
             {/* Timeline */}
             <div className="p-4 space-y-4">
                 {stops.map((stop, index) => (
                     <div key={stop.id} className={`relative p-4 rounded-xl border-l-4 shadow-sm ${stop.status === 'completed'
-                            ? 'bg-slate-100 border-green-500 opacity-60'
-                            : 'bg-white border-blue-500'
+                        ? 'bg-slate-100 border-green-500 opacity-60'
+                        : 'bg-white border-blue-500'
                         }`}>
                         <div className="flex justify-between items-start mb-2">
                             <h3 className="font-bold text-slate-800">{stop.client}</h3>
