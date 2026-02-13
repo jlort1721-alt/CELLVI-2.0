@@ -96,6 +96,7 @@ export const useTelemetry = (vehicleId?: string, options: PaginatedQueryOptions 
 };
 
 // ==================== ALERTS ====================
+// NOTE: This hook no longer polls. Use useRealtimeAlerts() to subscribe to live updates.
 export const useAlerts = (options: PaginatedQueryOptions = {}) => {
   const page = options.page || 1;
   const pageSize = options.pageSize || DEFAULT_PAGE_SIZES.alerts;
@@ -121,7 +122,7 @@ export const useAlerts = (options: PaginatedQueryOptions = {}) => {
 
       return buildPaginationResult(data, count || 0, page, pageSize);
     },
-    refetchInterval: 5000,
+    // ✅ NO MORE POLLING - Use useRealtimeAlerts() hook for live updates
     enabled: options.enabled !== false,
   });
 };
