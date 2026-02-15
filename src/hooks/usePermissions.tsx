@@ -1,48 +1,115 @@
 import { useAuth } from "@/hooks/useAuth";
-import type { ReactNode } from "react";
+import { ReactNode } from "react";
 
 type AppRole = "super_admin" | "admin" | "manager" | "operator" | "driver" | "client" | "auditor";
 
-const PERMISSION_MAP: Record<AppRole, string[]> = {
-  super_admin: ['*'],
-  admin: ['monitoring.*', 'fleet.*', 'operations.*', 'control.*', 'compliance.*', 'admin.*', 'reports.*'],
-  manager: ['monitoring.*', 'fleet.read', 'operations.read', 'control.read', 'compliance.read', 'reports.*'],
-  operator: ['monitoring.*', 'fleet.read', 'operations.read'],
-  driver: ['monitoring.own', 'compliance.inspections.own'],
-  client: ['monitoring.read', 'reports.read'],
-  auditor: ['compliance.*', 'control.audit', 'control.evidence', 'reports.read'],
+/**
+ * Permission mapping for each role
+ * Defines what permissions each role has access to
+ */
+const ROLE_PERMISSIONS: Record<AppRole, string[]> = {
+  super_admin: ["*"], // Can do anything
+
+  admin: [
+    "monitoring.read",
+    "monitoring.alerts",
+    "fleet.read",
+    "operations.read",
+    "control.read",
+    "control.evidence",
+    "control.audit",
+    "reports.read",
+    "compliance.read",
+    "admin.billing",
+    "admin.users",
+  ],
+
+  manager: [
+    "monitoring.read",
+    "monitoring.alerts",
+    "fleet.read",
+    "operations.read",
+    "control.read",
+    "reports.read",
+    "compliance.read",
+  ],
+
+  operator: [
+    "monitoring.read",
+    "monitoring.alerts",
+    "fleet.read",
+    "operations.read",
+    "control.read",
+    "reports.read",
+  ],
+
+  auditor: [
+    "monitoring.read",
+    "compliance.read",
+    "control.audit",
+    "reports.read",
+  ],
+
+  client: [
+    "monitoring.read",
+    "reports.read",
+  ],
+
+  driver: [
+    "monitoring.own", // Can only see their own data
+  ],
 };
 
-function matchPermission(userPerms: string[], required: string): boolean {
-  if (userPerms.includes('*')) return true;
-
-  for (const perm of userPerms) {
-    if (perm === required) return true;
-    if (perm.endsWith('.*')) {
-      const prefix = perm.slice(0, -2);
-      if (required.startsWith(prefix)) return true;
-    }
-  }
-  return false;
-}
-
-// eslint-disable-next-line react-refresh/only-export-components -- usePermissions is co-located with Can component intentionally
-export function usePermissions() {
+/**
+ * Hook to check user permissions based on their role
+ * @returns Object with permission checking functions
+ */
+export const usePermissions = () => {
   const { role } = useAuth();
 
+  /**
+   * Check if user has a specific permission
+   * @param permission - Permission string to check (e.g., "monitoring.read")
+   * @returns true if user has permission, false otherwise
+   */
   const can = (permission: string): boolean => {
     if (!role) return false;
-    const perms = PERMISSION_MAP[role] || [];
-    return matchPermission(perms, permission);
+
+    const permissions = ROLE_PERMISSIONS[role];
+    if (!permissions) return false;
+
+    // Super admin can do anything
+    if (permissions.includes("*")) return true;
+
+    // Check exact permission match
+    return permissions.includes(permission);
   };
 
+  /**
+   * Check if user has ANY of the provided permissions
+   * @param permissions - Array of permission strings to check
+   * @returns true if user has at least one permission, false otherwise
+   */
   const canAny = (...permissions: string[]): boolean => {
-    return permissions.some(p => can(p));
+    return permissions.some((permission) => can(permission));
   };
 
-  return { can, canAny, role };
-}
+  /**
+   * Check if user has ALL of the provided permissions
+   * @param permissions - Array of permission strings to check
+   * @returns true if user has all permissions, false otherwise
+   */
+  const canAll = (...permissions: string[]): boolean => {
+    return permissions.every((permission) => can(permission));
+  };
 
+  return { can, canAny, canAll };
+};
+
+/**
+ * Component for conditional rendering based on permissions
+ * Renders children only if user has the required permission
+ */
 interface CanProps {
   do: string;
   children: ReactNode;
@@ -51,5 +118,10 @@ interface CanProps {
 
 export const Can = ({ do: permission, children, fallback = null }: CanProps) => {
   const { can } = usePermissions();
-  return can(permission) ? <>{children}</> : <>{fallback}</>;
+
+  if (can(permission)) {
+    return <>{children}</>;
+  }
+
+  return <>{fallback}</>;
 };

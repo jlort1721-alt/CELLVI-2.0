@@ -1,18 +1,33 @@
 import { motion } from "framer-motion";
-import { Satellite, Shield, MapPin, Radio } from "lucide-react";
+import { Satellite, Shield, MapPin, Radio, Play, CheckCircle, TrendingUp, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-
-
+import { platformStats, formatNumber, formatKm, formatPercentage } from "@/lib/demoData";
 
 const HeroSection = () => {
   const { t } = useTranslation();
 
   const stats = [
-    { value: t("hero.stat1"), label: t("hero.stat1Label") },
-    { value: t("hero.stat2"), label: t("hero.stat2Label") },
-    { value: t("hero.stat3"), label: t("hero.stat3Label") },
-    { value: t("hero.stat4"), label: t("hero.stat4Label") },
+    {
+      value: formatNumber(platformStats.totalVehicles),
+      label: "Vehículos Monitoreados",
+      icon: MapPin
+    },
+    {
+      value: formatPercentage(platformStats.uptime, 2),
+      label: "Disponibilidad",
+      icon: TrendingUp
+    },
+    {
+      value: "500+",
+      label: "Clientes Activos",
+      icon: Users
+    },
+    {
+      value: "23 Años",
+      label: "de Experiencia",
+      icon: Shield
+    },
   ];
 
   return (
@@ -48,19 +63,73 @@ const HeroSection = () => {
             {t("hero.subtitle")}
           </motion.p>
 
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.45 }} className="flex flex-wrap gap-4 mb-16">
-            <Button asChild size="lg" className="bg-gold-gradient font-heading font-bold text-navy hover:opacity-90 shadow-gold text-base px-8">
-              <a href="#planes">{t("hero.cta1")}</a>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.45 }}
+            className="flex flex-wrap gap-4 mb-8"
+          >
+            <Button
+              asChild
+              size="lg"
+              className="bg-gold-gradient font-heading font-bold text-navy hover:opacity-90 shadow-gold text-base px-8 group"
+            >
+              <a href="#pricing">
+                {t("hero.cta1")}
+                <CheckCircle className="w-4 h-4 ml-2 group-hover:scale-110 transition-transform" />
+              </a>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-gold/40 text-gold hover:bg-gold/10 font-heading font-semibold text-base px-8">
-              <a href="/demo">{t("hero.cta2")}</a>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-gold/40 text-primary-foreground hover:bg-gold/10 font-heading font-semibold text-base px-8 group backdrop-blur-sm bg-white/5"
+            >
+              <a href="/demo">
+                <Play className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                {t("hero.cta2")}
+              </a>
             </Button>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.6 }} className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {/* Trust indicators */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.55 }}
+            className="flex flex-wrap items-center gap-6 mb-12 text-primary-foreground/60"
+          >
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-400" />
+              <span className="text-sm">Sin contratos largos</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-400" />
+              <span className="text-sm">Instalación gratis</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-400" />
+              <span className="text-sm">Soporte 24/7</span>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.65 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-6"
+          >
             {stats.map((stat, i) => (
-              <div key={i} className="text-center md:text-left">
-                <div className="font-heading font-extrabold text-2xl md:text-3xl text-gold">{stat.value}</div>
+              <div
+                key={i}
+                className="text-center md:text-left bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <stat.icon className="w-5 h-5 text-gold" />
+                </div>
+                <div className="font-heading font-extrabold text-2xl md:text-3xl text-gold">
+                  {stat.value}
+                </div>
                 <div className="text-sm text-primary-foreground/60 mt-1">{stat.label}</div>
               </div>
             ))}

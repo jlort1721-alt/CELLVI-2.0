@@ -12,13 +12,15 @@ export default function SecurityDashboard() {
     const { data: jammingAlerts } = useQuery({
         queryKey: ["security-jamming"],
         queryFn: async () => supabase.from("alerts").select("*, vehicles(plate)").eq("type", "JAMMING").eq("status", "open"),
-        refetchInterval: 5000
+        // ✅ NO MORE POLLING - Use Realtime subscriptions for live security alerts
+        staleTime: 30000,
     });
 
     const { data: batteryAlerts } = useQuery({
         queryKey: ["security-battery"],
         queryFn: async () => supabase.from("alerts").select("*, vehicles(plate)").eq("type", "BATTERY_CUT").eq("status", "open"),
-        refetchInterval: 10000
+        // ✅ NO MORE POLLING - Use Realtime subscriptions for live battery alerts
+        staleTime: 30000,
     });
 
     return (

@@ -126,6 +126,12 @@ self.addEventListener('fetch', (event) => {
 
 // ── Background Sync ──
 self.addEventListener('sync', (event) => {
+  // Enhanced: Process mutation queue from offline system
+  if (event.tag === 'process-mutation-queue') {
+    event.waitUntil(processMutationQueue());
+  }
+
+  // Legacy sync handlers (keep for backwards compatibility)
   if (event.tag === 'sync-telemetry') {
     event.waitUntil(syncTelemetryData());
   }
@@ -136,6 +142,45 @@ self.addEventListener('sync', (event) => {
     event.waitUntil(syncPQRData());
   }
 });
+
+// New: Process mutation queue from IndexedDB
+const processMutationQueue = async () => {
+  try {
+    // Open our new offline database
+    const db = await openOfflineDB();
+    const tx = db.transaction('offline_mutations', 'readonly');
+    const store = tx.objectStore('offline_mutations');
+    const index = store.index('status');
+    const request = index.getAll('pending');
+
+    const mutations = await new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+
+    console.log(`[SW] Processing ${mutations.length} pending mutations`);
+
+    // Notify main app to process queue
+    const clients = await self.clients.matchAll();
+    clients.forEach(client => {
+      client.postMessage({
+        type: 'PROCESS_QUEUE',
+        payload: { count: mutations.length }
+      });
+    });
+  } catch (err) {
+    console.warn('[SW] Mutation queue sync error:', err);
+  }
+};
+
+// Open the new offline database
+const openOfflineDB = () => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('cellvi_offline_db', 1);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+};
 
 const syncTelemetryData = async () => {
   try {
@@ -297,22 +342,116 @@ const getAllFromStore = (store) => {
   });
 };
 
-// ── Periodic Background Sync (for telemetry refresh) ──
+// ── Periodic Background Sync (refresh critical data when idle) ──
 self.addEventListener('periodicsync', (event) => {
+  console.log('[SW] Periodic sync triggered:', event.tag);
+
   if (event.tag === 'refresh-fleet-data') {
-    event.waitUntil(
-      fetch('/api/fleet/status')
-        .then((res) => res.json())
-        .then((data) => {
-          // Cache the refreshed fleet data
-          return caches.open(API_CACHE).then((cache) => {
-            const response = new Response(JSON.stringify(data), {
-              headers: { 'Content-Type': 'application/json' },
-            });
-            return cache.put('/api/fleet/status', response);
-          });
-        })
-        .catch(() => console.warn('[SW] Periodic sync failed'))
-    );
+    event.waitUntil(refreshFleetData());
+  }
+
+  if (event.tag === 'refresh-alerts') {
+    event.waitUntil(refreshAlerts());
+  }
+
+  if (event.tag === 'cleanup-old-data') {
+    event.waitUntil(cleanupOldCacheData());
   }
 });
+
+// Refresh fleet positions and status
+const refreshFleetData = async () => {
+  try {
+    console.log('[SW] Refreshing fleet data in background');
+
+    // Fetch latest vehicle positions
+    const response = await fetch('/api/fleet/status');
+    if (!response.ok) throw new Error('Fleet fetch failed');
+
+    const data = await response.json();
+
+    // Update cache
+    const cache = await caches.open(API_CACHE);
+    const cacheResponse = new Response(JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=300' },
+    });
+    await cache.put('/api/fleet/status', cacheResponse);
+
+    // Notify open clients
+    const clients = await self.clients.matchAll();
+    clients.forEach(client => {
+      client.postMessage({
+        type: 'FLEET_DATA_REFRESHED',
+        payload: { timestamp: Date.now(), count: data.length }
+      });
+    });
+
+    console.log('[SW] Fleet data refreshed successfully');
+  } catch (err) {
+    console.warn('[SW] Fleet data refresh failed:', err);
+  }
+};
+
+// Refresh critical alerts
+const refreshAlerts = async () => {
+  try {
+    console.log('[SW] Refreshing alerts in background');
+
+    const response = await fetch('/api/alerts/critical');
+    if (!response.ok) throw new Error('Alerts fetch failed');
+
+    const data = await response.json();
+
+    // If new critical alerts, show notification
+    if (data.length > 0 && data.some(alert => alert.isNew)) {
+      await self.registration.showNotification('CELLVI 2.0 - Alerta Crítica', {
+        body: `${data.length} alerta(s) crítica(s) requieren atención`,
+        icon: '/logo.png',
+        badge: '/badge-icon.png',
+        tag: 'critical-alerts',
+        requireInteraction: true,
+        data: { url: '/platform/alerts', alerts: data },
+        actions: [
+          { action: 'view', title: 'Ver Alertas' },
+          { action: 'dismiss', title: 'Cerrar' },
+        ],
+      });
+    }
+
+    console.log('[SW] Alerts refreshed successfully');
+  } catch (err) {
+    console.warn('[SW] Alerts refresh failed:', err);
+  }
+};
+
+// Cleanup old cache entries
+const cleanupOldCacheData = async () => {
+  try {
+    console.log('[SW] Cleaning up old cache data');
+
+    const cache = await caches.open(API_CACHE);
+    const requests = await cache.keys();
+    const now = Date.now();
+    const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+    let deletedCount = 0;
+
+    for (const request of requests) {
+      const response = await cache.match(request);
+      if (!response) continue;
+
+      const dateHeader = response.headers.get('date');
+      if (dateHeader) {
+        const cacheDate = new Date(dateHeader).getTime();
+        if (now - cacheDate > maxAge) {
+          await cache.delete(request);
+          deletedCount++;
+        }
+      }
+    }
+
+    console.log(`[SW] Cleaned up ${deletedCount} old cache entries`);
+  } catch (err) {
+    console.warn('[SW] Cache cleanup failed:', err);
+  }
+};

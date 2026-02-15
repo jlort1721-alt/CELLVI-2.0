@@ -1,25 +1,28 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { useTranslation } from "react-i18next";
-import { Truck, Thermometer, HardHat, Package, Fuel, Building2, CheckCircle, TrendingUp } from "lucide-react";
+import { Thermometer, Truck, Shield, Building2, CheckCircle, Target, AlertTriangle } from "lucide-react";
+import { useCases } from "@/lib/demoData";
 
-const cases = [
-  { icon: Truck, key: "uc1", color: "text-blue-500" },
-  { icon: Thermometer, key: "uc2", color: "text-cyan-500" },
-  { icon: HardHat, key: "uc3", color: "text-amber-500" },
-  { icon: Package, key: "uc4", color: "text-emerald-500" },
-  { icon: Fuel, key: "uc5", color: "text-orange-500" },
-  { icon: Building2, key: "uc6", color: "text-violet-500" },
-];
+const iconMap = {
+  thermometer: Thermometer,
+  truck: Truck,
+  shield: Shield,
+  building: Building2,
+};
 
 const UseCasesSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const { t } = useTranslation();
 
   return (
-    <section className="py-20 md:py-28 bg-background" ref={ref}>
-      <div className="container mx-auto px-4">
+    <section className="py-20 md:py-28 bg-background relative overflow-hidden" ref={ref}>
+      {/* Background decoration */}
+      <div className="absolute inset-0 opacity-5 pointer-events-none">
+        <div className="absolute top-[30%] left-[10%] w-72 h-72 bg-blue-500 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[30%] right-[10%] w-72 h-72 bg-gold rounded-full blur-[100px]" />
+      </div>
+
+      <div className="container mx-auto px-4 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -27,88 +30,90 @@ const UseCasesSection = () => {
           className="text-center mb-16"
         >
           <span className="text-sm font-heading font-bold tracking-widest text-gold uppercase">
-            {t("useCases.badge")}
+            Casos de Uso Reales
           </span>
           <h2 className="font-heading font-extrabold text-3xl md:text-4xl lg:text-5xl text-foreground mt-3">
-            {t("useCases.title")}
+            Soluciones para Cada Industria
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mt-4 text-lg">
-            {t("useCases.subtitle")}
+            Resultados comprobados en diferentes sectores del transporte colombiano
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {cases.map((uc, i) => (
-            <motion.div
-              key={uc.key}
-              initial={{ opacity: 0, y: 40 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.08 * i }}
-              className={`group rounded-xl border border-border overflow-hidden transition-all hover:shadow-lg relative ${["uc1", "uc3", "uc5", "uc6"].includes(uc.key) ? "md:col-span-2 lg:col-span-1 bg-navy text-white border-none" : "bg-card hover:border-gold/50"
-                }`}
-            >
-              {uc.key === "uc1" && (
-                <div className="absolute inset-0 z-0">
-                  <img src="/road-safety.jpg" alt="Transporte" className="w-full h-full object-cover opacity-40 group-hover:opacity-30 transition-opacity" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/80 to-navy/40" />
-                </div>
-              )}
-              {uc.key === "uc3" && (
-                <div className="absolute inset-0 z-0">
-                  <img src="/remote-mining.jpg" alt="Minería" className="w-full h-full object-cover opacity-40 group-hover:opacity-30 transition-opacity" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/80 to-navy/40" />
-                </div>
-              )}
-              {uc.key === "uc5" && (
-                <div className="absolute inset-0 z-0">
-                  <img src="/fleet-maintenance.jpg" alt="Mantenimiento" className="w-full h-full object-cover opacity-40 group-hover:opacity-30 transition-opacity" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/80 to-navy/40" />
-                </div>
-              )}
-              {uc.key === "uc6" && (
-                <div className="absolute inset-0 z-0">
-                  <img src="/compliance-office.jpg" alt="Gobierno" className="w-full h-full object-cover opacity-40 group-hover:opacity-30 transition-opacity" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/80 to-navy/40" />
-                </div>
-              )}
+        <div className="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+          {useCases.map((useCase, i) => {
+            const Icon = iconMap[useCase.icon as keyof typeof iconMap];
 
-              <div className="relative z-10 p-7 h-full flex flex-col">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center transition-colors ${["uc1", "uc3", "uc5", "uc6"].includes(uc.key) ? "bg-white/10 group-hover:bg-gold/20" : "bg-primary/10 group-hover:bg-gold/15"
-                    }`}>
-                    <uc.icon className={`w-6 h-6 transition-colors ${["uc1", "uc3", "uc5", "uc6"].includes(uc.key) ? "text-gold" : `${uc.color} group-hover:text-gold`
-                      }`} />
+            return (
+              <motion.div
+                key={useCase.id}
+                initial={{ opacity: 0, y: 40 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: 0.1 * i }}
+                className="group rounded-xl border border-border overflow-hidden transition-all hover:shadow-xl bg-card hover:border-gold/50"
+              >
+                <div className="relative p-8">
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-lg bg-gold/10 flex items-center justify-center group-hover:bg-gold/20 transition-colors">
+                        {Icon && <Icon className="w-7 h-7 text-gold" />}
+                      </div>
+                      <div>
+                        <h3 className="font-heading font-bold text-xl text-foreground mb-1">
+                          {useCase.title}
+                        </h3>
+                        <span className="text-xs px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 font-medium">
+                          {useCase.industry}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className={`flex items-center gap-1.5 border rounded-full px-3 py-1 ${["uc1", "uc3", "uc5", "uc6"].includes(uc.key) ? "bg-gold/20 border-gold/30" : "bg-gold/10 border-gold/20"
-                    }`}>
-                    <TrendingUp className="w-3.5 h-3.5 text-gold" />
-                    <span className="text-xs font-bold text-gold">{t(`useCases.${uc.key}Stat`)}</span>
+
+                  {/* Problem */}
+                  <div className="mb-4 p-4 rounded-lg bg-red-500/5 border border-red-500/10">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-bold text-red-600 mb-1">Problema</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {useCase.problem}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Solution */}
+                  <div className="mb-6 p-4 rounded-lg bg-green-500/5 border border-green-500/10">
+                    <div className="flex items-start gap-3">
+                      <Target className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-bold text-green-600 mb-1">Solución CELLVI</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {useCase.solution}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Results */}
+                  <div>
+                    <p className="text-xs font-bold text-foreground mb-3">Resultados Medibles</p>
+                    <ul className="space-y-2.5">
+                      {useCase.results.map((result, idx) => (
+                        <li key={idx} className="flex items-start gap-3">
+                          <CheckCircle className="w-4 h-4 text-gold flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-muted-foreground leading-relaxed">
+                            {result}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
-
-                <h3 className={`font-heading font-bold text-lg mb-2 ${["uc1", "uc3", "uc5", "uc6"].includes(uc.key) ? "text-white" : "text-foreground"
-                  }`}>
-                  {t(`useCases.${uc.key}Title`)}
-                </h3>
-                <p className={`text-sm leading-relaxed mb-4 flex-grow ${["uc1", "uc3", "uc5", "uc6"].includes(uc.key) ? "text-gray-300" : "text-muted-foreground"
-                  }`}>
-                  {t(`useCases.${uc.key}Desc`)}
-                </p>
-
-                <ul className="space-y-2 mt-auto">
-                  {[1, 2, 3].map((b) => (
-                    <li key={b} className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-gold flex-shrink-0 mt-0.5" />
-                      <span className={`text-xs leading-relaxed ${["uc1", "uc3", "uc5", "uc6"].includes(uc.key) ? "text-gray-400" : "text-muted-foreground"
-                        }`}>
-                        {t(`useCases.${uc.key}Bullet${b}`)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>

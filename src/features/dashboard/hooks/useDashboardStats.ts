@@ -33,6 +33,7 @@ export function useDashboardStats() {
                 efficiency: 0.94 // Mock for now, would be formula based on active time
             };
         },
-        refetchInterval: 30000,
+        // ✅ NO MORE POLLING - Stats refreshed via Realtime subscriptions and query invalidation
+        staleTime: 60000, // Consider data fresh for 1 minute
     });
 }

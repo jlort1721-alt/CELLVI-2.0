@@ -1,20 +1,28 @@
-
-import { useState } from "react";
+import { useState, memo, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, FileText, CheckCircle, XCircle, Clock, ServerCrash, RefreshCw } from "lucide-react";
+import { Loader2, FileText, CheckCircle, Clock, ServerCrash, RefreshCw } from "lucide-react";
 import { submitManifestToRNDC } from "../rndc/utils/rndcService";
+import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
+import { useQueryAnnouncer } from "@/components/accessibility/ProgressAnnouncer";
+import { ResponsiveTable, type Column } from "@/components/responsive/ResponsiveTable";
 
-export default function RNDCPage() {
+const RNDCPage = memo(() => {
     const [submitting, setSubmitting] = useState(false);
 
+    // Track performance
+    usePerformanceMonitor({
+        enabled: true,
+        trackWebVitals: true,
+        trackQueryMetrics: true,
+    });
+
     // Queries
-    const { data: logs, refetch: refetchLogs } = useQuery({
+    const { data: logs, isLoading: logsLoading, refetch: refetchLogs } = useQuery({
         queryKey: ["rndc-logs"],
         queryFn: async () => {
             const { data, error } = await supabase
@@ -27,7 +35,7 @@ export default function RNDCPage() {
         },
     });
 
-    const { data: jobs, refetch: refetchJobs } = useQuery({
+    const { data: jobs, isLoading: jobsLoading, refetch: refetchJobs } = useQuery({
         queryKey: ["rndc-jobs"],
         queryFn: async () => {
             const { data, error } = await supabase
@@ -39,8 +47,78 @@ export default function RNDCPage() {
             if (error) return [];
             return data;
         },
-        refetchInterval: 3000 // Real-time polling
+        // ✅ NO MORE POLLING - Use Realtime subscriptions for live job status updates
+        staleTime: 30000,
     });
+
+    // Announce loading states
+    useQueryAnnouncer(
+        { isLoading: logsLoading || jobsLoading },
+        {
+            loading: 'Cargando datos de RNDC',
+            success: 'Datos de RNDC cargados correctamente'
+        }
+    );
+
+    // Define columns for jobs table
+    const jobsColumns: Column<any>[] = useMemo(() => [
+        {
+            key: 'id',
+            label: 'Job ID',
+            mobileLabel: 'ID',
+            render: (value) => <span className="font-mono text-[10px] text-muted-foreground">#{value.slice(0, 8)}</span>,
+        },
+        {
+            key: 'status',
+            label: 'Estado',
+            render: (value) => {
+                if (value === 'processing') return <Badge variant="secondary" className="text-[10px]"><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Procesando</Badge>;
+                if (value === 'queued' || value === 'retrying') return <Badge variant="outline" className="text-[10px]"><Clock className="mr-1 h-3 w-3" /> {value}</Badge>;
+                if (value === 'completed') return <Badge className="bg-green-600 hover:bg-green-700 text-[10px]"><CheckCircle className="mr-1 h-3 w-3" /> Exitoso</Badge>;
+                if (value === 'failed' || value === 'dead_letter') return <Badge variant="destructive" className="text-[10px]"><ServerCrash className="mr-1 h-3 w-3" /> Fallido</Badge>;
+                return <Badge variant="outline" className="text-[10px]">{value}</Badge>;
+            },
+        },
+        {
+            key: 'attempts',
+            label: 'Int.',
+            render: (value, row) => <span className="text-xs text-center">{value}/{row.max_attempts}</span>,
+            hiddenOnMobile: true,
+        },
+        {
+            key: 'last_error',
+            label: 'Detalle',
+            render: (value) => (
+                <span className="text-[10px] text-red-500 max-w-[120px] truncate block" title={value}>
+                    {value || '-'}
+                </span>
+            ),
+            hiddenOnMobile: true,
+        },
+    ], []);
+
+    // Define columns for logs table
+    const logsColumns: Column<any>[] = useMemo(() => [
+        {
+            key: 'created_at',
+            label: 'Fecha',
+            render: (value) => <span className="text-[10px]">{new Date(value).toLocaleString()}</span>,
+        },
+        {
+            key: 'radicado',
+            label: 'Radicado',
+            render: (value) => <span className="font-mono text-[10px]">{value || "-"}</span>,
+        },
+        {
+            key: 'status',
+            label: 'Estado',
+            render: (value) => (
+                <Badge variant={value === 'success' ? 'outline' : 'destructive'} className="text-[10px]">
+                    {value === 'success' ? 'OK' : 'Error'}
+                </Badge>
+            ),
+        },
+    ], []);
 
     const handleTestSubmissionAsync = async () => {
         setSubmitting(true);
@@ -66,24 +144,36 @@ export default function RNDCPage() {
     };
 
     return (
-        <div className="p-6 space-y-6 animate-in fade-in">
-            <div className="flex justify-between items-center">
+        <main id="main-content" role="main" tabIndex={-1} className="p-6 space-y-6 animate-in fade-in">
+            <header className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Ministerio de Transporte (RNDC)</h1>
                     <p className="text-muted-foreground text-sm">Historial de transmisiones XML y estado legal</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => { refetchJobs(); refetchLogs(); }}>
-                        <RefreshCw className="mr-2 h-4 w-4" /> Refrescar
+                <div className="flex gap-2" role="toolbar" aria-label="Acciones de RNDC">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => { refetchJobs(); refetchLogs(); }}
+                        aria-label="Refrescar datos de RNDC"
+                    >
+                        <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" /> Refrescar
                     </Button>
-                    <Button onClick={handleTestSubmissionAsync} disabled={submitting}>
-                        {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                    <Button
+                        type="button"
+                        onClick={handleTestSubmissionAsync}
+                        disabled={submitting}
+                        aria-label="Simular envío asíncrono a RNDC"
+                    >
+                        {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <FileText className="mr-2 h-4 w-4" aria-hidden="true" />}
                         Simular Envío (Asíncrono)
                     </Button>
                 </div>
-            </div>
+            </header>
 
-            <div className="grid lg:grid-cols-2 gap-6">
+            <section aria-labelledby="rndc-data-section" className="grid lg:grid-cols-2 gap-6">
+                <h2 id="rndc-data-section" className="sr-only">Datos de transmisión RNDC</h2>
+
                 {/* --- COLA DE MENSAJES (NUEVO) --- */}
                 <Card className="border-l-4 border-l-blue-500 shadow-sm">
                     <CardHeader className="pb-2">
@@ -95,34 +185,14 @@ export default function RNDCPage() {
                     </CardHeader>
                     <CardContent>
                         <ScrollArea className="h-[300px]">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="text-xs w-[80px]">Job ID</TableHead>
-                                        <TableHead className="text-xs">Estado</TableHead>
-                                        <TableHead className="text-xs text-center">Int.</TableHead>
-                                        <TableHead className="text-xs">Detalle</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {jobs?.map((job: any) => (
-                                        <TableRow key={job.id}>
-                                            <TableCell className="font-mono text-[10px] text-muted-foreground">#{job.id.slice(0, 8)}</TableCell>
-                                            <TableCell>
-                                                {job.status === 'processing' && <Badge variant="secondary" className="text-[10px]"><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Procesando</Badge>}
-                                                {(job.status === 'queued' || job.status === 'retrying') && <Badge variant="outline" className="text-[10px]"><Clock className="mr-1 h-3 w-3" /> {job.status}</Badge>}
-                                                {job.status === 'completed' && <Badge className="bg-green-600 hover:bg-green-700 text-[10px]"><CheckCircle className="mr-1 h-3 w-3" /> Exitoso</Badge>}
-                                                {(job.status === 'failed' || job.status === 'dead_letter') && <Badge variant="destructive" className="text-[10px]"><ServerCrash className="mr-1 h-3 w-3" /> Fallido</Badge>}
-                                            </TableCell>
-                                            <TableCell className="text-xs text-center">{job.attempts}/{job.max_attempts}</TableCell>
-                                            <TableCell className="text-[10px] text-red-500 max-w-[120px] truncate" title={job.last_error}>
-                                                {job.last_error || '-'}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                    {!jobs?.length && <TableRow><TableCell colSpan={4} className="text-center text-xs py-10 text-muted-foreground">Cola vacía</TableCell></TableRow>}
-                                </TableBody>
-                            </Table>
+                            <ResponsiveTable
+                                columns={jobsColumns}
+                                data={jobs || []}
+                                keyExtractor={(row) => row.id}
+                                isLoading={jobsLoading}
+                                emptyMessage="Cola vacía"
+                                breakpoint="lg"
+                            />
                         </ScrollArea>
                     </CardContent>
                 </Card>
@@ -135,37 +205,26 @@ export default function RNDCPage() {
                     </CardHeader>
                     <CardContent>
                         <ScrollArea className="h-[300px]">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="text-xs">Fecha</TableHead>
-                                        <TableHead className="text-xs">Radicado</TableHead>
-                                        <TableHead className="text-xs">Estado</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {logs?.map((log: any) => (
-                                        <TableRow key={log.id}>
-                                            <TableCell className="text-[10px]">{new Date(log.created_at).toLocaleString()}</TableCell>
-                                            <TableCell className="font-mono text-[10px]">{log.radicado || "-"}</TableCell>
-                                            <TableCell>
-                                                <Badge variant={log.status === 'success' ? 'outline' : 'destructive'} className="text-[10px]">
-                                                    {log.status === 'success' ? 'OK' : 'Error'}
-                                                </Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                    {!logs?.length && <TableRow><TableCell colSpan={3} className="text-center text-xs py-10 text-muted-foreground">Sin registros</TableCell></TableRow>}
-                                </TableBody>
-                            </Table>
+                            <ResponsiveTable
+                                columns={logsColumns}
+                                data={logs || []}
+                                keyExtractor={(row) => row.id}
+                                isLoading={logsLoading}
+                                emptyMessage="Sin registros"
+                                breakpoint="lg"
+                            />
                         </ScrollArea>
                     </CardContent>
                 </Card>
-            </div>
+            </section>
 
-            <div className="bg-slate-50 p-4 rounded text-xs text-slate-500 font-mono border border-slate-200">
+            <aside className="bg-slate-50 p-4 rounded text-xs text-slate-500 font-mono border border-slate-200" aria-label="Información del sistema">
                 <p>DEBUG: Sistema operativo en modo Asíncrono. Los envíos entran a la cola y son procesados por Edge Workers.</p>
-            </div>
-        </div>
+            </aside>
+        </main>
     );
-}
+});
+
+RNDCPage.displayName = 'RNDCPage';
+
+export default RNDCPage;

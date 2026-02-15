@@ -39,7 +39,8 @@ export function useFleetStatus() {
                 };
             });
         },
-        refetchInterval: 15000,
+        // ✅ NO MORE POLLING - Use Realtime subscriptions for live vehicle status updates
+        staleTime: 30000, // Consider data fresh for 30 seconds
     });
 }
 
@@ -61,6 +62,7 @@ export function useRecentAlerts() {
                 type: a.type
             })) || [];
         },
-        refetchInterval: 10000,
+        // ✅ NO MORE POLLING - Use Realtime subscriptions for live alert updates
+        staleTime: 30000, // Consider data fresh for 30 seconds
     });
 }

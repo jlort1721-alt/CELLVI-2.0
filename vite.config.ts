@@ -39,13 +39,14 @@ export default defineConfig(({ mode }) => ({
       manifest: {
         name: 'CELLVI 2.0 Logistics',
         short_name: 'CELLVI',
-        description: 'Plataforma de Logística Enterprise',
+        description: 'Plataforma de Logística Enterprise con GPS, RNDC, y Gestión de Flotas',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',
         scope: '/',
-        start_url: '/',
+        start_url: '/?source=pwa',
         orientation: 'portrait',
+        categories: ['business', 'productivity', 'logistics', 'navigation'],
         icons: [
           {
             src: '/pwa-192x192.png',
@@ -59,24 +60,89 @@ export default defineConfig(({ mode }) => ({
             type: 'image/png',
             purpose: 'any maskable'
           }
-        ]
+        ],
+        screenshots: [
+          {
+            src: '/screenshots/dashboard-wide.png',
+            sizes: '1280x720',
+            type: 'image/png',
+            form_factor: 'wide',
+            label: 'Dashboard principal con vista de flota en tiempo real'
+          },
+          {
+            src: '/screenshots/map-mobile.png',
+            sizes: '750x1334',
+            type: 'image/png',
+            form_factor: 'narrow',
+            label: 'Mapa de rastreo GPS con ubicación de vehículos'
+          }
+        ],
+        shortcuts: [
+          {
+            name: 'Mapa de Flota',
+            short_name: 'Mapa',
+            description: 'Ver ubicación de todos los vehículos en tiempo real',
+            url: '/platform/tracking?source=shortcut',
+            icons: [{ src: '/icons/map-shortcut.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Alertas',
+            short_name: 'Alertas',
+            description: 'Ver alertas críticas pendientes',
+            url: '/platform/alerts?source=shortcut',
+            icons: [{ src: '/icons/alert-shortcut.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Preoperacional',
+            short_name: 'Inspección',
+            description: 'Iniciar inspección preoperacional',
+            url: '/platform/checklist?source=shortcut',
+            icons: [{ src: '/icons/checklist-shortcut.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Reportes',
+            short_name: 'Reportes',
+            description: 'Generar reportes de operación',
+            url: '/platform/reports?source=shortcut',
+            icons: [{ src: '/icons/report-shortcut.png', sizes: '192x192' }]
+          }
+        ],
+        share_target: {
+          action: '/platform/share',
+          method: 'POST',
+          enctype: 'multipart/form-data',
+          params: {
+            title: 'title',
+            text: 'text',
+            url: 'url',
+            files: [
+              {
+                name: 'media',
+                accept: ['image/*', 'application/pdf']
+              }
+            ]
+          }
+        }
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
+            // Read operations: NetworkFirst with quick cache fallback for offline support
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
             handler: 'NetworkFirst',
+            method: 'GET',
             options: {
               cacheName: 'supabase-api-data',
               expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 24h
+                maxEntries: 150,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days for offline support
               },
               cacheableResponse: {
                 statuses: [0, 200]
-              }
+              },
+              networkTimeoutSeconds: 3 // Fallback to cache after 3s if network slow
             }
           },
           {
@@ -123,6 +189,20 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
+            // Background Sync for Mutations (DELETE)
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            method: 'DELETE',
+            handler: 'NetworkOnly',
+            options: {
+              backgroundSync: {
+                name: 'supabase-mutations-queue',
+                options: {
+                  maxRetentionTime: 24 * 60 // Retry for 24 hours
+                }
+              }
+            }
+          },
+          {
             urlPattern: /^https:\/\/.*\.basemaps\.cartocdn\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
@@ -149,23 +229,77 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-radix': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-tooltip',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-select',
-            '@radix-ui/react-scroll-area',
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-toast',
-          ],
-          'vendor-recharts': ['recharts'],
-          'vendor-supabase': ['@supabase/supabase-js'],
-          'vendor-tanstack': ['@tanstack/react-query'],
+        manualChunks: (id) => {
+          // Core React libraries
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'vendor-react';
+          }
+          if (id.includes('node_modules/react-router')) {
+            return 'vendor-router';
+          }
+
+          // UI Component Libraries
+          if (id.includes('node_modules/@radix-ui')) {
+            return 'vendor-radix';
+          }
+          if (id.includes('node_modules/lucide-react')) {
+            return 'vendor-icons';
+          }
+
+          // Data Visualization (heavy - split from main)
+          if (id.includes('node_modules/recharts')) {
+            return 'vendor-recharts';
+          }
+          if (id.includes('node_modules/three') || id.includes('node_modules/@react-three')) {
+            return 'vendor-three';
+          }
+
+          // Maps (heavy - split from main)
+          if (id.includes('node_modules/leaflet') || id.includes('node_modules/react-leaflet')) {
+            return 'vendor-leaflet';
+          }
+
+          // Backend & State
+          if (id.includes('node_modules/@supabase')) {
+            return 'vendor-supabase';
+          }
+          if (id.includes('node_modules/@tanstack/react-query')) {
+            return 'vendor-tanstack';
+          }
+          if (id.includes('node_modules/zustand')) {
+            return 'vendor-zustand';
+          }
+
+          // Forms & Validation
+          if (id.includes('node_modules/react-hook-form') || id.includes('node_modules/zod')) {
+            return 'vendor-forms';
+          }
+
+          // I18n
+          if (id.includes('node_modules/i18next') || id.includes('node_modules/react-i18next')) {
+            return 'vendor-i18n';
+          }
+
+          // PDF & Export utilities
+          if (id.includes('node_modules/html2canvas') || id.includes('node_modules/jspdf')) {
+            return 'vendor-export';
+          }
+
+          // Other large vendor dependencies
+          if (id.includes('node_modules/')) {
+            return 'vendor-misc';
+          }
         },
+      },
+    },
+    // Increase chunk size warning limit (we're intentionally splitting)
+    chunkSizeWarningLimit: 600,
+    // Enable minification
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console.logs in production
+        drop_debugger: true,
       },
     },
   },

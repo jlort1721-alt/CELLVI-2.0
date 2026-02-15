@@ -1,24 +1,54 @@
-
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client"; // To fetch vehicles/providers
+import { useState, memo, useMemo } from "react";
 import { useWorkOrders, useCreateWorkOrder, useUpdateWorkOrder } from "../hooks/useMaintenance";
 import { useVehicles } from "@/hooks/useFleetData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Wrench, Calendar, Plus, Filter, CheckCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2, Wrench, Plus, CheckCircle } from "lucide-react";
+import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
+import { useQueryAnnouncer } from "@/components/accessibility/ProgressAnnouncer";
+import { ResponsiveTable, type Column } from "@/components/responsive/ResponsiveTable";
 
-export default function MaintenanceListPage() {
+// Memoized KPI Card
+const KPICard = memo(({ title, value, className }: { title: string; value: number; className?: string }) => (
+    <Card>
+        <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <div className={`text-2xl font-bold ${className || ''}`}>{value}</div>
+        </CardContent>
+    </Card>
+));
+
+KPICard.displayName = 'KPICard';
+
+const MaintenanceListPage = memo(() => {
     const { data: orders, isLoading: loadingOrders } = useWorkOrders();
     const { data: vehicles } = useVehicles();
     const createOrder = useCreateWorkOrder();
     const updateOrder = useUpdateWorkOrder();
+
+    // Track performance
+    usePerformanceMonitor({
+        enabled: true,
+        trackWebVitals: true,
+        trackQueryMetrics: true,
+    });
+
+    // Announce loading states
+    useQueryAnnouncer(
+        { isLoading: loadingOrders },
+        {
+            loading: 'Cargando órdenes de mantenimiento',
+            success: 'Órdenes cargadas correctamente'
+        }
+    );
 
     const [isNewOpen, setIsNewOpen] = useState(false);
     const [formData, setFormData] = useState({
@@ -54,12 +84,80 @@ export default function MaintenanceListPage() {
         }
     };
 
+    // Calculate KPIs with memoization
+    const kpis = useMemo(() => ({
+        pending: orders?.filter((o: any) => o.status === 'pending').length || 0,
+        inProgress: orders?.filter((o: any) => o.status === 'in_progress').length || 0,
+        completed: orders?.filter((o: any) => o.status === 'completed').length || 0,
+    }), [orders]);
+
+    // Define responsive table columns
+    const columns: Column<any>[] = useMemo(() => [
+        {
+            key: 'id',
+            label: 'ID',
+            render: (value) => <span className="font-mono text-xs text-muted-foreground">#{value.slice(0, 8)}</span>,
+            hiddenOnMobile: true,
+        },
+        {
+            key: 'vehicles',
+            label: 'Vehículo',
+            render: (value) => <span className="font-medium">{value?.plate}</span>,
+        },
+        {
+            key: 'type',
+            label: 'Tipo',
+            render: (value) => <span className="capitalize text-xs">{value}</span>,
+        },
+        {
+            key: 'description',
+            label: 'Descripción',
+            render: (value) => <span className="max-w-[200px] truncate block">{value}</span>,
+            hiddenOnMobile: true,
+        },
+        {
+            key: 'priority',
+            label: 'Prioridad',
+            render: (value) => <span className="capitalize text-xs">{value}</span>,
+            hiddenOnMobile: true,
+        },
+        {
+            key: 'status',
+            label: 'Estado',
+            render: (value) => (
+                <Badge variant="outline" className={getStatusColor(value)}>
+                    {value.replace('_', ' ')}
+                </Badge>
+            ),
+        },
+        {
+            key: 'actions',
+            label: 'Acciones',
+            render: (_, row) => (
+                row.status !== 'completed' && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => updateOrder.mutate({
+                            id: row.id,
+                            updates: { status: 'completed', completed_at: new Date().toISOString() }
+                        })}
+                        aria-label={`Marcar orden ${row.vehicles?.plate} como completada`}
+                    >
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                    </Button>
+                )
+            ),
+            className: 'text-right',
+        },
+    ], [updateOrder]);
+
     return (
-        <div className="p-6 space-y-6 animate-in fade-in">
-            <div className="flex justify-between items-center">
+        <main id="main-content" role="main" tabIndex={-1} className="p-6 space-y-6 animate-in fade-in">
+            <header className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                        <Wrench className="h-6 w-6 text-primary" /> Gestión de Mantenimiento
+                        <Wrench className="h-6 w-6 text-primary" aria-hidden="true" /> Gestión de Mantenimiento
                     </h1>
                     <p className="text-muted-foreground text-sm">Control de órdenes de trabajo y reparaciones</p>
                 </div>
@@ -149,81 +247,47 @@ export default function MaintenanceListPage() {
                         </form>
                     </DialogContent>
                 </Dialog>
-            </div>
+            </header>
 
-            <div className="grid md:grid-cols-3 gap-6">
-                {/* KPI Summary (Simple) */}
-                <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Total Pendientes</CardTitle></CardHeader>
-                    <CardContent><div className="text-2xl font-bold">{orders?.filter((o: any) => o.status === 'pending').length || 0}</div></CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">En Progreso</CardTitle></CardHeader>
-                    <CardContent><div className="text-2xl font-bold text-blue-600">{orders?.filter((o: any) => o.status === 'in_progress').length || 0}</div></CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Completadas (Mes)</CardTitle></CardHeader>
-                    <CardContent><div className="text-2xl font-bold text-green-600">{orders?.filter((o: any) => o.status === 'completed').length || 0}</div></CardContent>
-                </Card>
-            </div>
+            <section aria-labelledby="kpi-section-title" className="grid md:grid-cols-3 gap-6">
+                <h2 id="kpi-section-title" className="sr-only">Indicadores de mantenimiento</h2>
+                {loadingOrders ? (
+                    <>
+                        <Card><CardHeader className="pb-2"><Skeleton className="h-4 w-32" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /></CardContent></Card>
+                        <Card><CardHeader className="pb-2"><Skeleton className="h-4 w-32" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /></CardContent></Card>
+                        <Card><CardHeader className="pb-2"><Skeleton className="h-4 w-32" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /></CardContent></Card>
+                    </>
+                ) : (
+                    <>
+                        <KPICard title="Total Pendientes" value={kpis.pending} />
+                        <KPICard title="En Progreso" value={kpis.inProgress} className="text-blue-600" />
+                        <KPICard title="Completadas (Mes)" value={kpis.completed} className="text-green-600" />
+                    </>
+                )}
+            </section>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Órdenes Recientes</CardTitle>
-                    <CardDescription>Listado completo de intervenciones</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>ID</TableHead>
-                                    <TableHead>Vehículo</TableHead>
-                                    <TableHead>Tipo</TableHead>
-                                    <TableHead>Descripción</TableHead>
-                                    <TableHead>Prioridad</TableHead>
-                                    <TableHead>Estado</TableHead>
-                                    <TableHead className="text-right">Acciones</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {loadingOrders ? (
-                                    <TableRow><TableCell colSpan={7} className="text-center py-8">Cargando...</TableCell></TableRow>
-                                ) : orders?.length === 0 ? (
-                                    <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No hay órdenes registradas</TableCell></TableRow>
-                                ) : (
-                                    orders?.map((order: any) => (
-                                        <TableRow key={order.id}>
-                                            <TableCell className="font-mono text-xs text-muted-foreground">#{order.id.slice(0, 8)}</TableCell>
-                                            <TableCell className="font-medium">{order.vehicles?.plate}</TableCell>
-                                            <TableCell className="capitalize text-xs">{order.type}</TableCell>
-                                            <TableCell className="max-w-[200px] truncate">{order.description}</TableCell>
-                                            <TableCell className="capitalize text-xs">{order.priority}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline" className={getStatusColor(order.status)}>
-                                                    {order.status.replace('_', ' ')}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {order.status !== 'completed' && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => updateOrder.mutate({ id: order.id, updates: { status: 'completed', completed_at: new Date().toISOString() } })}
-                                                    >
-                                                        <CheckCircle className="h-4 w-4 text-green-600" />
-                                                    </Button>
-                                                )}
-                                                {/* More actions like Edit/Delete could go here */}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+            <section aria-labelledby="orders-section-title">
+                <Card>
+                    <CardHeader>
+                        <CardTitle id="orders-section-title">Órdenes Recientes</CardTitle>
+                        <CardDescription>Listado completo de intervenciones</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveTable
+                            columns={columns}
+                            data={orders || []}
+                            keyExtractor={(row) => row.id}
+                            isLoading={loadingOrders}
+                            emptyMessage="No hay órdenes registradas"
+                            breakpoint="md"
+                        />
+                    </CardContent>
+                </Card>
+            </section>
+        </main>
     );
-}
+});
+
+MaintenanceListPage.displayName = 'MaintenanceListPage';
+
+export default MaintenanceListPage;

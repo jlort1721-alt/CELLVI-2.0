@@ -1,20 +1,124 @@
-
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useOperationalReport, useSecurityReport } from "../hooks/useReports";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { subDays } from "date-fns";
 import { CalendarIcon, Download, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Line } from "recharts";
+import { useQueryAnnouncer } from "@/components/accessibility/ProgressAnnouncer";
+import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 
-export default function ReportsPage() {
+// Memoized KPI Card to prevent unnecessary re-renders
+const KPICard = memo(({ title, value, delta, icon: Icon, trend }: {
+    title: string;
+    value: string | number;
+    delta: string;
+    icon: any;
+    trend?: 'up' | 'down' | 'neutral';
+}) => (
+    <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            <Icon className={`h-4 w-4 ${
+                trend === 'up' ? 'text-green-500' :
+                trend === 'down' ? 'text-red-500' :
+                'text-muted-foreground'
+            }`} />
+        </CardHeader>
+        <CardContent>
+            <div className={`text-2xl font-bold ${
+                trend === 'down' && title.includes('Incidentes') ? 'text-red-600' : ''
+            }`}>
+                {value}
+            </div>
+            <p className="text-xs text-muted-foreground">{delta}</p>
+        </CardContent>
+    </Card>
+));
+
+KPICard.displayName = 'KPICard';
+
+// Skeleton loader for reports
+const ReportsSkeleton = () => (
+    <div className="space-y-8">
+        <div className="grid md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+                <Card key={i}>
+                    <CardHeader className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-8 w-32 mb-2" />
+                        <Skeleton className="h-3 w-24" />
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-[300px] w-full" />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-[300px] w-full" />
+                </CardContent>
+            </Card>
+        </div>
+    </div>
+);
+
+const ReportsPage = memo(() => {
     const [range, setRange] = useState({
         start: subDays(new Date(), 30).toISOString(),
         end: new Date().toISOString()
     });
 
-    const { data: opsReport } = useOperationalReport(range);
-    const { data: securityReport } = useSecurityReport(range);
+    const { data: opsReport, isLoading: opsLoading } = useOperationalReport(range);
+    const { data: securityReport, isLoading: securityLoading } = useSecurityReport(range);
+
+    // Track performance metrics
+    usePerformanceMonitor({
+        enabled: true,
+        trackWebVitals: true,
+        trackQueryMetrics: true,
+        onReport: (metrics) => {
+            if (metrics.LCP && metrics.LCP > 2500) {
+                console.warn('[ReportsPage] LCP is high:', metrics.LCP);
+            }
+        },
+    });
+
+    // Announce loading state to screen readers
+    useQueryAnnouncer(
+        { isLoading: opsLoading || securityLoading },
+        {
+            loading: 'Cargando reportes gerenciales',
+            success: 'Reportes cargados correctamente'
+        }
+    );
+
+    const isLoading = opsLoading || securityLoading;
+
+    if (isLoading) {
+        return (
+            <div className="p-6 space-y-8">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">Reportes Gerenciales</h1>
+                    <p className="text-slate-500">Cargando análisis estratégico...</p>
+                </div>
+                <ReportsSkeleton />
+            </div>
+        );
+    }
 
     const incidentData = Object.entries(securityReport?.stats || {}).map(([key, value]) => ({ name: key, value }));
 
@@ -25,17 +129,21 @@ export default function ReportsPage() {
     ];
 
     return (
-        <div className="p-6 space-y-8 animate-in fade-in">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <main id="main-content" role="main" tabIndex={-1} className="p-6 space-y-8 animate-in fade-in">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-slate-900">Reportes Gerenciales</h1>
                     <p className="text-slate-500">Análisis estratégico de costos, eficiencia y seguridad.</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline"><CalendarIcon className="mr-2 h-4 w-4" /> Últimos 30 días</Button>
-                    <Button variant="default" className="bg-slate-900 text-white"><Download className="mr-2 h-4 w-4" /> Exportar PDF</Button>
+                <div className="flex gap-2" role="toolbar" aria-label="Acciones de reportes">
+                    <Button variant="outline" aria-label="Filtrar por últimos 30 días">
+                        <CalendarIcon className="mr-2 h-4 w-4" aria-hidden="true" /> Últimos 30 días
+                    </Button>
+                    <Button variant="default" className="bg-slate-900 text-white" aria-label="Exportar reporte como PDF">
+                        <Download className="mr-2 h-4 w-4" aria-hidden="true" /> Exportar PDF
+                    </Button>
                 </div>
-            </div>
+            </header>
 
             {/* HIGH LEVEL KPIS */}
             <div className="grid md:grid-cols-4 gap-4">
@@ -82,7 +190,9 @@ export default function ReportsPage() {
             </div>
 
             {/* CHARTS ROW 1 */}
-            <div className="grid md:grid-cols-2 gap-6">
+            <section aria-labelledby="charts-section-title" className="grid md:grid-cols-2 gap-6">
+                <h2 id="charts-section-title" className="sr-only">Gráficos de análisis</h2>
+
                 <Card>
                     <CardHeader>
                         <CardTitle>Tendencia de Costos Operativos</CardTitle>
@@ -125,7 +235,11 @@ export default function ReportsPage() {
                         )}
                     </CardContent>
                 </Card>
-            </div>
-        </div>
+            </section>
+        </main>
     );
-}
+});
+
+ReportsPage.displayName = 'ReportsPage';
+
+export default ReportsPage;

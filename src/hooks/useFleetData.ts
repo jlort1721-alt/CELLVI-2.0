@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { Json } from "@/integrations/supabase/types";
 import { getPaginationRange, buildPaginationResult, DEFAULT_PAGE_SIZES, type PaginationResult, type PaginatedQueryOptions } from "@/lib/pagination";
+import { toast } from "sonner";
 
 // ==================== VEHICLES ====================
 export const useVehicles = () => {
@@ -29,7 +30,28 @@ export const useCreateVehicle = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["vehicles"] }),
+    onMutate: async (newVehicle) => {
+      await qc.cancelQueries({ queryKey: ["vehicles"] });
+      const previous = qc.getQueryData(["vehicles"]);
+      qc.setQueryData(["vehicles"], (old: any) => {
+        const optimisticVehicle = {
+          id: `temp-${Date.now()}`,
+          ...newVehicle,
+          active: true,
+          created_at: new Date().toISOString(),
+        };
+        return old ? [...old, optimisticVehicle] : [optimisticVehicle];
+      });
+      return { previous };
+    },
+    onError: (err, newVehicle, context: any) => {
+      qc.setQueryData(["vehicles"], context.previous);
+      toast.error("Error al crear vehículo");
+    },
+    onSuccess: () => {
+      toast.success("Vehículo creado exitosamente");
+      qc.invalidateQueries({ queryKey: ["vehicles"] });
+    },
   });
 };
 
@@ -56,7 +78,27 @@ export const useCreateDevice = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["devices"] }),
+    onMutate: async (newDevice) => {
+      await qc.cancelQueries({ queryKey: ["devices"] });
+      const previous = qc.getQueryData(["devices"]);
+      qc.setQueryData(["devices"], (old: any) => {
+        const optimisticDevice = {
+          id: `temp-${Date.now()}`,
+          ...newDevice,
+          created_at: new Date().toISOString(),
+        };
+        return old ? [...old, optimisticDevice] : [optimisticDevice];
+      });
+      return { previous };
+    },
+    onError: (err, newDevice, context: any) => {
+      qc.setQueryData(["devices"], context.previous);
+      toast.error("Error al crear dispositivo");
+    },
+    onSuccess: () => {
+      toast.success("Dispositivo creado exitosamente");
+      qc.invalidateQueries({ queryKey: ["devices"] });
+    },
   });
 };
 
@@ -140,7 +182,30 @@ export const useAcknowledgeAlert = () => {
       }).eq("id", alertId);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["alerts"] }),
+    onMutate: async (alertId) => {
+      await qc.cancelQueries({ queryKey: ["alerts"] });
+      const previous = qc.getQueryData(["alerts"]);
+      qc.setQueryData(["alerts"], (old: any) => {
+        if (!old?.data) return old;
+        return {
+          ...old,
+          data: old.data.map((alert: any) =>
+            alert.id === alertId
+              ? { ...alert, acknowledged: true, acknowledged_by: user?.id, acknowledged_at: new Date().toISOString() }
+              : alert
+          ),
+        };
+      });
+      return { previous };
+    },
+    onError: (err, alertId, context: any) => {
+      qc.setQueryData(["alerts"], context.previous);
+      toast.error("Error al reconocer alerta");
+    },
+    onSuccess: () => {
+      toast.success("Alerta reconocida");
+      qc.invalidateQueries({ queryKey: ["alerts"] });
+    },
   });
 };
 
@@ -233,7 +298,28 @@ export const useCreatePolicy = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["policies"] }),
+    onMutate: async (newPolicy) => {
+      await qc.cancelQueries({ queryKey: ["policies"] });
+      const previous = qc.getQueryData(["policies"]);
+      qc.setQueryData(["policies"], (old: any) => {
+        const optimisticPolicy = {
+          id: `temp-${Date.now()}`,
+          ...newPolicy,
+          status: newPolicy.status || 'draft',
+          created_at: new Date().toISOString(),
+        };
+        return old ? [optimisticPolicy, ...old] : [optimisticPolicy];
+      });
+      return { previous };
+    },
+    onError: (err, newPolicy, context: any) => {
+      qc.setQueryData(["policies"], context.previous);
+      toast.error("Error al crear política");
+    },
+    onSuccess: () => {
+      toast.success("Política creada exitosamente");
+      qc.invalidateQueries({ queryKey: ["policies"] });
+    },
   });
 };
 
@@ -245,7 +331,25 @@ export const useUpdatePolicy = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["policies"] }),
+    onMutate: async ({ id, ...updates }) => {
+      await qc.cancelQueries({ queryKey: ["policies"] });
+      const previous = qc.getQueryData(["policies"]);
+      qc.setQueryData(["policies"], (old: any) => {
+        if (!old) return old;
+        return old.map((policy: any) =>
+          policy.id === id ? { ...policy, ...updates } : policy
+        );
+      });
+      return { previous };
+    },
+    onError: (err, variables, context: any) => {
+      qc.setQueryData(["policies"], context.previous);
+      toast.error("Error al actualizar política");
+    },
+    onSuccess: () => {
+      toast.success("Política actualizada exitosamente");
+      qc.invalidateQueries({ queryKey: ["policies"] });
+    },
   });
 };
 
@@ -256,7 +360,23 @@ export const useDeletePolicy = () => {
       const { error } = await supabase.from("policies").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["policies"] }),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ["policies"] });
+      const previous = qc.getQueryData(["policies"]);
+      qc.setQueryData(["policies"], (old: any) => {
+        if (!old) return old;
+        return old.filter((policy: any) => policy.id !== id);
+      });
+      return { previous };
+    },
+    onError: (err, id, context: any) => {
+      qc.setQueryData(["policies"], context.previous);
+      toast.error("Error al eliminar política");
+    },
+    onSuccess: () => {
+      toast.success("Política eliminada exitosamente");
+      qc.invalidateQueries({ queryKey: ["policies"] });
+    },
   });
 };
 
@@ -283,7 +403,27 @@ export const useCreateGeofence = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["geofences"] }),
+    onMutate: async (newGeofence) => {
+      await qc.cancelQueries({ queryKey: ["geofences"] });
+      const previous = qc.getQueryData(["geofences"]);
+      qc.setQueryData(["geofences"], (old: any) => {
+        const optimisticGeofence = {
+          id: `temp-${Date.now()}`,
+          ...newGeofence,
+          created_at: new Date().toISOString(),
+        };
+        return old ? [optimisticGeofence, ...old] : [optimisticGeofence];
+      });
+      return { previous };
+    },
+    onError: (err, newGeofence, context: any) => {
+      qc.setQueryData(["geofences"], context.previous);
+      toast.error("Error al crear geocerca");
+    },
+    onSuccess: () => {
+      toast.success("Geocerca creada exitosamente");
+      qc.invalidateQueries({ queryKey: ["geofences"] });
+    },
   });
 };
 
@@ -295,7 +435,25 @@ export const useUpdateGeofence = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["geofences"] }),
+    onMutate: async ({ id, ...updates }) => {
+      await qc.cancelQueries({ queryKey: ["geofences"] });
+      const previous = qc.getQueryData(["geofences"]);
+      qc.setQueryData(["geofences"], (old: any) => {
+        if (!old) return old;
+        return old.map((geofence: any) =>
+          geofence.id === id ? { ...geofence, ...updates } : geofence
+        );
+      });
+      return { previous };
+    },
+    onError: (err, variables, context: any) => {
+      qc.setQueryData(["geofences"], context.previous);
+      toast.error("Error al actualizar geocerca");
+    },
+    onSuccess: () => {
+      toast.success("Geocerca actualizada exitosamente");
+      qc.invalidateQueries({ queryKey: ["geofences"] });
+    },
   });
 };
 
@@ -306,7 +464,23 @@ export const useDeleteGeofence = () => {
       const { error } = await supabase.from("geofences").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["geofences"] }),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ["geofences"] });
+      const previous = qc.getQueryData(["geofences"]);
+      qc.setQueryData(["geofences"], (old: any) => {
+        if (!old) return old;
+        return old.filter((geofence: any) => geofence.id !== id);
+      });
+      return { previous };
+    },
+    onError: (err, id, context: any) => {
+      qc.setQueryData(["geofences"], context.previous);
+      toast.error("Error al eliminar geocerca");
+    },
+    onSuccess: () => {
+      toast.success("Geocerca eliminada exitosamente");
+      qc.invalidateQueries({ queryKey: ["geofences"] });
+    },
   });
 };
 
@@ -333,7 +507,28 @@ export const useCreateDriver = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["drivers"] }),
+    onMutate: async (newDriver) => {
+      await qc.cancelQueries({ queryKey: ["drivers"] });
+      const previous = qc.getQueryData(["drivers"]);
+      qc.setQueryData(["drivers"], (old: any) => {
+        const optimisticDriver = {
+          id: `temp-${Date.now()}`,
+          ...newDriver,
+          score: 100,
+          created_at: new Date().toISOString(),
+        };
+        return old ? [optimisticDriver, ...old] : [optimisticDriver];
+      });
+      return { previous };
+    },
+    onError: (err, newDriver, context: any) => {
+      qc.setQueryData(["drivers"], context.previous);
+      toast.error("Error al crear conductor");
+    },
+    onSuccess: () => {
+      toast.success("Conductor creado exitosamente");
+      qc.invalidateQueries({ queryKey: ["drivers"] });
+    },
   });
 };
 
@@ -366,6 +561,7 @@ export const useTenant = () => {
 
 // ==================== VEHICLE POSITIONS (Cache Table) ====================
 // FIX: N+1 Problem - Use vehicle_last_positions instead of querying telemetry N times
+// ✅ NO MORE POLLING - Use useRealtimePositions() hook for live updates
 export const useVehiclePositions = () => {
   return useQuery({
     queryKey: ["vehicle-positions"],
@@ -377,12 +573,12 @@ export const useVehiclePositions = () => {
       return data;
     },
     staleTime: 30000, // 30 seconds - positions update frequently
-    refetchInterval: 30000, // Refetch every 30s (balanced with Realtime updates)
   });
 };
 
 // ==================== DASHBOARD STATS ====================
 // FIX: N+1 Problem - Single query for all dashboard metrics
+// ✅ NO MORE POLLING - Stats are refreshed via Realtime subscriptions on source tables
 export const useDashboardStats = () => {
   return useQuery({
     queryKey: ["dashboard-stats"],
@@ -439,6 +635,5 @@ export const useDashboardStats = () => {
       };
     },
     staleTime: 60000, // 1 minute - dashboard stats don't change frequently
-    refetchInterval: 60000, // Refetch every minute
   });
 };

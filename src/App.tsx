@@ -19,6 +19,9 @@ import InstallPrompt from './components/pwa/InstallPrompt';
 import { CELLVIAssistant } from "@/components/AIChatWidget";
 import PublicLedgerVerifier from './pages/public/VerifyLedger';
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { SkipLinks } from "@/components/accessibility/SkipLinks";
+import { GlobalLiveRegion } from "@/components/accessibility/LiveRegion";
+import { useCommonShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 /* ── Lazy-loaded pages (code splitting) ── */
 const Index = lazy(() => import("./pages/Index"));
@@ -82,21 +85,17 @@ const PageLoader = () => (
   </div>
 );
 
-const App = () => (
-  <ErrorBoundary level="page">
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}
-    >
-      <ThemeProvider>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <InstallPrompt />
-            <BrowserRouter>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
+// Inner component to use hooks that require Router context
+const AppContent = () => {
+  // Enable global keyboard shortcuts
+  useCommonShortcuts();
+
+  return (
+    <>
+      <SkipLinks />
+      <GlobalLiveRegion />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/verify" element={<PublicLedgerVerifier />} />
                   <Route path="/demo" element={<Demo />} />
@@ -123,6 +122,24 @@ const App = () => (
                 <CookieBanner />
                 <CELLVIAssistant />
               </Suspense>
+    </>
+  );
+};
+
+const App = () => (
+  <ErrorBoundary level="page">
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}
+    >
+      <ThemeProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <InstallPrompt />
+            <BrowserRouter>
+              <AppContent />
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>

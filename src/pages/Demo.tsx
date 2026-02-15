@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense, memo } from "react";
 import { Menu, X, Clock, Signal, ChevronLeft, LayoutDashboard, Route, MapPin, Fuel, FileText, Map, Bell, Users, Thermometer, Wifi, Shield, Fingerprint, Satellite, ClipboardList, Scale, Brain, Loader2 } from "lucide-react";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { useTranslation } from "react-i18next";
 import { vehicles as mockVehicles } from "@/lib/demoData";
+import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
+import { announce } from "@/components/accessibility/LiveRegion";
 
 /* ── Lazy-loaded modules (code splitting) ── */
 const DashboardOverview = lazy(() => import("@/features/monitoring/components/DashboardOverview"));
@@ -33,7 +35,7 @@ const ModuleLoader = () => (
 
 const statusColors: Record<string, string> = { activo: "#22c55e", detenido: "#3b82f6", alerta: "#ef4444", apagado: "#6b7280" };
 
-const Demo = () => {
+const Demo = memo(() => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -41,6 +43,18 @@ const Demo = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<ReturnType<NonNullable<typeof window.L>["map"]> | null>(null);
   const markersRef = useRef<{ remove(): void }[]>([]);
+
+  // Track performance metrics
+  usePerformanceMonitor({
+    enabled: true,
+    trackWebVitals: true,
+    trackQueryMetrics: true,
+    onReport: (metrics) => {
+      if (metrics.LCP && metrics.LCP > 2500) {
+        console.warn('[Demo] LCP is high:', metrics.LCP);
+      }
+    },
+  });
 
   const statusLabels = useMemo<Record<string, string>>(() => ({
     activo: t("dashboard.statusMoving", "En Movimiento"),
@@ -178,8 +192,15 @@ const Demo = () => {
       {/* Top Bar */}
       <header className="h-14 flex items-center justify-between px-4 border-b flex-shrink-0 z-20 bg-navy border-gold/20">
         <div className="flex items-center gap-3">
-          <button className="lg:hidden text-primary-foreground" onClick={() => setSidebarOpen(!sidebarOpen)}>
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <button
+            type="button"
+            className="lg:hidden text-primary-foreground"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label={sidebarOpen ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
+            aria-expanded={sidebarOpen ? "true" : "false"}
+            aria-controls="demo-sidebar"
+          >
+            {sidebarOpen ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
           </button>
           <img src="/logo.png" alt="ASEGURAR" className="h-10 w-auto object-contain" />
           <div className="hidden sm:block">
@@ -213,6 +234,7 @@ const Demo = () => {
 
         {/* Sidebar nav — overlay on mobile, static on desktop */}
         <aside
+          id="demo-sidebar"
           className={`
             ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
             fixed lg:static top-14 bottom-0 left-0 w-52 lg:w-52
@@ -220,44 +242,62 @@ const Demo = () => {
             flex flex-col flex-shrink-0 z-30 lg:z-10
             bg-sidebar border-r border-sidebar-border
           `}
+          aria-label="Navegación del demo"
         >
-          <nav className="flex-1 py-2 overflow-y-auto">
+          <nav className="flex-1 py-2 overflow-y-auto" aria-label="Módulos de CELLVI 2.0">
             {Object.entries(groupLabels).map(([groupKey, groupLabel]) => (
               <div key={groupKey}>
                 <div className="px-4 py-1.5 text-[9px] font-bold tracking-[0.2em] text-sidebar-foreground/30 uppercase">
                   {groupLabel}
                 </div>
-                {tabs.filter((tab) => tab.group === groupKey).map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      setActiveTab(tab.id);
-                      if (window.innerWidth < 1024) setSidebarOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-colors border-l-2 ${activeTab === tab.id
-                      ? "bg-sidebar-accent text-sidebar-primary border-sidebar-primary"
-                      : "text-sidebar-foreground/50 border-transparent hover:text-sidebar-foreground/70"
-                      }`}
-                  >
-                    <tab.icon className="w-4 h-4" />
-                    {tab.label}
-                  </button>
-                ))}
+                <div>
+                  {tabs.filter((tab) => tab.group === groupKey).map((tab) => {
+                    const isSelected = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveTab(tab.id);
+                          if (window.innerWidth < 1024) setSidebarOpen(false);
+                          announce(`Navegando a ${tab.label}`, 'polite');
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-colors border-l-2 ${isSelected
+                          ? "bg-sidebar-accent text-sidebar-primary border-sidebar-primary"
+                          : "text-sidebar-foreground/50 border-transparent hover:text-sidebar-foreground/70"
+                          }`}
+                        aria-current={isSelected ? "page" : undefined}
+                        aria-label={`${tab.label} - ${groupLabel}`}
+                      >
+                        <tab.icon className="w-4 h-4" aria-hidden="true" />
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             ))}
           </nav>
         </aside>
 
         {/* Main content */}
-        <div className="flex-1 overflow-auto p-4 lg:p-6">
+        <main
+          id="main-content"
+          role="main"
+          tabIndex={-1}
+          className="flex-1 overflow-auto p-4 lg:p-6"
+          aria-label="Contenido del módulo"
+        >
           <Suspense fallback={<ModuleLoader />}>
             {renderContent()}
           </Suspense>
-        </div>
+        </main>
       </div>
       <WhatsAppButton />
     </div>
   );
-};
+});
+
+Demo.displayName = 'Demo';
 
 export default Demo;
