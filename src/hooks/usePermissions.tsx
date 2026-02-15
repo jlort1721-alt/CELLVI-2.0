@@ -22,6 +22,7 @@ const ROLE_PERMISSIONS: Record<AppRole, string[]> = {
     "compliance.read",
     "admin.billing",
     "admin.users",
+    "asegurar_ia.view",
   ],
 
   manager: [
@@ -32,6 +33,7 @@ const ROLE_PERMISSIONS: Record<AppRole, string[]> = {
     "control.read",
     "reports.read",
     "compliance.read",
+    "asegurar_ia.view",
   ],
 
   operator: [

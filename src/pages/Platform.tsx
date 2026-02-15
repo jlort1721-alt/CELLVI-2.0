@@ -33,6 +33,7 @@ const EvidenceVerifier = lazy(() => import("@/features/monitoring/components/Evi
 const GatewayMonitor = lazy(() => import("@/features/monitoring/components/GatewayMonitor"));
 const DashboardPredictive = lazy(() => import("@/features/fleet/components/DashboardPredictive"));
 const DashboardRNDC = lazy(() => import("@/features/fleet/components/DashboardRNDC"));
+const AsegurarIADashboard = lazy(() => import("@/features/asegurar-ia/pages/AsegurarIADashboard"));
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center h-64" role="status" aria-label="Cargando módulo">
@@ -107,6 +108,7 @@ const Platform = () => {
       case "gateway-monitor": return <GatewayMonitor />;
       case "predictive": return <DashboardPredictive />;
       case "rndc": return <DashboardRNDC />;
+      case "asegurar-ia": return <AsegurarIADashboard />;
       default: return <DashboardOverview />;
     }
   };
@@ -136,6 +138,7 @@ const Platform = () => {
       'gateway-monitor': 'Monitor de Gateway',
       predictive: 'Predictivo',
       rndc: 'RNDC',
+      'asegurar-ia': 'Asegurar IA',
     };
 
     const moduleName = moduleNames[activeModule] || 'Vista General';

@@ -1,6 +1,7 @@
 import {
   ChevronLeft, LayoutDashboard, Route, MapPin, Fuel, FileText, Map,
   Thermometer, Shield, Zap, User, Bell, Radio, Settings, Satellite, Scale, Signal,
+  Sparkles,
 } from "lucide-react";
 import { useUIStore, type ActiveModule } from "@/stores/uiStore";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -71,14 +72,21 @@ const menuSections: MenuSection[] = [
       { id: "admin", label: "Administración", icon: Settings, permission: "admin.users" },
     ],
   },
+  {
+    title: "Organización",
+    items: [
+      { id: "asegurar-ia", label: "Asegurar IA", icon: Sparkles, permission: "asegurar_ia.view" },
+    ],
+  },
 ];
 
-const PlatformSidebar = () => {
+const PlatformSidebar = ({ id }: { id?: string }) => {
   const { sidebarOpen, activeModule, setActiveModule, setSidebarOpen } = useUIStore();
   const { can } = usePermissions();
 
   return (
     <aside
+      id={id}
       className={`${sidebarOpen ? "w-52" : "w-0"} transition-all duration-300 overflow-y-auto overflow-x-hidden flex flex-col flex-shrink-0 z-10 bg-sidebar border-r border-sidebar-border`}
     >
       <nav className="flex-1 py-2">

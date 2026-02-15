@@ -8,7 +8,8 @@ export type ActiveModule =
   | 'asset-detail' | 'predictive'
   | 'policy-engine' | 'gnss-security' | 'evidence' | 'audit-log' | 'reports' | 'compliance' | 'rndc'
   | 'billing' | 'admin'
-  | 'evidence-verifier' | 'gateway-monitor';
+  | 'evidence-verifier' | 'gateway-monitor'
+  | 'asegurar-ia';
 
 interface UIState {
   sidebarOpen: boolean;
