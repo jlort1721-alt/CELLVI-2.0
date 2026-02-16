@@ -42,12 +42,12 @@ const DashboardOverview = () => {
 
   // Use demo data as fallback
   const demoVehicles = vehicles || [];
-  const demoAlerts = alerts.map((alert, i) => ({
+  const demoAlerts = alerts?.map((alert, i) => ({
     id: alert.id,
     msg: alert.message,
     time: new Date(alert.timestamp).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
     severity: alert.severity === 'high' ? 'critical' : alert.severity
-  }));
+  })) || [];
 
   // Realistic telemetry data
   const telemetryData = generateTelemetryData(30);
@@ -57,7 +57,7 @@ const DashboardOverview = () => {
   const vehicleCount = stats?.vehicles || platformStats.totalVehicles;
   const activeVehicles = vehicles?.filter(v => v.status === 'activo') || demoVehicles.filter(v => v.status === 'activo');
   const activeCount = activeVehicles.length || platformStats.activeVehicles;
-  const alertCount = stats?.criticalAlerts || alerts.filter(a => a.severity === 'high').length;
+  const alertCount = stats?.criticalAlerts || alerts?.filter(a => a.severity === 'high').length || 0;
   const efficiency = stats?.efficiency ? (stats.efficiency * 100) : platformStats.fuelSavings;
   const kmToday = telemetryData[telemetryData.length - 1]?.distanceKm || 8247;
 
