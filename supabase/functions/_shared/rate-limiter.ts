@@ -114,3 +114,34 @@ export function getIdentifier(req: Request, preferUserId?: string): string {
   if (realIp) return `ip:${realIp}`;
   return "ip:unknown";
 }
+
+// ============================================================================
+// COMPATIBILITY PRESETS - For payment functions migration
+// ============================================================================
+
+/**
+ * Rate limit preset for checkout creation
+ * 5 requests per minute per IP
+ */
+export const CHECKOUT_RATE_LIMIT = {
+  maxRequests: 5,
+  windowMs: 60_000, // 1 minute
+} as const;
+
+/**
+ * Rate limit preset for checkout verification
+ * 10 requests per minute per IP
+ */
+export const VERIFY_RATE_LIMIT = {
+  maxRequests: 10,
+  windowMs: 60_000,
+} as const;
+
+/**
+ * Rate limit preset for customer portal
+ * 3 requests per minute per IP
+ */
+export const PORTAL_RATE_LIMIT = {
+  maxRequests: 3,
+  windowMs: 60_000,
+} as const;
