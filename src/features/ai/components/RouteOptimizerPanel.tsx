@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/hooks/use-toast';
 import {
   MapPin,
   Truck,
@@ -17,6 +18,9 @@ import {
   AlertCircle,
   CheckCircle2,
   Zap,
+  History,
+  Database,
+  HardDrive,
 } from 'lucide-react';
 import {
   optimizeRoutes,
@@ -26,26 +30,71 @@ import {
   type Delivery,
   type Vehicle,
 } from '../lib/routeOptimizer';
+import {
+  useCreateOptimizedRoute,
+  useOptimizedRoutes,
+  useOptimizationStats,
+} from '../hooks/useRouteOptimization';
+import { env } from '@/config/env';
 
 export default function RouteOptimizerPanel() {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<number>(0);
+  const [showHistory, setShowHistory] = useState(false);
+  const { toast } = useToast();
 
   // Demo data
   const demoData = generateDemoData();
   const [vehicles] = useState<Vehicle[]>(demoData.vehicles);
   const [deliveries] = useState<Delivery[]>(demoData.deliveries);
 
-  const handleOptimize = () => {
+  // Supabase hooks (only used when not in demo mode)
+  const useMockData = env.features.useMockData;
+  const createOptimizedRoute = useCreateOptimizedRoute();
+  const { data: savedRoutes, isLoading: loadingHistory } = useOptimizedRoutes();
+  const { data: stats } = useOptimizationStats();
+
+  const handleOptimize = async () => {
     setIsOptimizing(true);
 
-    // Simulate optimization delay
-    setTimeout(() => {
+    try {
+      // Simulate optimization delay
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       const optimizationResult = optimizeRoutes(vehicles, deliveries);
       setResult(optimizationResult);
+
+      // Save to Supabase if not in demo mode
+      if (!useMockData) {
+        await createOptimizedRoute.mutateAsync({
+          route_name: `Optimización ${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`,
+          optimization_result: optimizationResult,
+          vehicles,
+          deliveries,
+        });
+
+        toast({
+          title: '✅ Optimización guardada',
+          description: 'La ruta optimizada se guardó exitosamente en Supabase',
+        });
+      } else {
+        toast({
+          title: '🔧 Modo Demo',
+          description: 'Optimización completada (no persistida - modo demo)',
+          variant: 'default',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: '❌ Error',
+        description: 'Error al optimizar o guardar la ruta',
+        variant: 'destructive',
+      });
+      console.error('Optimization error:', error);
+    } finally {
       setIsOptimizing(false);
-    }, 1500);
+    }
   };
 
   const formatCurrency = (value: number) => {
@@ -82,29 +131,138 @@ export default function RouteOptimizerPanel() {
             <Navigation className="h-8 w-8 text-primary" />
             Route Genius
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 flex items-center gap-2">
             Optimización inteligente de rutas con algoritmo VRP
+            {useMockData ? (
+              <Badge variant="outline" className="gap-1">
+                <HardDrive className="h-3 w-3" />
+                Modo Demo
+              </Badge>
+            ) : (
+              <Badge variant="default" className="gap-1">
+                <Database className="h-3 w-3" />
+                Conectado a Supabase
+              </Badge>
+            )}
           </p>
         </div>
-        <Button
-          onClick={handleOptimize}
-          disabled={isOptimizing}
-          size="lg"
-          className="gap-2"
-        >
-          {isOptimizing ? (
-            <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Optimizando...
-            </>
-          ) : (
-            <>
-              <Zap className="h-4 w-4" />
-              Optimizar Rutas
-            </>
+        <div className="flex items-center gap-2">
+          {!useMockData && (
+            <Button
+              onClick={() => setShowHistory(!showHistory)}
+              variant="outline"
+              size="lg"
+              className="gap-2"
+            >
+              <History className="h-4 w-4" />
+              {showHistory ? 'Ocultar' : 'Ver'} Historial
+            </Button>
           )}
-        </Button>
+          <Button
+            onClick={handleOptimize}
+            disabled={isOptimizing}
+            size="lg"
+            className="gap-2"
+          >
+            {isOptimizing ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Optimizando...
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4" />
+                Optimizar Rutas
+              </>
+            )}
+          </Button>
+        </div>
       </div>
+
+      {/* History and Stats Section */}
+      {!useMockData && showHistory && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Historial de Optimizaciones
+            </CardTitle>
+            <CardDescription>
+              Rutas guardadas y estadísticas acumuladas
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Aggregate Stats */}
+            {stats && (
+              <div className="grid gap-4 md:grid-cols-4 p-4 bg-secondary/50 rounded-lg">
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Rutas</p>
+                  <p className="text-2xl font-bold">{stats.totalRoutes}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Distancia Total</p>
+                  <p className="text-2xl font-bold">{formatDistance(stats.totalDistance)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Ahorro Promedio</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.avgEfficiencyGain.toFixed(1)}%</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">CO₂ Reducido</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.totalCO2Reduced.toFixed(1)} kg</p>
+                </div>
+              </div>
+            )}
+
+            {/* Saved Routes List */}
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm">Últimas Optimizaciones</h4>
+              {loadingHistory ? (
+                <p className="text-sm text-muted-foreground">Cargando...</p>
+              ) : savedRoutes && savedRoutes.length > 0 ? (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {savedRoutes.slice(0, 10).map((route) => (
+                    <div
+                      key={route.id}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/50 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{route.route_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(route.created_at).toLocaleDateString('es-CO', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground">Eficiencia</p>
+                          <p className="text-sm font-semibold text-green-600">
+                            +{route.efficiency_gain.toFixed(1)}%
+                          </p>
+                        </div>
+                        <Badge variant={
+                          route.status === 'completed' ? 'default' :
+                          route.status === 'in_progress' ? 'secondary' :
+                          route.status === 'cancelled' ? 'destructive' : 'outline'
+                        }>
+                          {route.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No hay rutas guardadas aún</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Input Summary */}
       <div className="grid gap-4 md:grid-cols-3">

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 import {
   Eye,
   AlertTriangle,
@@ -18,26 +19,75 @@ import {
   XCircle,
   TrendingUp,
   Video,
+  Database,
+  HardDrive,
+  History,
 } from 'lucide-react';
 import { VisionGuard, type FatigueState, type FatigueMetrics } from '../lib/visionGuard';
+import {
+  useCreateSession,
+  useEndSession,
+  useRecordBreak,
+  useCreateAlert,
+  useActiveSession,
+  useDriverFatigueStats,
+} from '../hooks/useFatigueMonitoring';
+import { env } from '@/config/env';
 
 export default function FatigueMonitor() {
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [fatigueState, setFatigueState] = useState<FatigueState | null>(null);
   const [metrics, setMetrics] = useState<FatigueMetrics | null>(null);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [showStats, setShowStats] = useState(false);
   const visionGuard = useRef(new VisionGuard());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { toast } = useToast();
 
-  // Simulate video analysis
+  // Mock driver ID (in production, this would come from auth)
+  const driverId = 'demo-driver-id';
+
+  // Supabase hooks (only used when not in demo mode)
+  const useMockData = env.features.useMockData;
+  const createSession = useCreateSession();
+  const endSession = useEndSession();
+  const recordBreak = useRecordBreak();
+  const createAlert = useCreateAlert();
+  const { data: activeSession } = useActiveSession(driverId);
+  const { data: stats } = useDriverFatigueStats(driverId, 30);
+
+  // Simulate video analysis and save alerts to Supabase
   useEffect(() => {
     if (isMonitoring) {
-      intervalRef.current = setInterval(() => {
+      let previousAlertCount = 0;
+
+      intervalRef.current = setInterval(async () => {
         // Analyze frame (in production, this would use actual video)
         const currentMetrics = visionGuard.current.analyzeFrame();
         setMetrics(currentMetrics);
 
         const currentState = visionGuard.current.evaluateFatigue(currentMetrics);
         setFatigueState(currentState);
+
+        // Save new alerts to Supabase when not in demo mode
+        if (!useMockData && currentSessionId && currentState.alerts.length > previousAlertCount) {
+          const newAlerts = currentState.alerts.slice(previousAlertCount);
+
+          for (const alert of newAlerts) {
+            try {
+              await createAlert.mutateAsync({
+                session_id: currentSessionId,
+                alert,
+                fatigue_state: currentState,
+                metrics: currentMetrics,
+              });
+            } catch (error) {
+              console.error('Error saving alert:', error);
+            }
+          }
+
+          previousAlertCount = currentState.alerts.length;
+        }
       }, 1000); // Update every second
     } else {
       if (intervalRef.current) {
@@ -50,21 +100,91 @@ export default function FatigueMonitor() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isMonitoring]);
+  }, [isMonitoring, currentSessionId, useMockData, driverId, createAlert]);
 
-  const handleStartMonitoring = () => {
-    visionGuard.current.startDriving();
-    setIsMonitoring(true);
+  const handleStartMonitoring = async () => {
+    try {
+      visionGuard.current.startDriving();
+      setIsMonitoring(true);
+
+      // Create session in Supabase when not in demo mode
+      if (!useMockData) {
+        const session = await createSession.mutateAsync({});
+        setCurrentSessionId(session.id);
+
+        toast({
+          title: '✅ Sesión iniciada',
+          description: 'Monitoreo de fatiga guardándose en Supabase',
+        });
+      } else {
+        toast({
+          title: '🔧 Modo Demo',
+          description: 'Monitoreo iniciado (no persistido - modo demo)',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: '❌ Error',
+        description: 'Error al iniciar sesión de monitoreo',
+        variant: 'destructive',
+      });
+      console.error('Error starting monitoring:', error);
+    }
   };
 
-  const handleStopMonitoring = () => {
-    setIsMonitoring(false);
-    setFatigueState(null);
-    setMetrics(null);
+  const handleStopMonitoring = async () => {
+    try {
+      setIsMonitoring(false);
+
+      // End session in Supabase when not in demo mode
+      if (!useMockData && currentSessionId) {
+        const drivingDuration = fatigueState?.drivingDuration || 0;
+        const durationMinutes = Math.floor(drivingDuration / 60000);
+
+        await endSession.mutateAsync({
+          session_id: currentSessionId,
+          duration_minutes: durationMinutes,
+          status: 'completed',
+        });
+
+        toast({
+          title: '✅ Sesión finalizada',
+          description: `Duración: ${durationMinutes} minutos`,
+        });
+      }
+
+      setFatigueState(null);
+      setMetrics(null);
+      setCurrentSessionId(null);
+    } catch (error) {
+      toast({
+        title: '❌ Error',
+        description: 'Error al finalizar sesión',
+        variant: 'destructive',
+      });
+      console.error('Error ending session:', error);
+    }
   };
 
-  const handleTakeBreak = () => {
-    visionGuard.current.takeBreak();
+  const handleTakeBreak = async () => {
+    try {
+      visionGuard.current.takeBreak();
+
+      // Record break in Supabase when not in demo mode
+      if (!useMockData && currentSessionId) {
+        await recordBreak.mutateAsync({
+          sessionId: currentSessionId,
+          breakDuration: 15, // Default 15 min break
+        });
+
+        toast({
+          title: '☕ Descanso registrado',
+          description: 'Tiempo de descanso guardado',
+        });
+      }
+    } catch (error) {
+      console.error('Error recording break:', error);
+    }
   };
 
   const getLevelColor = (level: 'green' | 'yellow' | 'red') => {
@@ -118,11 +238,33 @@ export default function FatigueMonitor() {
             <Eye className="h-8 w-8 text-primary" />
             Vision Guard
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 flex items-center gap-2">
             Detección de fatiga en tiempo real con IA
+            {useMockData ? (
+              <Badge variant="outline" className="gap-1">
+                <HardDrive className="h-3 w-3" />
+                Modo Demo
+              </Badge>
+            ) : (
+              <Badge variant="default" className="gap-1">
+                <Database className="h-3 w-3" />
+                Conectado a Supabase
+              </Badge>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {!useMockData && !isMonitoring && (
+            <Button
+              onClick={() => setShowStats(!showStats)}
+              variant="outline"
+              size="lg"
+              className="gap-2"
+            >
+              <History className="h-4 w-4" />
+              {showStats ? 'Ocultar' : 'Ver'} Estadísticas
+            </Button>
+          )}
           {!isMonitoring ? (
             <Button onClick={handleStartMonitoring} size="lg" className="gap-2">
               <Play className="h-4 w-4" />
@@ -147,6 +289,45 @@ export default function FatigueMonitor() {
           )}
         </div>
       </div>
+
+      {/* Historical Stats */}
+      {!useMockData && showStats && !isMonitoring && stats && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Estadísticas de Fatiga (Últimos 30 días)
+            </CardTitle>
+            <CardDescription>
+              Resumen del rendimiento del conductor
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-5">
+              <div className="p-4 bg-secondary/50 rounded-lg">
+                <p className="text-xs text-muted-foreground">Total Sesiones</p>
+                <p className="text-2xl font-bold">{stats.total_sessions}</p>
+              </div>
+              <div className="p-4 bg-secondary/50 rounded-lg">
+                <p className="text-xs text-muted-foreground">Total Alertas</p>
+                <p className="text-2xl font-bold">{stats.total_alerts}</p>
+              </div>
+              <div className="p-4 bg-red-50 dark:bg-red-950 rounded-lg">
+                <p className="text-xs text-muted-foreground">Alertas Críticas</p>
+                <p className="text-2xl font-bold text-red-600">{stats.critical_alerts}</p>
+              </div>
+              <div className="p-4 bg-secondary/50 rounded-lg">
+                <p className="text-xs text-muted-foreground">Score Promedio</p>
+                <p className="text-2xl font-bold">{stats.avg_fatigue_score.toFixed(1)}</p>
+              </div>
+              <div className="p-4 bg-secondary/50 rounded-lg">
+                <p className="text-xs text-muted-foreground">Horas Conducción</p>
+                <p className="text-2xl font-bold">{stats.total_driving_hours.toFixed(1)}h</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Monitoring Active */}
       {isMonitoring && fatigueState && metrics && (

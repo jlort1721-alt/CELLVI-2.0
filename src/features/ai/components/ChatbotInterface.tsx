@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 import {
   Bot,
   Send,
@@ -17,15 +18,59 @@ import {
   Bell,
   Settings,
   Trash2,
+  Database,
+  HardDrive,
+  History,
+  Plus,
 } from 'lucide-react';
 import { NeuroCore, type ChatMessage } from '../lib/neuroCore';
+import {
+  useConversations,
+  useConversation,
+  useCreateConversation,
+  useAddMessage,
+  useArchiveConversation,
+  useKnowledgeBaseStats,
+} from '../hooks/useChatbot';
+import { env } from '@/config/env';
 
 export default function ChatbotInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [showConversations, setShowConversations] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const neuroCore = useRef(new NeuroCore());
+  const { toast } = useToast();
+
+  // Supabase hooks (only used when not in demo mode)
+  const useMockData = env.features.useMockData;
+  const { data: conversations } = useConversations('active');
+  const { data: currentConversation } = useConversation(currentConversationId);
+  const createConversation = useCreateConversation();
+  const addMessage = useAddMessage();
+  const archiveConversation = useArchiveConversation();
+  const { data: kbStats } = useKnowledgeBaseStats();
+
+  // Load conversation messages when current conversation changes
+  useEffect(() => {
+    if (currentConversation && !useMockData) {
+      // Convert Supabase messages to ChatMessage format
+      const chatMessages: ChatMessage[] = currentConversation.messages.map((msg: any) => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date(msg.timestamp),
+        metadata: msg.confidence ? {
+          confidence: msg.confidence,
+          sources: msg.sources_referenced || [],
+          suggestedActions: msg.suggested_actions || [],
+        } : undefined,
+      }));
+      setMessages(chatMessages);
+    }
+  }, [currentConversation, useMockData]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -38,32 +83,105 @@ export default function ChatbotInterface() {
   const handleSendMessage = async () => {
     if (!input.trim()) return;
 
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: input,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const userInput = input.trim();
     setInput('');
     setIsTyping(true);
 
-    // Simulate AI response delay
-    setTimeout(async () => {
-      const response = await neuroCore.current.chat(input);
-      setMessages((prev) => [...prev, response]);
+    try {
+      let conversationId = currentConversationId;
+
+      // Create new conversation if needed (when not in demo mode)
+      if (!useMockData && !conversationId) {
+        const newConversation = await createConversation.mutateAsync({
+          title: `${userInput.substring(0, 50)}...`,
+          initial_message: userInput,
+        });
+        conversationId = newConversation.id;
+        setCurrentConversationId(conversationId);
+      }
+
+      // Create user message
+      const userMessage: ChatMessage = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: userInput,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, userMessage]);
+
+      // Save user message to Supabase when not in demo mode
+      if (!useMockData && conversationId) {
+        await addMessage.mutateAsync({
+          conversation_id: conversationId,
+          message: userMessage,
+        });
+      }
+
+      // Simulate AI response delay
+      setTimeout(async () => {
+        const response = await neuroCore.current.chat(userInput);
+        setMessages((prev) => [...prev, response]);
+
+        // Save AI response to Supabase when not in demo mode
+        if (!useMockData && conversationId) {
+          await addMessage.mutateAsync({
+            conversation_id: conversationId,
+            message: response,
+          });
+
+          toast({
+            title: '✅ Mensaje guardado',
+            description: 'Conversación guardada en Supabase',
+          });
+        }
+
+        setIsTyping(false);
+      }, 1000);
+    } catch (error) {
+      toast({
+        title: '❌ Error',
+        description: 'Error al guardar mensaje',
+        variant: 'destructive',
+      });
+      console.error('Error sending message:', error);
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   const handleExampleQuestion = (question: string) => {
     setInput(question);
   };
 
-  const handleClearHistory = () => {
-    neuroCore.current.clearHistory();
+  const handleClearHistory = async () => {
+    try {
+      // Archive current conversation in Supabase when not in demo mode
+      if (!useMockData && currentConversationId) {
+        await archiveConversation.mutateAsync(currentConversationId);
+        setCurrentConversationId(null);
+
+        toast({
+          title: '✅ Conversación archivada',
+          description: 'La conversación se archivó exitosamente',
+        });
+      }
+
+      neuroCore.current.clearHistory();
+      setMessages([]);
+    } catch (error) {
+      toast({
+        title: '❌ Error',
+        description: 'Error al archivar conversación',
+        variant: 'destructive',
+      });
+      console.error('Error archiving conversation:', error);
+    }
+  };
+
+  const handleNewConversation = () => {
+    setCurrentConversationId(null);
     setMessages([]);
+    neuroCore.current.clearHistory();
   };
 
   const handleActionClick = (action: any) => {
@@ -97,16 +215,45 @@ export default function ChatbotInterface() {
             <Bot className="h-8 w-8 text-primary" />
             Neuro-Core
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 flex items-center gap-2">
             Asistente inteligente con RAG para consultas operativas
+            {useMockData ? (
+              <Badge variant="outline" className="gap-1">
+                <HardDrive className="h-3 w-3" />
+                Modo Demo
+              </Badge>
+            ) : (
+              <Badge variant="default" className="gap-1">
+                <Database className="h-3 w-3" />
+                Conectado a Supabase
+              </Badge>
+            )}
           </p>
         </div>
-        {messages.length > 0 && (
-          <Button onClick={handleClearHistory} variant="outline" className="gap-2">
-            <Trash2 className="h-4 w-4" />
-            Limpiar Historial
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {!useMockData && conversations && conversations.length > 0 && (
+            <Button
+              onClick={() => setShowConversations(!showConversations)}
+              variant="outline"
+              className="gap-2"
+            >
+              <History className="h-4 w-4" />
+              Conversaciones
+            </Button>
+          )}
+          {messages.length > 0 && (
+            <>
+              <Button onClick={handleNewConversation} variant="outline" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Nueva
+              </Button>
+              <Button onClick={handleClearHistory} variant="outline" className="gap-2">
+                <Trash2 className="h-4 w-4" />
+                Archivar
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Chat Container */}
@@ -339,22 +486,49 @@ export default function ChatbotInterface() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center justify-between p-2 bg-secondary rounded">
-                <span className="text-xs font-medium">Manuales de Vehículos</span>
-                <Badge variant="secondary">2</Badge>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-secondary rounded">
-                <span className="text-xs font-medium">Regulaciones RNDC</span>
-                <Badge variant="secondary">2</Badge>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-secondary rounded">
-                <span className="text-xs font-medium">Políticas Empresa</span>
-                <Badge variant="secondary">2</Badge>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-secondary rounded">
-                <span className="text-xs font-medium">Historial Incidentes</span>
-                <Badge variant="secondary">1</Badge>
-              </div>
+              {kbStats ? (
+                <>
+                  <div className="flex items-center justify-between p-2 bg-secondary rounded">
+                    <span className="text-xs font-medium">Total Documentos</span>
+                    <Badge variant="default">{kbStats.totalDocuments}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-secondary rounded">
+                    <span className="text-xs font-medium">Manuales de Vehículos</span>
+                    <Badge variant="secondary">{kbStats.byCategory.vehicle_manual || 0}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-secondary rounded">
+                    <span className="text-xs font-medium">Regulaciones RNDC</span>
+                    <Badge variant="secondary">{kbStats.byCategory.rndc_regulation || 0}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-secondary rounded">
+                    <span className="text-xs font-medium">Políticas Empresa</span>
+                    <Badge variant="secondary">{kbStats.byCategory.company_policy || 0}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-secondary rounded">
+                    <span className="text-xs font-medium">Historial Incidentes</span>
+                    <Badge variant="secondary">{kbStats.byCategory.incident_history || 0}</Badge>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between p-2 bg-secondary rounded">
+                    <span className="text-xs font-medium">Manuales de Vehículos</span>
+                    <Badge variant="secondary">2</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-secondary rounded">
+                    <span className="text-xs font-medium">Regulaciones RNDC</span>
+                    <Badge variant="secondary">2</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-secondary rounded">
+                    <span className="text-xs font-medium">Políticas Empresa</span>
+                    <Badge variant="secondary">2</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-secondary rounded">
+                    <span className="text-xs font-medium">Historial Incidentes</span>
+                    <Badge variant="secondary">1</Badge>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
