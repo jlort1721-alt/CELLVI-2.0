@@ -15,6 +15,13 @@ import { motion } from 'framer-motion';
 const PresidenciaView = lazy(() => import('../components/areas/PresidenciaView'));
 const GerenciaGeneralView = lazy(() => import('../components/areas/GerenciaGeneralView'));
 const JefeRedView = lazy(() => import('../components/areas/JefeRedView'));
+const CCORackView = lazy(() => import('../components/areas/CCORackView'));
+const AsistenteGerenciaView = lazy(() => import('../components/areas/AsistenteGerenciaView'));
+const OperadorCELLVIView = lazy(() => import('../components/areas/OperadorCELLVIView'));
+const ContabilidadView = lazy(() => import('../components/areas/ContabilidadView'));
+const CRMView = lazy(() => import('../components/areas/CRMView'));
+const ComercialMarketingView = lazy(() => import('../components/areas/ComercialMarketingView'));
+const DesarrolloView = lazy(() => import('../components/areas/DesarrolloView'));
 
 const iconMap = {
   Crown, Briefcase, Network, Shield, ClipboardList,
@@ -196,6 +203,20 @@ export default function AsegurarIADashboard() {
           return <GerenciaGeneralView />;
         case 'jefe-red':
           return <JefeRedView />;
+        case 'cco-rack':
+          return <CCORackView />;
+        case 'asistente-gerencia':
+          return <AsistenteGerenciaView />;
+        case 'operador-cellvi':
+          return <OperadorCELLVIView />;
+        case 'contabilidad':
+          return <ContabilidadView />;
+        case 'crm':
+          return <CRMView />;
+        case 'comercial-marketing':
+          return <ComercialMarketingView />;
+        case 'desarrollo':
+          return <DesarrolloView />;
         default:
           return (
             <Card>
