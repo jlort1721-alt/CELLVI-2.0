@@ -1,4 +1,4 @@
-import { memo, useState, useMemo, useCallback } from "react";
+import { memo, useState, useMemo, useCallback, useEffect } from "react";
 import {
   Bell, AlertTriangle, Info, CheckCircle, X, Filter,
   Trash2, CheckCheck, Clock,
@@ -194,6 +194,16 @@ export const NotificationCenter = memo(({ open, onClose }: { open: boolean; onCl
     setNotifications((prev) => prev.filter((n) => !n.read));
   }, []);
 
+  // Escape key to close (keyboard accessibility)
+  useEffect(() => {
+    if (!open) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
@@ -300,3 +310,6 @@ export const NotificationCenter = memo(({ open, onClose }: { open: boolean; onCl
   );
 });
 NotificationCenter.displayName = "NotificationCenter";
+
+/** Returns the initial unread count from demo notifications */
+export const getInitialUnreadCount = () => DEMO_NOTIFICATIONS.filter((n) => !n.read).length;

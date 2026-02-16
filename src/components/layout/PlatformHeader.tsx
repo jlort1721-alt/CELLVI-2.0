@@ -1,4 +1,4 @@
-import { memo, useState, useEffect, useRef } from "react";
+import { memo, useState, useEffect, useRef, useCallback } from "react";
 import {
   Menu, X, Clock, Signal, SignalZero, LogOut, Bell, Search,
   ChevronRight, RefreshCw, User, Settings, Building2,
@@ -7,7 +7,7 @@ import { useUIStore, type ActiveModule } from "@/stores/uiStore";
 import { useSyncStatusStore } from "@/stores/syncStatusStore";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { NotificationCenter } from "@/features/notifications/NotificationCenter";
+import { NotificationCenter, getInitialUnreadCount } from "@/features/notifications/NotificationCenter";
 
 /* ── Module label map for breadcrumbs ─────────────────── */
 const MODULE_LABELS: Record<string, { section: string; label: string }> = {
@@ -91,6 +91,17 @@ const SyncIndicator = memo(() => {
 });
 SyncIndicator.displayName = "SyncIndicator";
 
+/* ── Role labels (static, outside component to avoid re-creation) ── */
+const ROLE_LABELS: Record<string, string> = {
+  super_admin: "Super Admin",
+  admin: "Administrador",
+  manager: "Gerente",
+  operator: "Operador",
+  driver: "Conductor",
+  client: "Cliente",
+  auditor: "Auditor",
+};
+
 /* ── User Menu Dropdown ───────────────────────────────── */
 const UserMenu = memo(({ onSignOut }: { onSignOut: () => void }) => {
   const { profile, role, isAdmin } = useAuth();
@@ -104,16 +115,6 @@ const UserMenu = memo(({ onSignOut }: { onSignOut: () => void }) => {
     if (open) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
-
-  const roleLabel: Record<string, string> = {
-    super_admin: "Super Admin",
-    admin: "Administrador",
-    manager: "Gerente",
-    operator: "Operador",
-    driver: "Conductor",
-    client: "Cliente",
-    auditor: "Auditor",
-  };
 
   return (
     <div className="relative" ref={menuRef}>
@@ -130,7 +131,7 @@ const UserMenu = memo(({ onSignOut }: { onSignOut: () => void }) => {
             {profile?.display_name || "Usuario"}
           </div>
           <div className="text-gold text-[9px] leading-tight">
-            {roleLabel[role || "operator"] || role}
+            {ROLE_LABELS[role || "operator"] || role}
           </div>
         </div>
       </button>
@@ -193,17 +194,17 @@ const PlatformHeader = memo(() => {
   const navigate = useNavigate();
   const [now, setNow] = useState(new Date());
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const notificationCount = 3; // Unread demo count - will be replaced by real data
+  const notificationCount = getInitialUnreadCount();
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     await signOut();
     navigate("/");
-  };
+  }, [signOut, navigate]);
 
   return (
     <header className="h-14 flex items-center justify-between px-4 border-b flex-shrink-0 z-20 bg-navy border-gold/20">
