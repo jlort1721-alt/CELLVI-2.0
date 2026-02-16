@@ -24,8 +24,8 @@ const DashboardOverview = () => {
 
   // Realtime Data Hooks
   const { data: stats, isLoading: loadingStats } = useDashboardStats();
-  const { data: vehicles, isLoading: loadingVehicles } = useFleetStatus();
-  const { data: alerts, isLoading: loadingAlerts } = useRecentAlerts();
+  const { data: dbVehicles, isLoading: loadingVehicles } = useFleetStatus();
+  const { data: dbAlerts, isLoading: loadingAlerts } = useRecentAlerts();
 
   const [showShortcuts, setShowShortcuts] = useState(false);
   const { query: searchQuery, deferredQuery, isPending: searchPending, setQuery: setSearchQuery } = useDeferredSearch({ debounceMs: 300 });
@@ -40,14 +40,16 @@ const DashboardOverview = () => {
     return () => document.removeEventListener("keydown", handleKeyboard);
   }, [handleKeyboard]);
 
-  // Use demo data as fallback
-  const demoVehicles = vehicles || [];
-  const demoAlerts = alerts?.map((alert, i) => ({
-    id: alert.id,
-    msg: alert.message,
-    time: new Date(alert.timestamp).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
-    severity: alert.severity === 'high' ? 'critical' : alert.severity
-  })) || [];
+  // Use imported demo data as fallback when Supabase returns no data
+  const displayVehicles = dbVehicles?.length > 0 ? dbVehicles : vehicles;
+  const displayAlerts = dbAlerts?.length > 0
+    ? dbAlerts
+    : alerts.map((alert) => ({
+        id: alert.id,
+        msg: alert.message,
+        time: new Date(alert.timestamp).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+        severity: alert.severity === 'high' ? 'critical' : alert.severity
+      }));
 
   // Realistic telemetry data
   const telemetryData = generateTelemetryData(30);
@@ -55,20 +57,19 @@ const DashboardOverview = () => {
 
   // Safe defaults with demo data fallback
   const vehicleCount = stats?.vehicles || platformStats.totalVehicles;
-  const activeVehicles = vehicles?.filter(v => v.status === 'activo') || demoVehicles.filter(v => v.status === 'activo');
+  const activeVehicles = displayVehicles.filter((v: any) => v.status === 'activo');
   const activeCount = activeVehicles.length || platformStats.activeVehicles;
-  const alertCount = stats?.criticalAlerts || alerts?.filter(a => a.severity === 'high').length || 0;
+  const alertCount = stats?.criticalAlerts || displayAlerts.filter((a: any) => a.severity === 'high' || a.severity === 'critical').length;
   const efficiency = stats?.efficiency ? (stats.efficiency * 100) : platformStats.fuelSavings;
   const kmToday = telemetryData[telemetryData.length - 1]?.distanceKm || 8247;
 
-  // Filter logic - use demo vehicles as fallback, use deferredQuery for non-blocking filtering
-  const allVehicles = vehicles?.length > 0 ? vehicles : demoVehicles;
+  // Filter logic - use deferredQuery for non-blocking filtering
   const filteredVehicles = deferredQuery
-    ? allVehicles?.filter((v: any) =>
+    ? displayVehicles.filter((v: any) =>
       v.plate.toLowerCase().includes(deferredQuery.toLowerCase()) ||
       (v.driver && v.driver.toLowerCase().includes(deferredQuery.toLowerCase()))
     )
-    : allVehicles;
+    : displayVehicles;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -141,7 +142,7 @@ const DashboardOverview = () => {
       <div className="grid lg:grid-cols-3 gap-4">
         {/* Realtime Alerts Timeline */}
         <AlertsTimeline 
-          alerts={alerts?.length > 0 ? alerts : demoAlerts}
+          alerts={displayAlerts}
           loadingAlerts={loadingAlerts}
         />
 
