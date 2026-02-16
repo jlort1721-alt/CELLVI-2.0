@@ -376,9 +376,9 @@ const FleetMap = () => {
                 <Truck className="text-blue-500" />
                 {selectedVehicle.plate}
               </h2>
-              <p className="text-xs text-slate-400 mt-1">{selectedVehicle.id.slice(0, 8)}...</p>
+              <p className="text-xs text-sidebar-foreground/40 mt-1">{selectedVehicle.id.slice(0, 8)}...</p>
             </div>
-            <button type="button" onClick={() => setSelectedVehicleId(null)} className="text-slate-400 hover:text-white" title="Cerrar panel">
+            <button type="button" onClick={() => setSelectedVehicleId(null)} className="text-sidebar-foreground/40 hover:text-sidebar-foreground" title="Cerrar panel">
               <X size={20} />
             </button>
           </div>
@@ -386,32 +386,32 @@ const FleetMap = () => {
           <div className="p-4 space-y-6 overflow-y-auto flex-1">
             <div className={`p-4 rounded-lg border ${selectedVehicle.status === 'moving' ? 'bg-green-500/10 border-green-500/20' :
               selectedVehicle.status === 'alert' ? 'bg-red-500/10 border-red-500/20' :
-                'bg-slate-800 border-slate-700'
+                'bg-sidebar-accent border-sidebar-border'
               }`}>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Estado</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-sidebar-foreground/40">Estado</span>
                 {selectedVehicle.status === 'alert' && <AlertTriangle size={16} className="text-red-500" />}
               </div>
-              <div className="text-2xl font-bold text-white capitalize flex items-center gap-2">
+              <div className="text-2xl font-bold text-sidebar-foreground capitalize flex items-center gap-2">
                 {selectedVehicle.status}
                 {selectedVehicle.status === 'moving' && <Zap size={16} className="text-yellow-400 animate-pulse" />}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-800/50 p-3 rounded border border-slate-700">
-                <span className="text-[10px] text-slate-500 block mb-1">VELOCIDAD</span>
-                <span className="text-lg font-mono text-white">{Math.round(selectedVehicle.speed)} <span className="text-xs text-slate-500">km/h</span></span>
+              <div className="bg-sidebar-accent/50 p-3 rounded border border-sidebar-border">
+                <span className="text-[10px] text-sidebar-foreground/50 block mb-1">VELOCIDAD</span>
+                <span className="text-lg font-mono text-sidebar-foreground">{Math.round(selectedVehicle.speed)} <span className="text-xs text-sidebar-foreground/50">km/h</span></span>
               </div>
-              <div className="bg-slate-800/50 p-3 rounded border border-slate-700">
-                <span className="text-[10px] text-slate-500 block mb-1">RUMBO</span>
-                <span className="text-lg font-mono text-white">{Math.round(selectedVehicle.heading)}°</span>
+              <div className="bg-sidebar-accent/50 p-3 rounded border border-sidebar-border">
+                <span className="text-[10px] text-sidebar-foreground/50 block mb-1">RUMBO</span>
+                <span className="text-lg font-mono text-sidebar-foreground">{Math.round(selectedVehicle.heading)}°</span>
               </div>
-              <div className="bg-slate-800/50 p-3 rounded border border-slate-700 col-span-2 flex items-center gap-3">
-                <Clock size={16} className="text-slate-500" />
+              <div className="bg-sidebar-accent/50 p-3 rounded border border-sidebar-border col-span-2 flex items-center gap-3">
+                <Clock size={16} className="text-sidebar-foreground/50" />
                 <div>
-                  <span className="text-[10px] text-slate-500 block">ÚLTIMO REPORTE</span>
-                  <span className="text-sm font-mono text-white">
+                  <span className="text-[10px] text-sidebar-foreground/50 block">ÚLTIMO REPORTE</span>
+                  <span className="text-sm font-mono text-sidebar-foreground">
                     {new Date(selectedVehicle.last_updated).toLocaleTimeString()}
                   </span>
                 </div>

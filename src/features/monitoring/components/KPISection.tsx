@@ -135,33 +135,33 @@ export const KPISection = memo(({
         icon={AlertTriangle}
         label={t("kpi.alertsCrit")}
         value={loadingStats ? "..." : alertCount}
-        delta="Pendientes"
+        delta={t("kpi.pending")}
         deltaType="down"
         color="#ef4444"
         sparkData={[2, 3, 2, 4, 5, 2, 1, 2, 3, alertCount]}
       />
       <KpiCard
         icon={Shield}
-        label="Inspecciones Hoy"
+        label={t("kpi.inspectionsToday")}
         value={loadingStats ? "..." : inspectionsToday}
-        delta={`${failedInspections} fallidas`}
+        delta={t("kpi.failed", { count: failedInspections })}
         deltaType="neutral"
         color="#a855f7"
       />
       <KpiCard
         icon={Route}
-        label="Km Hoy"
+        label={t("kpi.kmToday")}
         value={formatNumber(kmToday)}
-        delta={`${formatKm(kmThisMonth)} este mes`}
+        delta={t("kpi.thisMonth", { value: formatKm(kmThisMonth) })}
         deltaType="up"
         color="hsl(45,95%,55%)"
         sparkData={last7DaysKm}
       />
       <KpiCard
         icon={Fuel}
-        label="Eficiencia"
+        label={t("kpi.efficiency")}
         value={`${(Number.isFinite(efficiency) ? efficiency : 0).toFixed(0)}%`}
-        delta="Global"
+        delta={t("kpi.global")}
         deltaType="up"
         color="#f97316"
         sparkData={[90, 92, 91, 93, 94]}

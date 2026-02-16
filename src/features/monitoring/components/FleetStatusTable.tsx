@@ -30,6 +30,7 @@ const VehicleRow = memo(({ vehicle, onViewMap, onViewDetail }: {
   onViewMap: (id: string) => void;
   onViewDetail: (id: string) => void;
 }) => {
+  const { t } = useTranslation();
   const color = statusColor[vehicle.status] ?? "bg-gray-500";
 
   return (
@@ -69,10 +70,10 @@ const VehicleRow = memo(({ vehicle, onViewMap, onViewDetail }: {
         )}
         {/* Inline actions on hover */}
         <div className="hidden group-hover:flex items-center gap-1 ml-2">
-          <button type="button" onClick={() => onViewMap(vehicle.id)} className="p-1 rounded hover:bg-blue-500/10 text-blue-400" title="Ver en mapa">
+          <button type="button" onClick={() => onViewMap(vehicle.id)} className="p-1 rounded hover:bg-blue-500/10 text-blue-400" title={t("fleetTable.viewOnMap")}>
             <MapPin className="w-3 h-3" />
           </button>
-          <button type="button" onClick={() => onViewDetail(vehicle.id)} className="p-1 rounded hover:bg-gold/10 text-gold" title="Ver detalle">
+          <button type="button" onClick={() => onViewDetail(vehicle.id)} className="p-1 rounded hover:bg-gold/10 text-gold" title={t("fleetTable.viewDetail")}>
             <Eye className="w-3 h-3" />
           </button>
         </div>
@@ -92,6 +93,7 @@ export const FleetStatusTable = memo(({ vehicles, activeCount, loadingVehicles }
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const scrollRef = useRef<HTMLDivElement>(null);
   const setActiveModule = useUIStore((s) => s.setActiveModule);
+  const { t } = useTranslation();
 
   const toggleSort = useCallback((field: SortField) => {
     if (sortField === field) {
