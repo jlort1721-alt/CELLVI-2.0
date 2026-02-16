@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type FC } from "react";
+import { useCallback, useMemo, memo, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Menu,
@@ -17,6 +17,7 @@ import {
   FileText,
   ChevronRight,
   type LucideIcon,
+  Sparkles,
 } from "lucide-react";
 
 import {
@@ -50,18 +51,17 @@ interface NavLink {
   icon?: LucideIcon;
   desc?: string;
   external?: boolean;
+  badge?: string;
 }
 
 interface NavGroup {
   id: string;
   label: string;
-  /** Hash-section IDs that belong to this group (for active highlighting) */
   sections: string[];
   links: NavLink[];
-  /** If true, the top-level item is a direct link (no dropdown) */
   direct?: boolean;
-  /** Wide layout for the dropdown (2-column grid) */
-  wide?: boolean;
+  /** Number of grid columns for the dropdown (default 1) */
+  cols?: 1 | 2 | 3;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -88,13 +88,13 @@ function useNavGroups(): NavGroup[] {
         id: "soluciones",
         label: t("nav.soluciones"),
         sections: ["servicios"],
-        wide: true,
+        cols: 3,
         links: [
           { label: t("nav.solTransporte"), href: "#servicios", icon: Car, desc: t("nav.solTransporteDesc") },
-          { label: t("nav.solSeguridad"), href: "#servicios", icon: Building2, desc: t("nav.solSeguridadDesc") },
+          { label: t("nav.solSeguridad"), href: "#servicios", icon: Shield, desc: t("nav.solSeguridadDesc") },
           { label: t("nav.solObras"), href: "#servicios", icon: Construction, desc: t("nav.solObrasDesc") },
-          { label: t("nav.solConsultoria"), href: "#servicios", icon: Shield, desc: t("nav.solConsultoriaDesc") },
-          { label: t("nav.solComercio"), href: "#servicios", icon: Globe, desc: t("nav.solComercioDesc") },
+          { label: t("nav.solConsultoria"), href: "#servicios", icon: Globe, desc: t("nav.solConsultoriaDesc") },
+          { label: t("nav.solComercio"), href: "#servicios", icon: Building2, desc: t("nav.solComercioDesc") },
           { label: t("nav.solVideo"), href: "#servicios", icon: Camera, desc: t("nav.solVideoDesc") },
         ],
       },
@@ -102,12 +102,13 @@ function useNavGroups(): NavGroup[] {
         id: "plataforma",
         label: t("nav.plataforma"),
         sections: ["plataforma", "security", "api"],
+        cols: 3,
         links: [
-          { label: "ASEGURAR LTDA", href: "#plataforma", icon: MonitorPlay, desc: t("nav.cellvi20Desc") },
+          { label: "ASEGURAR LTDA", href: "#plataforma", icon: MonitorPlay, desc: t("nav.cellvi20Desc"), badge: "Core" },
           { label: t("nav.seguridad"), href: "#security", icon: Shield, desc: t("nav.seguridadDesc") },
           { label: "API", href: "#api", icon: Code2, desc: t("nav.apiDesc") },
           { label: t("nav.appMovil"), href: "#plataforma", icon: Smartphone, desc: t("nav.appMovilDesc") },
-          { label: t("nav.demoCellvi"), href: "/demo", icon: MonitorPlay, desc: t("nav.demoDesc") },
+          { label: t("nav.demoCellvi"), href: "/demo", icon: MonitorPlay, desc: t("nav.demoDesc"), badge: "Live" },
         ],
       },
       {
@@ -137,14 +138,11 @@ function useNavGroups(): NavGroup[] {
    Helpers
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/** Shared trigger classnames - override shadcn defaults for dark theme */
 const triggerCx =
-  "text-primary-foreground/70 hover:text-gold data-[state=open]:text-gold text-[13px] font-semibold tracking-wide bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent data-[active]:bg-transparent";
+  "text-white/70 hover:text-gold data-[state=open]:text-gold text-[13px] font-semibold tracking-wide bg-transparent hover:bg-white/[0.04] focus:bg-white/[0.04] data-[state=open]:bg-white/[0.06] data-[active]:bg-transparent";
 
-/** Active state trigger classnames when section is visible */
 const triggerActiveCx = "text-gold";
 
-/** Check if any section in a group is currently visible */
 function isGroupActive(groupSections: string[], visibleSections: string[]): boolean {
   return groupSections.some((s) => visibleSections.includes(s));
 }
@@ -153,38 +151,57 @@ function isGroupActive(groupSections: string[], visibleSections: string[]): bool
    Dropdown link item (reused in desktop panels)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-const DropdownLinkItem: FC<{ link: NavLink; onClick?: () => void }> = ({ link, onClick }) => {
+const DropdownLinkItem = memo<{ link: NavLink; compact?: boolean; onClick?: () => void }>(({ link, compact, onClick }) => {
   const Icon = link.icon;
   return (
     <NavigationMenuLink asChild>
       <a
         href={link.href}
         onClick={onClick}
-        className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-white/[0.04] group/link"
+        className={cn(
+          "flex items-center rounded-lg transition-all duration-200 hover:bg-white/[0.05] group/link",
+          compact ? "gap-2.5 px-2.5 py-2" : "gap-3 px-3 py-2.5",
+        )}
       >
         {Icon && (
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gold/[0.08] border border-gold/[0.12] transition-all duration-200 group-hover/link:bg-gold/15 group-hover/link:border-gold/25">
-            <Icon className="h-3.5 w-3.5 text-gold/80 group-hover/link:text-gold transition-colors" />
+          <div className={cn(
+            "shrink-0 flex items-center justify-center rounded-lg bg-gold/[0.08] border border-gold/[0.12] transition-all duration-200 group-hover/link:bg-gold/15 group-hover/link:border-gold/25",
+            compact ? "h-8 w-8" : "h-9 w-9",
+          )}>
+            <Icon className={cn("text-gold/70 group-hover/link:text-gold transition-colors", compact ? "h-3.5 w-3.5" : "h-4 w-4")} />
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <div className="text-[13px] font-semibold text-white/85 group-hover/link:text-gold transition-colors leading-tight">
-            {link.label}
+          <div className="flex items-center gap-1.5">
+            <span className={cn(
+              "font-semibold text-white/85 group-hover/link:text-gold transition-colors leading-tight truncate",
+              compact ? "text-[12px]" : "text-[13px]",
+            )}>
+              {link.label}
+            </span>
+            {link.badge && (
+              <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-px rounded bg-gold/10 text-gold/70 border border-gold/15 shrink-0">
+                {link.badge}
+              </span>
+            )}
           </div>
           {link.desc && (
-            <div className="text-[11px] leading-snug text-white/35 mt-0.5 group-hover/link:text-white/45 transition-colors">
+            <div className={cn(
+              "leading-snug text-white/35 group-hover/link:text-white/50 transition-colors line-clamp-1",
+              compact ? "text-[10px] mt-px" : "text-[11px] mt-0.5",
+            )}>
               {link.desc}
             </div>
           )}
         </div>
-        <ChevronRight className="ml-auto h-3 w-3 shrink-0 text-white/15 opacity-0 -translate-x-1 transition-all duration-200 group-hover/link:opacity-100 group-hover/link:translate-x-0 group-hover/link:text-gold/60" />
       </a>
     </NavigationMenuLink>
   );
-};
+});
+DropdownLinkItem.displayName = "DropdownLinkItem";
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Desktop Navigation (hidden on mobile, shown lg:flex)
+   Desktop Navigation
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const DesktopNav: FC = () => {
@@ -197,7 +214,6 @@ const DesktopNav: FC = () => {
         {navGroups.map((group) => {
           const active = isGroupActive(group.sections, visibleSections);
 
-          /* Direct link (no dropdown) */
           if (group.direct) {
             return (
               <NavigationMenuItem key={group.id}>
@@ -205,9 +221,9 @@ const DesktopNav: FC = () => {
                   <a
                     href={group.links[0].href}
                     className={cn(
-                      "inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors",
-                      triggerCx,
-                      active && triggerActiveCx,
+                      "inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-[13px] font-semibold tracking-wide transition-colors",
+                      "text-white/70 hover:text-gold hover:bg-white/[0.04]",
+                      active && "text-gold",
                     )}
                   >
                     {group.label}
@@ -217,7 +233,6 @@ const DesktopNav: FC = () => {
             );
           }
 
-          /* Dropdown group */
           return (
             <NavigationMenuItem key={group.id}>
               <NavigationMenuTrigger
@@ -228,31 +243,33 @@ const DesktopNav: FC = () => {
 
               <NavigationMenuContent
                 className={cn(
-                  "p-2",
-                  group.wide ? "w-[520px]" : "w-[300px]",
+                  "p-3",
+                  group.cols === 3 ? "w-[740px]" : group.cols === 2 ? "w-[540px]" : "w-[320px]",
                 )}
               >
-                {/* Section label */}
-                <div className="px-3 pt-1.5 pb-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gold/50">
+                {/* Section header */}
+                <div className="px-3 pt-1 pb-2.5 flex items-center gap-2">
+                  <div className="h-px flex-1 bg-gradient-to-r from-gold/30 to-transparent" />
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold/60 shrink-0">
                     {group.label}
                   </p>
+                  <div className="h-px flex-1 bg-gradient-to-l from-gold/30 to-transparent" />
                 </div>
-
-                {/* Subtle separator */}
-                <div className="mx-3 mb-1.5 h-px bg-white/[0.06]" />
 
                 <div
                   className={cn(
-                    group.wide
-                      ? "grid grid-cols-2 gap-px"
-                      : "flex flex-col gap-px",
+                    group.cols === 3 ? "grid grid-cols-3 gap-0.5" :
+                    group.cols === 2 ? "grid grid-cols-2 gap-0.5" :
+                    "flex flex-col gap-0.5",
                   )}
                 >
                   {group.links.map((link) => (
-                    <DropdownLinkItem key={link.href + link.label} link={link} />
+                    <DropdownLinkItem key={link.label} link={link} compact={(group.cols ?? 1) >= 3} />
                   ))}
                 </div>
+
+                {/* Bottom accent line */}
+                <div className="mt-2.5 mx-3 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
               </NavigationMenuContent>
             </NavigationMenuItem>
           );
@@ -266,21 +283,21 @@ const DesktopNav: FC = () => {
    Mobile collapsible section (inside Sheet)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-const MobileSectionGroup: FC<{
+const MobileSectionGroup = memo<{
   label: string;
   links: NavLink[];
   onNavigate: () => void;
-}> = ({ label, links, onNavigate }) => (
+}>(({ label, links, onNavigate }) => (
   <div className="py-3">
     <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-[0.15em] text-gold/50">
       {label}
     </p>
-    <div className="flex flex-col gap-px">
+    <div className="flex flex-col gap-0.5">
       {links.map((link) => {
         const Icon = link.icon;
         return (
           <a
-            key={link.href + link.label}
+            key={link.label}
             href={link.href}
             onClick={onNavigate}
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-white/[0.04] group/mlink"
@@ -295,7 +312,7 @@ const MobileSectionGroup: FC<{
                 {link.label}
               </div>
               {link.desc && (
-                <div className="text-[11px] text-white/30 leading-snug mt-0.5">
+                <div className="text-[11px] text-white/30 leading-snug mt-0.5 line-clamp-1">
                   {link.desc}
                 </div>
               )}
@@ -305,10 +322,11 @@ const MobileSectionGroup: FC<{
       })}
     </div>
   </div>
-);
+));
+MobileSectionGroup.displayName = "MobileSectionGroup";
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Mobile Navigation (Sheet from right, shown lg:hidden)
+   Mobile Navigation (Sheet from right)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const MobileNav: FC = () => {
@@ -321,22 +339,21 @@ const MobileNav: FC = () => {
 
   return (
     <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-      {/* Hamburger trigger */}
       <SheetTrigger asChild>
         <button
           type="button"
-          className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg border border-gold/30 hover:bg-gold/10 transition-colors"
+          className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg border border-white/10 hover:border-gold/30 hover:bg-white/[0.04] transition-all"
           aria-label={t("nav.openMenu")}
         >
-          <Menu className="h-5 w-5 text-primary-foreground/80" />
+          <Menu className="h-5 w-5 text-white/80" />
         </button>
       </SheetTrigger>
 
       <SheetContent
         side="right"
-        className="w-[320px] sm:w-[360px] bg-navy/98 backdrop-blur-xl border-l border-gold/20 p-0 overflow-y-auto"
+        className="w-[320px] sm:w-[360px] bg-[hsl(222,60%,10%)] border-l border-white/[0.06] p-0 overflow-y-auto"
       >
-        <SheetHeader className="px-5 pt-5 pb-3 border-b border-gold/10">
+        <SheetHeader className="px-5 pt-5 pb-3 border-b border-white/[0.06]">
           <SheetTitle className="flex items-center gap-3">
             <img
               src="/logo.png"
@@ -346,8 +363,7 @@ const MobileNav: FC = () => {
           </SheetTitle>
         </SheetHeader>
 
-        {/* Scrollable link groups */}
-        <div className="px-2 divide-y divide-gold/10">
+        <div className="px-2 divide-y divide-white/[0.04]">
           {navGroups.map((group) => (
             <MobileSectionGroup
               key={group.id}
@@ -358,12 +374,12 @@ const MobileNav: FC = () => {
           ))}
         </div>
 
-        {/* CTAs at bottom */}
-        <div className="sticky bottom-0 border-t border-gold/10 bg-navy/98 backdrop-blur-lg p-4 flex flex-col gap-2.5">
+        {/* CTAs */}
+        <div className="sticky bottom-0 border-t border-white/[0.06] bg-[hsl(222,60%,10%)] p-4 flex flex-col gap-2.5">
           <Button
             asChild
             variant="outline"
-            className="w-full border-gold/30 text-primary-foreground/80 hover:bg-gold/10 hover:text-gold font-heading font-semibold text-sm h-10"
+            className="w-full border-white/10 text-white/80 hover:bg-white/[0.04] hover:text-gold hover:border-gold/30 font-heading font-semibold text-sm h-10"
           >
             <a href="/demo" onClick={closeMenu}>
               Demo
@@ -371,7 +387,7 @@ const MobileNav: FC = () => {
           </Button>
           <Button
             asChild
-            className="w-full bg-gradient-to-r from-gold to-yellow-500 font-heading font-bold text-navy hover:from-gold/90 hover:to-yellow-500/90 shadow-[0_0_20px_rgba(212,175,55,0.25)] text-sm h-10"
+            className="w-full bg-gradient-to-r from-gold to-yellow-500 font-heading font-bold text-navy hover:from-gold/90 hover:to-yellow-500/90 shadow-[0_0_20px_rgba(212,175,55,0.2)] text-sm h-10"
           >
             <a href="#contacto" onClick={closeMenu}>
               {t("hero.cta1")}
@@ -395,54 +411,62 @@ const Navbar: FC = () => {
     <nav
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        "bg-navy/95 backdrop-blur-md border-b",
+        /* Solid background — always visible and distinguishable */
+        "bg-[hsl(222,60%,11%)] border-b",
         hasScrolledPastHero
-          ? "border-gold/20 shadow-lg shadow-black/10"
-          : "border-gold/10 shadow-none",
+          ? "border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.3)]"
+          : "border-white/[0.04] shadow-none",
       )}
       role="navigation"
       aria-label={t("nav.mainNav")}
     >
-      <div className="container mx-auto px-4 flex items-center justify-between h-16 md:h-20">
+      {/* Top accent line */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+
+      <div className="container mx-auto px-4 flex items-center justify-between h-16 lg:h-[72px]">
         {/* ── Logo ─────────────────────────────────────────── */}
         <a
           href="#inicio"
-          className="flex items-center gap-2 shrink-0"
+          className="flex items-center gap-2.5 shrink-0 group"
           aria-label="ASEGURAR LTDA - Inicio"
         >
           <img
             src="/logo.png"
             alt="ASEGURAR LTDA"
-            className="h-12 md:h-16 w-auto object-contain"
+            className="h-10 lg:h-12 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]"
           />
         </a>
 
-        {/* ── Desktop mega-menu (hidden < lg) ──────────────── */}
+        {/* ── Desktop mega-menu ──────────────── */}
         <DesktopNav />
 
         {/* ── Desktop right-side actions ───────────────────── */}
-        <div className="hidden lg:flex items-center gap-2">
+        <div className="hidden lg:flex items-center gap-1.5">
           <LanguageSelector />
           <ThemeToggle />
 
+          <div className="w-px h-6 bg-white/[0.08] mx-1.5" />
+
           <Button
             asChild
-            variant="outline"
-            className="border-gold/30 text-primary-foreground/80 hover:bg-gold/10 hover:text-gold font-heading font-semibold text-[13px] h-9"
+            className="border border-white/10 bg-transparent text-white/70 hover:bg-white/[0.04] hover:text-gold hover:border-gold/30 font-heading font-semibold text-[13px] h-9 transition-all"
           >
             <a href="/demo">Demo</a>
           </Button>
 
           <Button
             asChild
-            className="bg-gradient-to-r from-gold to-yellow-500 font-heading font-bold text-navy hover:from-gold/90 hover:to-yellow-500/90 shadow-[0_0_20px_rgba(212,175,55,0.25)] text-[13px] h-9"
+            className="bg-gradient-to-r from-gold to-yellow-500 font-heading font-bold text-navy hover:from-gold/90 hover:to-yellow-500/90 shadow-[0_0_24px_rgba(212,175,55,0.15)] hover:shadow-[0_0_24px_rgba(212,175,55,0.3)] text-[13px] h-9 transition-all"
           >
-            <a href="#contacto">{t("hero.cta1")}</a>
+            <a href="#contacto" className="flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5" />
+              {t("hero.cta1")}
+            </a>
           </Button>
         </div>
 
         {/* ── Mobile right-side controls ───────────────────── */}
-        <div className="flex lg:hidden items-center gap-2">
+        <div className="flex lg:hidden items-center gap-1.5">
           <LanguageSelector />
           <ThemeToggle />
           <MobileNav />
