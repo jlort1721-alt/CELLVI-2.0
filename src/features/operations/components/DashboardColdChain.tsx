@@ -419,10 +419,10 @@ const DashboardColdChain = () => {
               )}
             </TabsTrigger>
             <TabsTrigger value="compliance" className="data-[state=active]:bg-purple-500/10 data-[state=active]:text-purple-400 rounded-lg text-[10px] font-bold uppercase tracking-wider px-4 py-2">
-              <ShieldCheck className="w-3 h-3 mr-1.5" /> Compliance
+              <ShieldCheck className="w-3 h-3 mr-1.5" /> {t("coldChain.tabCompliance")}
             </TabsTrigger>
             <TabsTrigger value="analytics" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-400 rounded-lg text-[10px] font-bold uppercase tracking-wider px-4 py-2">
-              <BarChart3 className="w-3 h-3 mr-1.5" /> Analytics
+              <BarChart3 className="w-3 h-3 mr-1.5" /> {t("coldChain.tabAnalytics")}
             </TabsTrigger>
           </TabsList>
         </motion.div>
@@ -435,8 +435,8 @@ const DashboardColdChain = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-sidebar-foreground/30" />
               <input
                 type="text"
-                placeholder="Buscar placa, carga, conductor, ruta..."
-                aria-label="Buscar unidades de cadena de frío"
+                placeholder={t("coldChain.searchPlaceholder")}
+                aria-label={t("coldChain.searchAriaLabel")}
                 value={filters.search}
                 onChange={(e) => updateSearch(e.target.value)}
                 className="w-full bg-white/5 border border-white/5 rounded-xl pl-9 pr-4 py-2 text-[11px] text-sidebar-foreground placeholder:text-sidebar-foreground/20 focus:outline-none focus:border-gold/30 focus:ring-1 focus:ring-gold/20 transition-all"
@@ -481,7 +481,7 @@ const DashboardColdChain = () => {
             <motion.div variants={itemVariants} className="rounded-3xl border bg-sidebar/40 border-white/5 p-4 shadow-2xl">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-heading font-bold text-sidebar-foreground/40 text-[10px] uppercase tracking-widest flex items-center gap-2">
-                  <Truck className="w-3.5 h-3.5" /> Flota en Tránsito
+                  <Truck className="w-3.5 h-3.5" /> {t("coldChain.fleetInTransit")}
                 </h3>
                 <Badge variant="outline" className="text-[8px] border-white/10 text-sidebar-foreground/30 rounded-full">
                   {filteredUnits.length}/{stats.total}
@@ -501,7 +501,7 @@ const DashboardColdChain = () => {
                 {filteredUnits.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-12 text-sidebar-foreground/20">
                     <Search className="w-8 h-8 mb-3 opacity-30" />
-                    <span className="text-[11px]">Sin resultados</span>
+                    <span className="text-[11px]">{t("coldChain.noResults")}</span>
                   </div>
                 )}
               </div>
