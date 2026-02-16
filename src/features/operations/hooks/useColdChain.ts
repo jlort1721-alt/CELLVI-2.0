@@ -69,8 +69,7 @@ export const useColdChain = () => {
   const cached = useRef(loadCachedState());
 
   const [selectedUnit, setSelectedUnit] = useState<ColdChainUnit | null>(
-    cached.current?.selectedUnit
-      ?? coldChainUnits.find(u => u.id === (cached.current as Record<string, unknown>)?.selectedUnitId)
+    coldChainUnits.find(u => u.id === (cached.current as Record<string, unknown>)?.selectedUnitId)
       ?? coldChainUnits[0]
       ?? null
   );
@@ -263,6 +262,7 @@ export const useColdChain = () => {
     unitCompliance,
     alertCounts,
     complianceSummary,
+    allUnits: coldChainUnits,
     allComplianceRecords: complianceRecords,
     allEvents: coldChainEvents,
 

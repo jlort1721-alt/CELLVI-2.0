@@ -64,7 +64,7 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { y: 20, opacity: 0 },
-  visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 30 } },
+  visible: { y: 0, opacity: 1, transition: { type: "spring" as const, stiffness: 300, damping: 30 } },
 };
 
 // ── Sub-components ────────────────────────────────────────────────────
@@ -286,7 +286,7 @@ const DashboardColdChain = () => {
   const {
     selectedUnit, activeTab, filters, sortField, sortDir, alerts, isLiveMode, lastSync,
     stats, filteredUnits, chartData, unitAlerts, unitEvents, unitCompliance,
-    alertCounts, complianceSummary, allComplianceRecords,
+    alertCounts, complianceSummary, allUnits, allComplianceRecords,
     setSelectedUnit, setActiveTab, acknowledgeAlert, acknowledgeAllAlerts,
     updateSearch, updateStatusFilter, updateClassificationFilter, toggleSort,
     setIsLiveMode, refreshData,
@@ -318,6 +318,16 @@ const DashboardColdChain = () => {
       compliance: u.complianceScore,
     })),
   [filteredUnits]);
+
+  // Pre-sorted alerts for Alerts tab (avoids re-sorting on every render)
+  const sortedAlerts = useMemo(() =>
+    [...alerts].sort((a, b) => {
+      if (a.acknowledged !== b.acknowledged) return a.acknowledged ? 1 : -1;
+      const sev = { critical: 0, warning: 1, info: 2 };
+      if (sev[a.severity] !== sev[b.severity]) return sev[a.severity] - sev[b.severity];
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    }),
+  [alerts]);
 
   if (!selectedUnit) {
     return (
@@ -442,7 +452,7 @@ const DashboardColdChain = () => {
               ))}
             </div>
             <div className="flex items-center gap-1.5">
-              {(["all", "pharma", "frozen", "refrigerated"] as const).map((c) => (
+              {(["all", "pharma", "frozen", "refrigerated", "ambient-controlled"] as const).map((c) => (
                 <button
                   key={c}
                   onClick={() => updateClassificationFilter(c)}
@@ -709,16 +719,9 @@ const DashboardColdChain = () => {
           <motion.div variants={itemVariants} className="rounded-3xl border bg-sidebar/40 border-white/5 p-5 shadow-2xl">
             <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1 custom-scrollbar">
               <AnimatePresence mode="popLayout">
-                {[...alerts]
-                  .sort((a, b) => {
-                    if (a.acknowledged !== b.acknowledged) return a.acknowledged ? 1 : -1;
-                    const sev = { critical: 0, warning: 1, info: 2 };
-                    if (sev[a.severity] !== sev[b.severity]) return sev[a.severity] - sev[b.severity];
-                    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-                  })
-                  .map((alert) => (
-                    <AlertRow key={alert.id} alert={alert} onAcknowledge={acknowledgeAlert} />
-                  ))}
+                {sortedAlerts.map((alert) => (
+                  <AlertRow key={alert.id} alert={alert} onAcknowledge={acknowledgeAlert} />
+                ))}
               </AnimatePresence>
             </div>
           </motion.div>
@@ -753,7 +756,7 @@ const DashboardColdChain = () => {
             </h4>
             <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
               {allComplianceRecords.map((record) => {
-                const unit = filteredUnits.find(u => u.id === record.unitId) ?? filteredUnits[0];
+                const unit = allUnits.find(u => u.id === record.unitId) ?? allUnits[0];
                 const statusCfg = complianceStatusConfig[record.status];
                 return (
                   <div key={record.id} className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] transition-all">
