@@ -216,7 +216,7 @@ const PlatformHeader = memo(() => {
         </button>
         <img src="/logo.png" alt="ASEGURAR" className="h-10 w-auto object-contain" />
         <div className="hidden sm:block">
-          <div className="text-primary-foreground font-bold text-sm font-heading">CELLVI 2.0</div>
+          <div className="text-primary-foreground font-bold text-sm font-heading">ASEGURAR LTDA</div>
           <Breadcrumbs activeModule={activeModule} />
         </div>
       </div>

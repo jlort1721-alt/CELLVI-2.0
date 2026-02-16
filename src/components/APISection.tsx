@@ -81,10 +81,10 @@ const APISection = () => {
                   <div className="w-3 h-3 rounded-full bg-red-500/60" />
                   <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
                   <div className="w-3 h-3 rounded-full bg-green-500/60" />
-                  <span className="text-xs text-primary-foreground/40 ml-2 font-mono">curl — CELLVI API v2</span>
+                  <span className="text-xs text-primary-foreground/40 ml-2 font-mono">curl — ASEGURAR API v2</span>
                 </div>
                 <pre className="p-5 text-xs font-mono text-primary-foreground/70 overflow-x-auto leading-relaxed">
-                  <code>{`curl -X GET "https://api.cellvi.com/v2/vehicles" \\
+                  <code>{`curl -X GET "https://api.asegurarltda.com/v2/vehicles" \\
   -H "Authorization: Bearer <token>" \\
   -H "X-Tenant-Id: <org_id>" \\
   -H "Accept: application/json"

@@ -19,7 +19,7 @@ const MobileAppSection = () => {
                         <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl border-4 border-foreground/5 max-w-sm mx-auto transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
                             <img
                                 src="/mobile-app-driver.jpg"
-                                alt="App Conductor CELLVI"
+                                alt="App Conductor ASEGURAR"
                                 className="w-full h-auto"
                             />
                         </div>

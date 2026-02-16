@@ -45,12 +45,12 @@ const PlatformSection = () => {
 
           <motion.div initial={{ opacity: 0, x: 40 }} animate={isInView ? { opacity: 1, x: 0 } : {}} transition={{ duration: 0.7, delay: 0.3 }} className="relative">
             <div className="rounded-2xl overflow-hidden shadow-2xl border-2 border-gold/20">
-              <img src="/platform-preview-2.jpg" alt="Plataforma CELLVI" className="w-full" />
+              <img src="/platform-preview-2.jpg" alt="Plataforma ASEGURAR" className="w-full" />
             </div>
             <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-gold-gradient rounded-2xl flex items-center justify-center shadow-gold">
               <div className="text-center">
-                <div className="font-heading font-extrabold text-2xl text-navy">2.0</div>
-                <div className="text-[10px] font-bold text-navy/70">CELLVI</div>
+                <div className="font-heading font-extrabold text-2xl text-navy">LTDA</div>
+                <div className="text-[10px] font-bold text-navy/70">ASEGURAR</div>
               </div>
             </div>
           </motion.div>

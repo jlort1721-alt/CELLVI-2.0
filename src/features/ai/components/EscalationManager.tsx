@@ -64,7 +64,7 @@ const EscalationItem = memo(({ escalation, onAcknowledge, onResolve }: {
             <Zap className="w-3 h-3 text-gold" />
             <span className="text-xs font-bold text-gold font-mono">{(escalation.aiConfidence * 100).toFixed(0)}%</span>
           </div>
-          <span className="text-[7px] text-sidebar-foreground/20 uppercase font-bold tracking-widest">Confianza IA</span>
+          <span className="text-[7px] text-sidebar-foreground/20 uppercase font-bold tracking-widest">{t("escalation.aiConfidence")}</span>
         </div>
       </div>
 
@@ -75,7 +75,7 @@ const EscalationItem = memo(({ escalation, onAcknowledge, onResolve }: {
       <div className="flex items-start gap-2 p-2.5 rounded-xl bg-purple-500/5 border border-purple-500/10 mb-3">
         <Shield className="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5" />
         <div>
-          <span className="text-[8px] font-bold uppercase text-purple-400 tracking-widest">Recomendación IA</span>
+          <span className="text-[8px] font-bold uppercase text-purple-400 tracking-widest">{t("escalation.aiRecommendation")}</span>
           <p className="text-[10px] text-sidebar-foreground/50 mt-0.5">{escalation.recommendation}</p>
         </div>
       </div>
@@ -89,7 +89,7 @@ const EscalationItem = memo(({ escalation, onAcknowledge, onResolve }: {
             className="h-7 text-[9px] bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 rounded-xl"
             variant="outline"
           >
-            <AlertTriangle className="w-3 h-3 mr-1" /> Tomar Control
+            <AlertTriangle className="w-3 h-3 mr-1" /> {t("escalation.takeControl")}
           </Button>
           <Button
             size="sm"
@@ -97,7 +97,7 @@ const EscalationItem = memo(({ escalation, onAcknowledge, onResolve }: {
             className="h-7 text-[9px] bg-green-500/10 hover:bg-green-500/20 text-green-500 border border-green-500/20 rounded-xl"
             variant="outline"
           >
-            <CheckCircle className="w-3 h-3 mr-1" /> Resolver
+            <CheckCircle className="w-3 h-3 mr-1" /> {t("escalation.resolve")}
           </Button>
         </div>
       )}
@@ -108,7 +108,7 @@ const EscalationItem = memo(({ escalation, onAcknowledge, onResolve }: {
           className="h-7 text-[9px] bg-green-500/10 hover:bg-green-500/20 text-green-500 border border-green-500/20 rounded-xl"
           variant="outline"
         >
-          <CheckCircle className="w-3 h-3 mr-1" /> Marcar como Resuelto
+          <CheckCircle className="w-3 h-3 mr-1" /> {t("escalation.markResolved")}
         </Button>
       )}
     </div>
@@ -121,6 +121,7 @@ const EscalationManager = memo(({ escalations, onAcknowledge, onResolve }: {
   onAcknowledge: (id: string) => void;
   onResolve: (id: string) => void;
 }) => {
+  const { t } = useTranslation();
   const pending = useMemo(() => escalations.filter((e) => e.status === 'pending'), [escalations]);
   const acknowledged = useMemo(() => escalations.filter((e) => e.status === 'acknowledged'), [escalations]);
   const resolved = useMemo(() => escalations.filter((e) => e.status === 'resolved'), [escalations]);
@@ -129,22 +130,22 @@ const EscalationManager = memo(({ escalations, onAcknowledge, onResolve }: {
     <div className="rounded-3xl border bg-sidebar/40 backdrop-blur-xl border-white/5 p-5 shadow-2xl">
       <div className="flex items-center justify-between mb-4">
         <h4 className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest flex items-center gap-2">
-          <ArrowUpRight className="w-3.5 h-3.5" /> Cola de Escalación — IA → Humano
+          <ArrowUpRight className="w-3.5 h-3.5" /> {t("escalation.title")}
         </h4>
         <div className="flex items-center gap-2">
           {pending.length > 0 && (
             <span className="text-[8px] font-bold bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full animate-pulse">
-              {pending.length} pendientes
+              {t("escalation.pending", { count: pending.length })}
             </span>
           )}
           {acknowledged.length > 0 && (
             <span className="text-[8px] font-bold bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full">
-              {acknowledged.length} en proceso
+              {t("escalation.inProgress", { count: acknowledged.length })}
             </span>
           )}
           {resolved.length > 0 && (
             <span className="text-[8px] font-bold bg-green-500/10 text-green-500 px-2 py-0.5 rounded-full">
-              {resolved.length} resueltas
+              {t("escalation.resolved", { count: resolved.length })}
             </span>
           )}
         </div>
@@ -154,8 +155,8 @@ const EscalationManager = memo(({ escalations, onAcknowledge, onResolve }: {
         {escalations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-sidebar-foreground/20">
             <CheckCircle className="w-8 h-8 mb-3 text-green-500/30" />
-            <span className="text-[11px]">Sin escalaciones pendientes</span>
-            <span className="text-[9px] text-sidebar-foreground/15 mt-1">El agente IA está gestionando todo automáticamente</span>
+            <span className="text-[11px]">{t("escalation.noPending")}</span>
+            <span className="text-[9px] text-sidebar-foreground/15 mt-1">{t("escalation.aiManaging")}</span>
           </div>
         ) : (
           escalations

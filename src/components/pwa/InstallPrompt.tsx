@@ -149,7 +149,7 @@ const InstallPrompt = () => {
                                 <Download size={24} />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <h3 className="font-bold text-sm">Instalar CELLVI</h3>
+                                <h3 className="font-bold text-sm">Instalar ASEGURAR</h3>
                                 <p className="text-xs text-slate-400 truncate">Acceso rápido, trabaja offline</p>
                             </div>
                         </div>
@@ -175,7 +175,7 @@ const InstallPrompt = () => {
                         <X size={24} />
                     </button>
                     <div className="text-center space-y-4">
-                        <p className="font-bold text-lg">Instalar CELLVI en iPhone</p>
+                        <p className="font-bold text-lg">Instalar ASEGURAR en iPhone</p>
                         <div className="flex items-center justify-center gap-2 text-sm text-slate-300">
                             1. Toca el botón <Share size={18} className="text-blue-400" /> Compartir
                         </div>
