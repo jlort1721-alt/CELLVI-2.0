@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/hooks/useAuth";
 import CookieBanner from "@/components/CookieBanner";
@@ -108,6 +108,7 @@ const AppContent = () => {
                   <Route path="/driver" element={<ErrorBoundary level="feature"><DriverRoute /></ErrorBoundary>} />
                   <Route path="/privacidad" element={<Privacidad />} />
                   <Route path="/terminos" element={<Terminos />} />
+                  <Route path="/dashboard" element={<Navigate to="/auth" replace />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="/preoperacional" element={<ProtectedRoute><ErrorBoundary level="feature"><ChecklistPage /></ErrorBoundary></ProtectedRoute>} />
                   <Route path="/rndc" element={<ProtectedRoute><ErrorBoundary level="feature"><RNDCPage /></ErrorBoundary></ProtectedRoute>} />
