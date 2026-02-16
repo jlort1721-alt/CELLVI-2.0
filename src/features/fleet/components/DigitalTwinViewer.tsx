@@ -1,6 +1,6 @@
 
 import { Canvas } from "@react-three/fiber";
-import { Float, Environment, ContactShadows, PresentationControls } from "@react-three/drei";
+import { Float, ContactShadows, PresentationControls } from "@react-three/drei";
 import { Suspense, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Activity, Thermometer, Battery, Wifi, AlertTriangle } from "lucide-react";
@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
   TRUCK MODEL COMPONENT 
   Renders a 3D primitive truck reflecting health state color-coded.
 */
-function TruckModel({ health }: { health: any }) {
+function TruckModel({ health, ...props }: { health: any } & Record<string, any>) {
     // Determine subsystem colors based on health status
     // If health < 70 => yellow, < 40 => red
     const getStatusColor = (val: number) => val < 40 ? "#ef4444" : val < 70 ? "#eab308" : "#22c55e";
@@ -20,7 +20,7 @@ function TruckModel({ health }: { health: any }) {
     const coolingColor = getStatusColor(health.cooling_unit_health);
 
     return (
-        <group dispose={null}>
+        <group dispose={null} {...props}>
             {/* Chassis */}
             <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
                 <boxGeometry args={[2, 0.5, 4]} />
@@ -77,11 +77,11 @@ export function DigitalTwinViewer({ vehicleData }: { vehicleData?: any }) {
 
         // 1. Initial Fetch
         const fetchState = async () => {
-            const { data } = await supabase
-                .from('digital_twin_state')
+            const { data } = await (supabase
+                .from('digital_twin_state' as any)
                 .select('*')
                 .eq('vehicle_id', vehicleData.id)
-                .single();
+                .single() as any);
 
             if (data) setTwinState((prev: any) => ({ ...prev, ...data }));
         };
@@ -134,9 +134,10 @@ export function DigitalTwinViewer({ vehicleData }: { vehicleData?: any }) {
             {/* 3D Scene */}
             <Canvas shadows camera={{ position: [4, 2, 5], fov: 50 }}>
                 <Suspense fallback={null}>
-                    <Environment preset="city" />
-                    <ambientLight intensity={0.5} />
-                    <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} shadow-mapSize={2048} castShadow />
+                    <ambientLight intensity={0.7} />
+                    <directionalLight position={[5, 8, 5]} intensity={1.2} castShadow shadow-mapSize={2048} />
+                    <directionalLight position={[-3, 4, -2]} intensity={0.4} />
+                    <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={0.6} castShadow />
 
                     <PresentationControls
                         global
@@ -159,7 +160,7 @@ export function DigitalTwinViewer({ vehicleData }: { vehicleData?: any }) {
             <div className="absolute bottom-4 right-4 z-10">
                 {twinState.anomaly_detected ? (
                     <Badge variant="destructive" className="bg-red-500 text-white animate-pulse flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3" /> FALLA CRÍTICA EN {twinState.anomaly_component?.toUpperCase()}
+                        <AlertTriangle className="w-3 h-3" /> FALLA CRÍTICA EN {twinState.anomaly_component?.toUpperCase() || 'DESCONOCIDO'}
                     </Badge>
                 ) : (
                     <Badge variant="secondary" className="bg-green-100 text-green-700">
