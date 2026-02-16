@@ -103,7 +103,7 @@ function useNavGroups(): NavGroup[] {
         label: t("nav.plataforma"),
         sections: ["plataforma", "security", "api"],
         links: [
-          { label: "CELLVI 2.0", href: "#plataforma", icon: MonitorPlay, desc: t("nav.cellvi20Desc") },
+          { label: "ASEGURAR LTDA", href: "#plataforma", icon: MonitorPlay, desc: t("nav.cellvi20Desc") },
           { label: t("nav.seguridad"), href: "#security", icon: Shield, desc: t("nav.seguridadDesc") },
           { label: "API", href: "#api", icon: Code2, desc: t("nav.apiDesc") },
           { label: t("nav.appMovil"), href: "#plataforma", icon: Smartphone, desc: t("nav.appMovilDesc") },
