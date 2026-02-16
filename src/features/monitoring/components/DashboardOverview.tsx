@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { Activity, Search, Route } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useDashboardStats, useFleetStatus, useRecentAlerts } from "@/features/dashboard/hooks/useRealtimeDashboard";
@@ -19,7 +19,7 @@ const shortcuts = [
 ];
 
 /* ── Main Dashboard ───────────────────────────────────── */
-const DashboardOverview = () => {
+const DashboardOverview = memo(() => {
   const { t } = useTranslation();
 
   // Realtime Data Hooks
@@ -41,7 +41,7 @@ const DashboardOverview = () => {
   }, [handleKeyboard]);
 
   // Use imported demo data as fallback when Supabase returns no data
-  const displayVehicles = dbVehicles?.length > 0 ? dbVehicles : vehicles;
+  const displayVehicles = dbVehicles && dbVehicles.length > 0 ? dbVehicles : vehicles;
   const displayAlerts = dbAlerts?.length > 0
     ? dbAlerts
     : alerts.map((alert) => ({
@@ -58,8 +58,8 @@ const DashboardOverview = () => {
   // Safe defaults with demo data fallback
   const vehicleCount = stats?.vehicles || platformStats.totalVehicles;
   const activeVehicles = displayVehicles.filter((v: any) => v.status === 'activo');
-  const activeCount = activeVehicles.length || platformStats.activeVehicles;
-  const alertCount = stats?.criticalAlerts || displayAlerts.filter((a: any) => a.severity === 'high' || a.severity === 'critical').length;
+  const activeCount = activeVehicles.length > 0 ? activeVehicles.length : platformStats.activeVehicles;
+  const alertCount = stats?.criticalAlerts ?? displayAlerts.filter((a: any) => a.severity === 'high' || a.severity === 'critical').length;
   const efficiency = stats?.efficiency ? (stats.efficiency * 100) : platformStats.fuelSavings;
   const kmToday = telemetryData[telemetryData.length - 1]?.distanceKm || 8247;
 
@@ -220,6 +220,7 @@ const DashboardOverview = () => {
       </div>
     </div>
   );
-};
+});
+DashboardOverview.displayName = "DashboardOverview";
 
 export default DashboardOverview;

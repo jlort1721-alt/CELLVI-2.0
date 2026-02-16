@@ -94,35 +94,46 @@ const AppContent = () => {
     <>
       <SkipLinks />
       <GlobalLiveRegion />
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/verify" element={<PublicLedgerVerifier />} />
-                  <Route path="/demo" element={<Demo />} />
-                  <Route path="/pqr" element={<PQR />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/platform" element={<ProtectedRoute><ErrorBoundary level="page"><Platform /></ErrorBoundary></ProtectedRoute>} />
-                  <Route path="/api-docs" element={<ApiDocs />} />
-                  <Route path="/tracking" element={<ErrorBoundary level="feature"><TrackingDashboard /></ErrorBoundary>} />
-                  <Route path="/planning" element={<ErrorBoundary level="feature"><RoutePlanner /></ErrorBoundary>} />
-                  <Route path="/driver" element={<ErrorBoundary level="feature"><DriverRoute /></ErrorBoundary>} />
-                  <Route path="/privacidad" element={<Privacidad />} />
-                  <Route path="/terminos" element={<Terminos />} />
-                  <Route path="/dashboard" element={<Navigate to="/auth" replace />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="/preoperacional" element={<ProtectedRoute><ErrorBoundary level="feature"><ChecklistPage /></ErrorBoundary></ProtectedRoute>} />
-                  <Route path="/rndc" element={<ProtectedRoute><ErrorBoundary level="feature"><RNDCPage /></ErrorBoundary></ProtectedRoute>} />
-                  <Route path="/mantenimiento" element={<ProtectedRoute><ErrorBoundary level="feature"><MaintenanceDashboard /></ErrorBoundary></ProtectedRoute>} />
-                  <Route path="/mantenimiento-lista" element={<ProtectedRoute><ErrorBoundary level="feature"><MaintenancePage /></ErrorBoundary></ProtectedRoute>} />
-                  <Route path="/seguridad" element={<ProtectedRoute><ErrorBoundary level="feature"><SecurityPage /></ErrorBoundary></ProtectedRoute>} />
-                  <Route path="/auditoria" element={<ProtectedRoute><ErrorBoundary level="feature"><AuditLogPage /></ErrorBoundary></ProtectedRoute>} />
-                  <Route path="/reportes" element={<ProtectedRoute><ErrorBoundary level="feature"><ReportsPage /></ErrorBoundary></ProtectedRoute>} />
-                  <Route path="/maestro-repuestos" element={<ProtectedRoute><ErrorBoundary level="feature"><InventoryPage /></ErrorBoundary></ProtectedRoute>} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-                <CookieBanner />
-                <CELLVIAssistant />
-              </Suspense>
+      <Routes>
+        {/* Public pages */}
+        <Route path="/" element={<Suspense fallback={<PageLoader />}><Index /></Suspense>} />
+        <Route path="/verify" element={<PublicLedgerVerifier />} />
+        <Route path="/demo" element={<Suspense fallback={<PageLoader />}><Demo /></Suspense>} />
+        <Route path="/pqr" element={<Suspense fallback={<PageLoader />}><PQR /></Suspense>} />
+        <Route path="/auth" element={<Suspense fallback={<PageLoader />}><Auth /></Suspense>} />
+        <Route path="/api-docs" element={<Suspense fallback={<PageLoader />}><ApiDocs /></Suspense>} />
+        <Route path="/privacidad" element={<Suspense fallback={<PageLoader />}><Privacidad /></Suspense>} />
+        <Route path="/terminos" element={<Suspense fallback={<PageLoader />}><Terminos /></Suspense>} />
+        <Route path="/dashboard" element={<Navigate to="/auth" replace />} />
+
+        {/* Platform - heavy module, isolated Suspense */}
+        <Route path="/platform" element={
+          <ProtectedRoute>
+            <ErrorBoundary level="page">
+              <Suspense fallback={<PageLoader />}><Platform /></Suspense>
+            </ErrorBoundary>
+          </ProtectedRoute>
+        } />
+
+        {/* Feature routes - non-lazy, no Suspense needed */}
+        <Route path="/tracking" element={<ErrorBoundary level="feature"><TrackingDashboard /></ErrorBoundary>} />
+        <Route path="/planning" element={<ErrorBoundary level="feature"><RoutePlanner /></ErrorBoundary>} />
+        <Route path="/driver" element={<ErrorBoundary level="feature"><DriverRoute /></ErrorBoundary>} />
+
+        {/* Protected lazy routes - each with isolated Suspense */}
+        <Route path="/preoperacional" element={<ProtectedRoute><ErrorBoundary level="feature"><Suspense fallback={<PageLoader />}><ChecklistPage /></Suspense></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/rndc" element={<ProtectedRoute><ErrorBoundary level="feature"><Suspense fallback={<PageLoader />}><RNDCPage /></Suspense></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/mantenimiento" element={<ProtectedRoute><ErrorBoundary level="feature"><MaintenanceDashboard /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/mantenimiento-lista" element={<ProtectedRoute><ErrorBoundary level="feature"><Suspense fallback={<PageLoader />}><MaintenancePage /></Suspense></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/seguridad" element={<ProtectedRoute><ErrorBoundary level="feature"><Suspense fallback={<PageLoader />}><SecurityPage /></Suspense></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/auditoria" element={<ProtectedRoute><ErrorBoundary level="feature"><Suspense fallback={<PageLoader />}><AuditLogPage /></Suspense></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/reportes" element={<ProtectedRoute><ErrorBoundary level="feature"><Suspense fallback={<PageLoader />}><ReportsPage /></Suspense></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/maestro-repuestos" element={<ProtectedRoute><ErrorBoundary level="feature"><Suspense fallback={<PageLoader />}><InventoryPage /></Suspense></ErrorBoundary></ProtectedRoute>} />
+
+        <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFound /></Suspense>} />
+      </Routes>
+      <CookieBanner />
+      <CELLVIAssistant />
     </>
   );
 };

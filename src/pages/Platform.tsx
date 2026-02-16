@@ -39,9 +39,69 @@ const FatigueMonitor = lazy(() => import("@/features/ai/components/FatigueMonito
 const ChatbotInterface = lazy(() => import("@/features/ai/components/ChatbotInterface"));
 
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center h-64" role="status" aria-label="Cargando módulo">
-    <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-    <span className="sr-only">Cargando...</span>
+  <div className="space-y-6 animate-pulse" role="status" aria-label="Cargando módulo">
+    <span className="sr-only">Cargando módulo...</span>
+    {/* Header skeleton */}
+    <div className="flex items-center justify-between">
+      <div className="space-y-2">
+        <div className="h-5 w-48 rounded bg-sidebar-foreground/5" />
+        <div className="h-3 w-32 rounded bg-sidebar-foreground/5" />
+      </div>
+      <div className="h-8 w-32 rounded-lg bg-sidebar-foreground/5" />
+    </div>
+    {/* KPI cards skeleton */}
+    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="rounded-xl p-4 border bg-sidebar border-sidebar-border">
+          <div className="flex items-start justify-between mb-3">
+            <div className="w-9 h-9 rounded-lg bg-sidebar-foreground/5" />
+            <div className="w-12 h-4 rounded bg-sidebar-foreground/5" />
+          </div>
+          <div className="h-6 w-16 rounded bg-sidebar-foreground/5 mb-1" />
+          <div className="h-3 w-20 rounded bg-sidebar-foreground/5" />
+        </div>
+      ))}
+    </div>
+    {/* Content area skeleton */}
+    <div className="grid lg:grid-cols-3 gap-4">
+      <div className="rounded-xl p-4 border bg-sidebar border-sidebar-border space-y-3">
+        <div className="h-4 w-32 rounded bg-sidebar-foreground/5" />
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-sidebar-foreground/5" />
+            <div className="flex-1 h-3 rounded bg-sidebar-foreground/5" />
+            <div className="w-10 h-3 rounded bg-sidebar-foreground/5" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl p-4 border bg-sidebar border-sidebar-border space-y-3">
+        <div className="h-4 w-32 rounded bg-sidebar-foreground/5" />
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-sidebar-foreground/5" />
+            <div className="flex-1 space-y-1">
+              <div className="h-3 w-24 rounded bg-sidebar-foreground/5" />
+              <div className="h-2 w-16 rounded bg-sidebar-foreground/5" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl p-4 border bg-sidebar border-sidebar-border">
+        <div className="h-4 w-32 rounded bg-sidebar-foreground/5 mb-3" />
+        <div className="h-40 rounded bg-sidebar-foreground/5" />
+      </div>
+    </div>
+    {/* Charts skeleton */}
+    <div className="grid lg:grid-cols-2 gap-4">
+      <div className="rounded-xl p-4 border bg-sidebar border-sidebar-border">
+        <div className="h-4 w-48 rounded bg-sidebar-foreground/5 mb-4" />
+        <div className="h-40 rounded bg-sidebar-foreground/5" />
+      </div>
+      <div className="rounded-xl p-4 border bg-sidebar border-sidebar-border">
+        <div className="h-4 w-48 rounded bg-sidebar-foreground/5 mb-4" />
+        <div className="h-40 rounded bg-sidebar-foreground/5" />
+      </div>
+    </div>
   </div>
 );
 
