@@ -1,7 +1,45 @@
-import { memo } from "react";
+import { memo, useEffect, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Car, AlertTriangle, Fuel, Route, Gauge, Shield, TrendingUp, TrendingDown } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area } from "recharts";
 import { formatNumber, formatKm } from "@/lib/demoData";
+
+/* ── Animated Counter (count-up from 0) ────────────────── */
+const AnimatedValue = memo(({ value, suffix = "", prefix = "" }: { value: string | number; suffix?: string; prefix?: string }) => {
+  const [display, setDisplay] = useState(0);
+  const numericValue = typeof value === "string" ? parseFloat(value.replace(/[^0-9.]/g, "")) : value;
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!Number.isFinite(numericValue) || numericValue === 0) {
+      setDisplay(0);
+      return;
+    }
+    let start = 0;
+    const duration = 1000;
+    const startTime = performance.now();
+
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      start = numericValue * eased;
+      setDisplay(Math.round(start));
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(animate);
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [numericValue]);
+
+  if (typeof value === "string" && value === "...") return <>...</>;
+
+  return <>{prefix}{display.toLocaleString("es-CO")}{suffix}</>;
+});
+AnimatedValue.displayName = "AnimatedValue";
 
 /* ── Sparkline mini chart ─────────────────────────────── */
 const Sparkline = memo(({ data, color, height = 32 }: { data: number[]; color: string; height?: number }) => {
@@ -32,7 +70,7 @@ export const KpiCard = memo(({ icon: Icon, label, value, delta, deltaType, color
   color: string;
   sparkData?: number[];
 }) => (
-  <div className="rounded-xl p-4 border bg-sidebar border-sidebar-border group hover:border-sidebar-foreground/20 transition-colors">
+  <div className="rounded-xl p-4 border bg-sidebar border-sidebar-border group hover:border-sidebar-foreground/20 transition-all hover:shadow-lg hover:-translate-y-0.5 duration-300">
     <div className="flex items-start justify-between mb-2">
       <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: `${color}15` }}>
         <Icon className="w-4 h-4" style={{ color }} />
@@ -45,7 +83,9 @@ export const KpiCard = memo(({ icon: Icon, label, value, delta, deltaType, color
         </span>
       )}
     </div>
-    <div className="font-bold text-xl text-sidebar-foreground font-heading leading-none mb-0.5">{value}</div>
+    <div className="font-bold text-xl text-sidebar-foreground font-heading leading-none mb-0.5">
+      <AnimatedValue value={value} />
+    </div>
     <div className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40 font-medium">{label}</div>
     {sparkData && <div className="mt-2 -mx-1"><Sparkline data={sparkData} color={color} /></div>}
   </div>
@@ -71,11 +111,12 @@ export const KPISection = memo(({
   vehicleCount, activeCount, alertCount, inspectionsToday, failedInspections,
   kmToday, kmThisMonth, efficiency, last7DaysKm, loadingStats, loadingVehicles
 }: KPISectionProps) => {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
       <KpiCard
         icon={Car}
-        label="Vehículos"
+        label={t("kpi.vehicles")}
         value={loadingStats ? "..." : vehicleCount}
         delta="+2 sem"
         deltaType="up"
@@ -84,7 +125,7 @@ export const KPISection = memo(({
       />
       <KpiCard
         icon={Gauge}
-        label="En Movimiento"
+        label={t("kpi.moving")}
         value={loadingVehicles ? "..." : activeCount}
         delta={`${Math.round((activeCount / (vehicleCount || 1)) * 100)}%`}
         deltaType="neutral"
@@ -92,7 +133,7 @@ export const KPISection = memo(({
       />
       <KpiCard
         icon={AlertTriangle}
-        label="Alertas (Crit)"
+        label={t("kpi.alertsCrit")}
         value={loadingStats ? "..." : alertCount}
         delta="Pendientes"
         deltaType="down"

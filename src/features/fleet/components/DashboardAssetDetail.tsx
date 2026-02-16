@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Car, MapPin, Fuel, Gauge, Clock, Shield, Thermometer, Signal, ChevronRight, Hash, CheckCircle, Battery, Lock, Unlock, Activity } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Car, MapPin, Fuel, Gauge, Clock, Shield, Thermometer, Signal, ChevronRight, CheckCircle, Battery, Lock, Unlock, Activity, Send, Power, Locate, AlertTriangle, Zap } from "lucide-react";
 import { vehicles } from "@/lib/demoData";
 import { Button } from "@/components/ui/button";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area } from "recharts";
 import { DigitalTwinViewer } from "./DigitalTwinViewer";
+import { toast } from "sonner";
 
 /* ── Mock telemetry timeline for selected vehicle ──── */
 const generateTimeline = (vehicleId: string) => {
@@ -28,8 +29,70 @@ const generateSpeedHistory = () =>
     fuel: Math.round(80 - i * 0.8 + Math.random() * 3),
   }));
 
+/* ── Remote Command Panel ──────────────────────────── */
+const RemoteCommandPanel = ({ vehiclePlate }: { vehiclePlate: string }) => {
+  const [confirmAction, setConfirmAction] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+
+  const commands = [
+    { id: "disable_engine", label: "Deshabilitar Motor", icon: Power, color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20", confirm: true },
+    { id: "lock_doors", label: "Bloquear Puertas", icon: Lock, color: "text-orange-500", bg: "bg-orange-500/10", border: "border-orange-500/20", confirm: true },
+    { id: "unlock_doors", label: "Desbloquear Puertas", icon: Unlock, color: "text-green-500", bg: "bg-green-500/10", border: "border-green-500/20", confirm: false },
+    { id: "request_checkin", label: "Solicitar Check-in", icon: Locate, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", confirm: false },
+    { id: "speed_limit", label: "Límite 80 km/h", icon: Gauge, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", confirm: true },
+    { id: "alert_driver", label: "Alertar Conductor", icon: AlertTriangle, color: "text-yellow-500", bg: "bg-yellow-500/10", border: "border-yellow-500/20", confirm: false },
+  ];
+
+  const executeCommand = useCallback((cmdId: string) => {
+    setSending(true);
+    // Simulate remote command execution
+    setTimeout(() => {
+      setSending(false);
+      setConfirmAction(null);
+      toast.success(`Comando "${cmdId}" enviado a ${vehiclePlate}`);
+    }, 1500);
+  }, [vehiclePlate]);
+
+  return (
+    <div className="rounded-xl border bg-sidebar border-sidebar-border p-4">
+      <h4 className="font-heading font-bold text-sidebar-foreground text-sm mb-3 flex items-center gap-2">
+        <Send className="w-4 h-4 text-gold" /> Comandos Remotos
+      </h4>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {commands.map((cmd) => (
+          <div key={cmd.id}>
+            {confirmAction === cmd.id ? (
+              <div className={`p-2 rounded-lg border ${cmd.border} ${cmd.bg} space-y-1.5`}>
+                <span className="text-[9px] text-sidebar-foreground/50 block">Confirmar acción?</span>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => executeCommand(cmd.id)} disabled={sending} className={`h-6 text-[9px] flex-1 ${cmd.color}`}>
+                    {sending ? "Enviando..." : "Sí"}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setConfirmAction(null)} className="h-6 text-[9px] flex-1 text-sidebar-foreground/40">
+                    No
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => cmd.confirm ? setConfirmAction(cmd.id) : executeCommand(cmd.id)}
+                className={`w-full p-2.5 rounded-lg border ${cmd.border} ${cmd.bg} hover:opacity-80 transition-all flex flex-col items-center gap-1.5`}
+              >
+                <cmd.icon className={`w-4 h-4 ${cmd.color}`} />
+                <span className={`text-[9px] font-bold ${cmd.color}`}>{cmd.label}</span>
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const DashboardAssetDetail = () => {
   const [selectedVehicle, setSelectedVehicle] = useState(vehicles[0] ?? null);
+  const [timelineFilter, setTimelineFilter] = useState<string>("all");
 
   if (!selectedVehicle) {
     return (
@@ -41,6 +104,10 @@ const DashboardAssetDetail = () => {
 
   const timeline = generateTimeline(selectedVehicle.id);
   const speedHistory = generateSpeedHistory();
+
+  const filteredTimeline = timelineFilter === "all"
+    ? timeline
+    : timeline.filter((e) => e.type === timelineFilter);
 
   const statusConfig: Record<string, { color: string; label: string; bg: string }> = {
     activo: { color: "text-green-500", label: "En Movimiento", bg: "bg-green-500/10" },
@@ -68,6 +135,7 @@ const DashboardAssetDetail = () => {
             {vehicles.map((v) => (
               <button
                 key={v.id}
+                type="button"
                 onClick={() => setSelectedVehicle(v)}
                 className={`w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-colors ${selectedVehicle.id === v.id ? "bg-gold/10 border border-gold/30" : "hover:bg-sidebar-foreground/[0.03] border border-transparent"
                   }`}
@@ -89,7 +157,7 @@ const DashboardAssetDetail = () => {
 
         {/* ── Detail panel ──────────────────────────── */}
         <div className="lg:col-span-3 space-y-4">
-          {/* Digital Twin Viewer (NEW) replaces basic header */}
+          {/* Digital Twin Viewer */}
           <div className="rounded-xl border bg-sidebar border-sidebar-border h-[400px] overflow-hidden relative">
             <DigitalTwinViewer vehicleData={selectedVehicle} />
           </div>
@@ -116,6 +184,9 @@ const DashboardAssetDetail = () => {
             </div>
           </div>
 
+          {/* Remote Commands Panel */}
+          <RemoteCommandPanel vehiclePlate={selectedVehicle.plate} />
+
           {/* Speed & Fuel chart */}
           <div className="rounded-xl border bg-sidebar border-sidebar-border p-4">
             <h4 className="font-heading font-bold text-sidebar-foreground text-sm mb-3">Telemetría (24h)</h4>
@@ -139,13 +210,33 @@ const DashboardAssetDetail = () => {
             </div>
           </div>
 
-          {/* Timeline */}
+          {/* Timeline with filter */}
           <div className="rounded-xl border bg-sidebar border-sidebar-border p-4">
-            <h4 className="font-heading font-bold text-sidebar-foreground text-sm mb-4 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-gold" /> Timeline del Día
-            </h4>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-heading font-bold text-sidebar-foreground text-sm flex items-center gap-2">
+                <Clock className="w-4 h-4 text-gold" /> Timeline del Día
+              </h4>
+              <div className="flex items-center gap-1">
+                {[
+                  { key: "all", label: "Todos" },
+                  { key: "speed", label: "Velocidad" },
+                  { key: "fuel_drop", label: "Combustible" },
+                  { key: "geofence_exit", label: "Geocerca" },
+                  { key: "evidence", label: "Evidence" },
+                ].map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setTimelineFilter(f.key)}
+                    className={`px-2 py-0.5 rounded text-[9px] font-bold transition-colors ${timelineFilter === f.key ? "bg-gold/15 text-gold" : "text-sidebar-foreground/30 hover:text-sidebar-foreground/50"}`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="space-y-0">
-              {timeline.map((ev, i) => {
+              {filteredTimeline.map((ev, i) => {
                 const isAlert = ev.type === "speed" || ev.type === "fuel_drop";
                 const isEvidence = ev.type === "evidence";
                 return (
@@ -156,9 +247,9 @@ const DashboardAssetDetail = () => {
                         }`}>
                         {ev.icon}
                       </div>
-                      {i < timeline.length - 1 && <div className="w-px flex-1 bg-sidebar-border min-h-[16px]" />}
+                      {i < filteredTimeline.length - 1 && <div className="w-px flex-1 bg-sidebar-border min-h-[16px]" />}
                     </div>
-                    <div className={`flex-1 pb-4 ${isAlert ? "" : ""}`}>
+                    <div className="flex-1 pb-4">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-mono text-sidebar-foreground/30">{ev.time}</span>
                         <span className={`text-xs font-bold ${isAlert ? "text-red-400" : isEvidence ? "text-gold" : "text-sidebar-foreground"}`}>{ev.label}</span>
@@ -168,6 +259,9 @@ const DashboardAssetDetail = () => {
                   </div>
                 );
               })}
+              {filteredTimeline.length === 0 && (
+                <div className="text-xs text-center py-8 text-sidebar-foreground/20">Sin eventos para este filtro</div>
+              )}
             </div>
           </div>
         </div>

@@ -5,8 +5,8 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 // Importar recursos directamente (bundling) para evitar requests de red
 // En fase Enterprise, usar 'i18next-http-backend' para lazy load.
-import translationES from '@/locales/es/translation.json';
-import translationEN from '@/locales/en/translation.json';
+import translationES from '@/locales/es.json';
+import translationEN from '@/locales/en.json';
 
 // Recursos
 const resources = {

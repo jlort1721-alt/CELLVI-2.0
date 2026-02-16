@@ -73,7 +73,7 @@ const APISection = () => {
                 {t("platform.apiIntegrationTitle")}
               </h3>
               <p className="text-primary-foreground/60 mb-6 leading-relaxed">
-                Connect your existing ERP, CRM, or custom software with our robust RESTful API.
+                {t("platform.apiIntegrationDesc")}
               </p>
 
               <div className="bg-[hsl(222,47%,8%)] rounded-xl border border-gold/10 overflow-hidden shadow-2xl">

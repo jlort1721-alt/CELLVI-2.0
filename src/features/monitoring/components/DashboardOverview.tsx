@@ -1,13 +1,16 @@
-import { useState, useEffect, useCallback, memo } from "react";
-import { Activity, Search, Route } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
+import { Activity, Search, Route, Brain, Cpu, Bell, Zap, CheckCircle, AlertTriangle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useDashboardStats, useFleetStatus, useRecentAlerts } from "@/features/dashboard/hooks/useRealtimeDashboard";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { vehicles, alerts, platformStats, generateTelemetryData, formatNumber } from "@/lib/demoData";
 import { useDeferredSearch } from "@/hooks/useDeferredSearch";
+import { useNotificationStore } from "@/stores/notificationStore";
+import { useUIStore } from "@/stores/uiStore";
 import { KPISection } from "./KPISection";
 import { AlertsTimeline } from "./AlertsTimeline";
 import { FleetStatusTable } from "./FleetStatusTable";
+import NotificationBadge from "./NotificationBadge";
 
 /* ── Shortcuts ────────────────────────────────────────── */
 const shortcuts = [
@@ -17,6 +20,104 @@ const shortcuts = [
   { key: "R", label: "Reportes" },
   { key: "?", label: "Ayuda" },
 ];
+
+/* ── AI Agent Mini Status ─────────────────────────────── */
+const AIAgentMiniPanel = memo(() => {
+  const setActiveModule = useUIStore((s) => s.setActiveModule);
+
+  return (
+    <button
+      type="button"
+      onClick={() => setActiveModule("ai-command-center")}
+      className="rounded-xl p-4 border bg-sidebar border-sidebar-border hover:border-purple-500/30 transition-all group cursor-pointer text-left w-full"
+    >
+      <div className="flex items-center gap-3 mb-3">
+        <div className="p-2 rounded-lg bg-purple-500/10">
+          <Brain className="w-4 h-4 text-purple-400" />
+        </div>
+        <div className="flex-1">
+          <div className="text-xs font-bold text-sidebar-foreground flex items-center gap-2">
+            Agente IA Autónomo
+            <span className="flex items-center gap-1 text-[8px] font-bold text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> ACTIVO
+            </span>
+          </div>
+          <div className="text-[9px] text-sidebar-foreground/30 mt-0.5">10,247 dispositivos monitoreados</div>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="flex flex-col items-center p-2 rounded-lg bg-sidebar-foreground/[0.02]">
+          <Cpu className="w-3 h-3 text-blue-400 mb-1" />
+          <span className="text-[10px] font-bold text-sidebar-foreground">~450</span>
+          <span className="text-[7px] text-sidebar-foreground/25 uppercase">eventos/s</span>
+        </div>
+        <div className="flex flex-col items-center p-2 rounded-lg bg-sidebar-foreground/[0.02]">
+          <CheckCircle className="w-3 h-3 text-green-500 mb-1" />
+          <span className="text-[10px] font-bold text-sidebar-foreground">92%</span>
+          <span className="text-[7px] text-sidebar-foreground/25 uppercase">auto-res</span>
+        </div>
+        <div className="flex flex-col items-center p-2 rounded-lg bg-sidebar-foreground/[0.02]">
+          <Zap className="w-3 h-3 text-gold mb-1" />
+          <span className="text-[10px] font-bold text-sidebar-foreground">25ms</span>
+          <span className="text-[7px] text-sidebar-foreground/25 uppercase">resp</span>
+        </div>
+      </div>
+      <div className="mt-2 text-[8px] text-purple-400 font-bold uppercase tracking-widest group-hover:text-purple-300 transition-colors text-center">
+        Abrir Centro de Comando IA →
+      </div>
+    </button>
+  );
+});
+AIAgentMiniPanel.displayName = "AIAgentMiniPanel";
+
+/* ── Notification Summary Widget ─────────────────────── */
+const NotificationSummaryWidget = memo(() => {
+  const { notifications, unreadCount } = useNotificationStore();
+  const setActiveModule = useUIStore((s) => s.setActiveModule);
+
+  const counts = useMemo(() => ({
+    critical: notifications.filter((n) => n.status === "new" && n.severity === "critical").length,
+    high: notifications.filter((n) => n.status === "new" && n.severity === "high").length,
+    total: unreadCount,
+  }), [notifications, unreadCount]);
+
+  return (
+    <button
+      type="button"
+      onClick={() => setActiveModule("alerts")}
+      className="rounded-xl p-4 border bg-sidebar border-sidebar-border hover:border-gold/30 transition-all text-left w-full"
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <div className="p-2 rounded-lg bg-gold/10">
+          <Bell className="w-4 h-4 text-gold" />
+        </div>
+        <div>
+          <div className="text-xs font-bold text-sidebar-foreground">Notificaciones</div>
+          <div className="text-[9px] text-sidebar-foreground/30">{counts.total} sin leer</div>
+        </div>
+      </div>
+      {counts.critical > 0 && (
+        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-red-500/5 border border-red-500/10 mb-2">
+          <AlertTriangle className="w-3 h-3 text-red-500" />
+          <span className="text-[10px] font-bold text-red-500">{counts.critical} alertas críticas</span>
+        </div>
+      )}
+      {counts.high > 0 && (
+        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-orange-500/5 border border-orange-500/10">
+          <AlertTriangle className="w-3 h-3 text-orange-500" />
+          <span className="text-[10px] font-bold text-orange-500">{counts.high} alertas altas</span>
+        </div>
+      )}
+      {counts.total === 0 && (
+        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-green-500/5 border border-green-500/10">
+          <CheckCircle className="w-3 h-3 text-green-500" />
+          <span className="text-[10px] font-bold text-green-500">Todo en orden</span>
+        </div>
+      )}
+    </button>
+  );
+});
+NotificationSummaryWidget.displayName = "NotificationSummaryWidget";
 
 /* ── Main Dashboard ───────────────────────────────────── */
 const DashboardOverview = memo(() => {
@@ -51,9 +152,9 @@ const DashboardOverview = memo(() => {
         severity: alert.severity === 'high' ? 'critical' : alert.severity
       }));
 
-  // Realistic telemetry data
-  const telemetryData = generateTelemetryData(30);
-  const last7Days = telemetryData.slice(-7);
+  // Memoize telemetry data
+  const telemetryData = useMemo(() => generateTelemetryData(30), []);
+  const last7Days = useMemo(() => telemetryData.slice(-7), [telemetryData]);
 
   // Safe defaults with demo data fallback
   const vehicleCount = stats?.vehicles || platformStats.totalVehicles;
@@ -63,7 +164,7 @@ const DashboardOverview = memo(() => {
   const efficiency = stats?.efficiency ? (stats.efficiency * 100) : platformStats.fuelSavings;
   const kmToday = telemetryData[telemetryData.length - 1]?.distanceKm || 8247;
 
-  // Filter logic - use deferredQuery for non-blocking filtering
+  // Filter logic
   const filteredVehicles = deferredQuery
     ? displayVehicles.filter((v: any) =>
       v.plate.toLowerCase().includes(deferredQuery.toLowerCase()) ||
@@ -86,6 +187,7 @@ const DashboardOverview = memo(() => {
 
         {/* Search & Actions */}
         <div className="flex items-center gap-2">
+          <NotificationBadge />
           <div className="relative">
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-sidebar-foreground/30" />
             <input
@@ -97,6 +199,7 @@ const DashboardOverview = memo(() => {
             />
           </div>
           <button
+            type="button"
             onClick={() => setShowShortcuts((v) => !v)}
             className="px-2 py-1.5 rounded-lg text-[10px] font-bold text-sidebar-foreground/40 bg-sidebar-accent border border-sidebar-border hover:border-sidebar-foreground/20"
           >
@@ -109,8 +212,8 @@ const DashboardOverview = memo(() => {
       {showShortcuts && (
         <div className="rounded-xl p-4 border bg-sidebar-accent border-gold/20 animate-in fade-in mb-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-heading font-bold text-sidebar-foreground text-sm">⌨️ Atajos de Teclado</h3>
-            <button onClick={() => setShowShortcuts(false)} className="text-sidebar-foreground/40 text-xs">Cerrar</button>
+            <h3 className="font-heading font-bold text-sidebar-foreground text-sm">Atajos de Teclado</h3>
+            <button type="button" onClick={() => setShowShortcuts(false)} className="text-sidebar-foreground/40 text-xs">Cerrar</button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
             {shortcuts.map((s) => (
@@ -141,7 +244,7 @@ const DashboardOverview = memo(() => {
       {/* ── Main Content Grid ─────────────────────────── */}
       <div className="grid lg:grid-cols-3 gap-4">
         {/* Realtime Alerts Timeline */}
-        <AlertsTimeline 
+        <AlertsTimeline
           alerts={displayAlerts}
           loadingAlerts={loadingAlerts}
         />
@@ -152,6 +255,12 @@ const DashboardOverview = memo(() => {
           activeCount={activeCount}
           loadingVehicles={loadingVehicles}
         />
+
+        {/* AI Agent + Notifications Widget Column */}
+        <div className="space-y-4">
+          <AIAgentMiniPanel />
+          <NotificationSummaryWidget />
+        </div>
       </div>
 
       {/* ── Operations Charts Grid ── */}

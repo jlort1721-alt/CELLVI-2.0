@@ -37,6 +37,7 @@ const AsegurarIADashboard = lazy(() => import("@/features/asegurar-ia/pages/Aseg
 const RouteOptimizerPanel = lazy(() => import("@/features/ai/components/RouteOptimizerPanel"));
 const FatigueMonitor = lazy(() => import("@/features/ai/components/FatigueMonitor"));
 const ChatbotInterface = lazy(() => import("@/features/ai/components/ChatbotInterface"));
+const AICommandCenter = lazy(() => import("@/features/ai/components/AICommandCenter"));
 
 const LoadingFallback = () => (
   <div className="space-y-6 animate-pulse" role="status" aria-label="Cargando módulo">
@@ -175,6 +176,7 @@ const Platform = () => {
       case "route-genius": return <RouteOptimizerPanel />;
       case "vision-guard": return <FatigueMonitor />;
       case "neuro-core": return <ChatbotInterface />;
+      case "ai-command-center": return <AICommandCenter />;
       default: return <DashboardOverview />;
     }
   };
@@ -208,6 +210,8 @@ const Platform = () => {
       'route-genius': 'Route Genius',
       'vision-guard': 'Vision Guard',
       'neuro-core': 'Neuro-Core',
+      'ai-command-center': 'Centro de Comando IA',
+      'notification-center': 'Centro de Notificaciones',
     };
 
     const moduleName = moduleNames[activeModule] || 'Vista General';

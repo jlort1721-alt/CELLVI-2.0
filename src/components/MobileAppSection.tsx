@@ -34,7 +34,7 @@ const MobileAppSection = () => {
                                 </div>
                                 <span className="text-xs font-bold">4.9/5</span>
                             </div>
-                            <div className="text-xs text-muted-foreground">Driver Rating</div>
+                            <div className="text-xs text-muted-foreground">{t("mobileApp.driverRating")}</div>
                         </div>
                     </motion.div>
 
@@ -46,28 +46,28 @@ const MobileAppSection = () => {
                     >
                         <div className="inline-flex items-center gap-2 bg-primary/10 rounded-full px-4 py-1.5 mb-6">
                             <Smartphone className="w-4 h-4 text-primary" />
-                            <span className="text-sm font-medium text-primary">Mobile First Control</span>
+                            <span className="text-sm font-medium text-primary">{t("mobileApp.badgeText")}</span>
                         </div>
 
                         <h2 className="font-heading font-extrabold text-3xl md:text-4xl lg:text-5xl text-foreground mb-6">
-                            {t("app.title", "Control Total en la Palma de tu Mano")}
+                            {t("mobileApp.title")}
                         </h2>
                         <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                            {t("app.description", "Empodera a tus conductores y supervisores con nuestra App móvil nativa. Gestión de rutas, inspecciones pre-operacionales y comunicación en tiempo real, incluso sin conexión.")}
+                            {t("mobileApp.description")}
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
                             <Button size="lg" className="h-14 px-8 bg-foreground text-background hover:bg-foreground/90 rounded-xl flex items-center gap-3">
                                 <Download className="w-6 h-6" />
                                 <div className="text-left">
-                                    <div className="text-[10px] uppercase font-bold tracking-wider opacity-70">Available on</div>
+                                    <div className="text-[10px] uppercase font-bold tracking-wider opacity-70">{t("mobileApp.availableOn")}</div>
                                     <div className="text-sm font-bold">App Store</div>
                                 </div>
                             </Button>
                             <Button size="lg" variant="outline" className="h-14 px-8 border-foreground/20 rounded-xl flex items-center gap-3 hover:bg-foreground/5">
                                 <Download className="w-6 h-6" />
                                 <div className="text-left">
-                                    <div className="text-[10px] uppercase font-bold tracking-wider opacity-70">Get it on</div>
+                                    <div className="text-[10px] uppercase font-bold tracking-wider opacity-70">{t("mobileApp.getItOn")}</div>
                                     <div className="text-sm font-bold">Google Play</div>
                                 </div>
                             </Button>

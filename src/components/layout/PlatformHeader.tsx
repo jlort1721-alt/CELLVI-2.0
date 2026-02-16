@@ -8,6 +8,7 @@ import { useSyncStatusStore } from "@/stores/syncStatusStore";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { NotificationCenter, getInitialUnreadCount } from "@/features/notifications/NotificationCenter";
+import ThemeToggle from "@/components/ThemeToggle";
 
 /* ── Module label map for breadcrumbs ─────────────────── */
 const MODULE_LABELS: Record<string, { section: string; label: string }> = {
@@ -137,7 +138,7 @@ const UserMenu = memo(({ onSignOut }: { onSignOut: () => void }) => {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-56 bg-navy border border-gold/20 rounded-lg shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 top-full mt-1 w-56 bg-sidebar border border-sidebar-border rounded-lg shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
           {/* User Info */}
           <div className="px-3 py-2.5 border-b border-gold/10">
             <div className="text-primary-foreground text-xs font-semibold">{profile?.display_name || "Usuario"}</div>
@@ -207,7 +208,7 @@ const PlatformHeader = memo(() => {
   }, [signOut, navigate]);
 
   return (
-    <header className="h-14 flex items-center justify-between px-4 border-b flex-shrink-0 z-20 bg-navy border-gold/20">
+    <header className="h-14 flex items-center justify-between px-4 border-b flex-shrink-0 z-20 bg-sidebar border-sidebar-border">
       {/* Left: Logo + Breadcrumbs */}
       <div className="flex items-center gap-3">
         <button type="button" className="lg:hidden text-primary-foreground" onClick={toggleSidebar} aria-label="Toggle menu">
@@ -259,6 +260,9 @@ const PlatformHeader = memo(() => {
           )}
         </button>
         <NotificationCenter open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+
+        {/* Theme Toggle */}
+        <ThemeToggle />
 
         {/* Separator */}
         <div className="hidden md:block w-px h-6 bg-gold/15" />

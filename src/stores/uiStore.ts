@@ -10,7 +10,8 @@ export type ActiveModule =
   | 'billing' | 'admin'
   | 'evidence-verifier' | 'gateway-monitor'
   | 'asegurar-ia'
-  | 'route-genius' | 'vision-guard' | 'neuro-core';
+  | 'route-genius' | 'vision-guard' | 'neuro-core'
+  | 'ai-command-center' | 'notification-center';
 
 interface UIState {
   sidebarOpen: boolean;

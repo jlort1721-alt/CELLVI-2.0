@@ -72,8 +72,8 @@ const SecuritySection = () => {
             <div className="absolute -bottom-6 -left-6 bg-card border border-border p-4 rounded-xl shadow-xl z-20 flex items-center gap-3">
               <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
               <div>
-                <div className="text-xs font-bold text-foreground">Jamming Detected</div>
-                <div className="text-[10px] text-muted-foreground">Action: Motor Cut-off triggered</div>
+                <div className="text-xs font-bold text-foreground">{t("security.jammingDetected")}</div>
+                <div className="text-[10px] text-muted-foreground">{t("security.jammingAction")}</div>
               </div>
             </div>
           </motion.div>

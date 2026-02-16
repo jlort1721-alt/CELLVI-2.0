@@ -1,4 +1,5 @@
 import { memo, useState, useMemo, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Bell, AlertTriangle, Info, CheckCircle, X, Filter,
   Trash2, CheckCheck, Clock,

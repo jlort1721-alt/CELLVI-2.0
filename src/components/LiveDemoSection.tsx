@@ -1,267 +1,238 @@
 import { motion, useInView } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
-import { MapPin, Truck, Activity, Zap, Gauge, Fuel, Battery, Signal } from "lucide-react";
+import { useRef, useState, useEffect, memo } from "react";
+import { useTranslation } from "react-i18next";
+import { MapPin, Truck, Activity, Zap, Gauge, Fuel, Battery, Signal, Clock, ArrowRight } from "lucide-react";
 import { vehicles } from "@/lib/demoData";
+import { Button } from "@/components/ui/button";
+import { useLandingStore } from "@/stores/landingStore";
 
+/* ── Status helpers ───────────────────────────────── */
+const statusKeys: Record<string, { color: string; bg: string; i18nKey: string }> = {
+  activo: { color: "bg-emerald-500", bg: "bg-emerald-500/10", i18nKey: "liveDemo.inMovement" },
+  detenido: { color: "bg-blue-400", bg: "bg-blue-500/10", i18nKey: "liveDemo.stopped" },
+  alerta: { color: "bg-red-500", bg: "bg-red-500/10", i18nKey: "liveDemo.activeAlert" },
+  apagado: { color: "bg-gray-500", bg: "bg-gray-500/10", i18nKey: "liveDemo.off" },
+};
+
+/* ── Vehicle List Item ────────────────────────────── */
+const VehicleListItem = memo(({ vehicle, selected, onSelect, pulse, t }: {
+  vehicle: typeof vehicles[0];
+  selected: boolean;
+  onSelect: () => void;
+  pulse: boolean;
+  t: (key: string) => string;
+}) => {
+  const st = statusKeys[vehicle.status] ?? statusKeys.apagado;
+  return (
+    <button
+      onClick={onSelect}
+      className={`w-full p-3.5 text-left transition-all rounded-lg ${
+        selected ? "bg-gold/10 border border-gold/30" : "hover:bg-muted/50 border border-transparent"
+      }`}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="font-bold text-foreground text-sm">{vehicle.plate}</span>
+        <div className="flex items-center gap-1.5">
+          <div className={`w-2 h-2 rounded-full ${st.color} ${pulse && vehicle.status === "activo" ? "animate-ping" : ""}`} />
+          <span className="text-[10px] text-muted-foreground font-mono">{vehicle.lastUpdate}</span>
+        </div>
+      </div>
+      <p className="text-[11px] text-muted-foreground mb-1.5">{vehicle.driver}</p>
+      <div className="flex items-center gap-2">
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${st.bg} ${vehicle.status === "activo" ? "text-emerald-600 dark:text-emerald-400" : vehicle.status === "alerta" ? "text-red-600 dark:text-red-400" : vehicle.status === "detenido" ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-400"}`}>
+          {t(st.i18nKey)}
+        </span>
+        {vehicle.speed > 0 && <span className="text-[10px] text-muted-foreground font-mono">{vehicle.speed} km/h</span>}
+      </div>
+    </button>
+  );
+});
+VehicleListItem.displayName = "VehicleListItem";
+
+/* ── Telemetry Gauge ──────────────────────────────── */
+const TelemetryCard = memo(({ icon: Icon, label, value, unit, color, progress }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string | number;
+  unit: string;
+  color: string;
+  progress?: number;
+}) => (
+  <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
+    <div className="flex items-center gap-2 mb-2">
+      <Icon className={`w-4 h-4 ${color}`} />
+      <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">{label}</span>
+    </div>
+    <p className="font-heading font-bold text-2xl text-foreground leading-none">
+      {value}<span className="text-sm text-muted-foreground ml-1 font-normal">{unit}</span>
+    </p>
+    {progress !== undefined && (
+      <div className="w-full bg-muted rounded-full h-1.5 mt-2.5">
+        <div className={`h-1.5 rounded-full transition-all duration-500 ${progress > 50 ? "bg-emerald-500" : progress > 25 ? "bg-yellow-500" : "bg-red-500"}`} style={{ width: `${Math.min(progress, 100)}%` }} />
+      </div>
+    )}
+  </div>
+));
+TelemetryCard.displayName = "TelemetryCard";
+
+/* ── Main Section ─────────────────────────────────── */
 const LiveDemoSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const [selectedVehicle, setSelectedVehicle] = useState(vehicles[0]);
-  const [liveUpdate, setLiveUpdate] = useState(false);
+  const { t } = useTranslation();
+  const selectedVehicleId = useLandingStore((s) => s.selectedVehicleId);
+  const setSelectedVehicleId = useLandingStore((s) => s.setSelectedVehicleId);
+  const [pulse, setPulse] = useState(false);
 
-  // Simulate live updates
+  const selectedVehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? vehicles[0];
+
   useEffect(() => {
     const interval = setInterval(() => {
-      setLiveUpdate(true);
-      setTimeout(() => setLiveUpdate(false), 500);
+      setPulse(true);
+      setTimeout(() => setPulse(false), 500);
     }, 3000);
-
     return () => clearInterval(interval);
   }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "activo":
-        return "bg-green-500";
-      case "detenido":
-        return "bg-yellow-500";
-      case "alerta":
-        return "bg-red-500";
-      case "apagado":
-        return "bg-gray-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "activo":
-        return "En Movimiento";
-      case "detenido":
-        return "Detenido";
-      case "alerta":
-        return "Alerta Activa";
-      case "apagado":
-        return "Apagado";
-      default:
-        return status;
-    }
-  };
+  const sv = selectedVehicle;
+  const st = statusKeys[sv.status] ?? statusKeys.apagado;
 
   return (
     <section className="py-20 md:py-28 bg-section-gradient relative overflow-hidden" ref={ref}>
-      {/* Background decoration */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none">
-        <div className="absolute top-[20%] right-[10%] w-96 h-96 bg-blue-500 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[20%] left-[10%] w-96 h-96 bg-gold rounded-full blur-[120px]" />
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[20%] right-[10%] w-96 h-96 bg-blue-500/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-[20%] left-[10%] w-96 h-96 bg-gold/5 rounded-full blur-[150px]" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-14"
         >
-          <span className="text-sm font-heading font-bold tracking-widest text-gold uppercase">
-            Demo en Vivo
-          </span>
-          <h2 className="font-heading font-extrabold text-3xl md:text-4xl lg:text-5xl text-foreground mt-3">
-            Rastreo GPS en Tiempo Real
+          <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-full px-4 py-1.5 mb-6">
+            <div className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+            </div>
+            <span className="text-[11px] font-bold text-blue-400 uppercase tracking-widest">{t("liveDemo.badge")}</span>
+          </div>
+          <h2 className="font-heading font-extrabold text-3xl md:text-4xl lg:text-5xl text-foreground">
+            {t("liveDemo.title")}
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto mt-4 text-lg">
-            Monitorea tu flota como lo hacen nuestros clientes. Datos reales actualizados cada 30 segundos.
+          <p className="text-muted-foreground max-w-2xl mx-auto mt-4 text-lg leading-relaxed">
+            {t("liveDemo.subtitle")}
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+        <div className="grid lg:grid-cols-3 gap-5 max-w-7xl mx-auto">
           {/* Vehicle List */}
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
+            initial={{ opacity: 0, x: -30 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
             className="lg:col-span-1"
           >
-            <div className="bg-card rounded-xl border border-border overflow-hidden">
-              <div className="p-4 border-b border-border bg-muted/30">
-                <h3 className="font-heading font-bold text-foreground flex items-center gap-2">
-                  <Truck className="w-5 h-5 text-gold" />
-                  Flota Demo ({vehicles.length} vehículos)
+            <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col">
+              <div className="p-4 border-b border-border bg-muted/20 flex items-center justify-between">
+                <h3 className="font-heading font-bold text-foreground text-sm flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-gold" />
+                  {t("liveDemo.demoFleet", { count: vehicles.length })}
                 </h3>
               </div>
-              <div className="divide-y divide-border max-h-[600px] overflow-y-auto">
+              <div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[520px]">
                 {vehicles.map((vehicle) => (
-                  <button
+                  <VehicleListItem
                     key={vehicle.id}
-                    onClick={() => setSelectedVehicle(vehicle)}
-                    className={`w-full p-4 text-left transition-all hover:bg-muted/50 ${
-                      selectedVehicle.id === vehicle.id ? 'bg-gold/10 border-l-4 border-gold' : ''
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-foreground">{vehicle.plate}</span>
-                      <div className="flex items-center gap-1.5">
-                        <div className={`w-2 h-2 rounded-full ${getStatusColor(vehicle.status)} ${liveUpdate ? 'animate-ping' : ''}`} />
-                        <span className="text-xs text-muted-foreground">{vehicle.lastUpdate}</span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-1">{vehicle.driver}</p>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        vehicle.status === 'activo' ? 'bg-green-500/10 text-green-600' :
-                        vehicle.status === 'alerta' ? 'bg-red-500/10 text-red-600' :
-                        vehicle.status === 'detenido' ? 'bg-yellow-500/10 text-yellow-600' :
-                        'bg-gray-500/10 text-gray-600'
-                      }`}>
-                        {getStatusText(vehicle.status)}
-                      </span>
-                      {vehicle.speed > 0 && (
-                        <span className="text-xs text-muted-foreground">{vehicle.speed} km/h</span>
-                      )}
-                    </div>
-                  </button>
+                    vehicle={vehicle}
+                    selected={sv.id === vehicle.id}
+                    onSelect={() => setSelectedVehicleId(vehicle.id)}
+                    pulse={pulse}
+                    t={t}
+                  />
                 ))}
               </div>
             </div>
           </motion.div>
 
-          {/* Vehicle Details */}
+          {/* Vehicle Detail */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
             className="lg:col-span-2"
           >
             <div className="bg-card rounded-xl border border-border overflow-hidden">
               {/* Header */}
-              <div className="p-6 border-b border-border bg-muted/30">
+              <div className="p-5 border-b border-border bg-muted/20">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-heading font-bold text-2xl text-foreground mb-1">
-                      {selectedVehicle.plate}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">{selectedVehicle.driver}</p>
+                    <h3 className="font-heading font-bold text-xl text-foreground mb-0.5">{sv.plate}</h3>
+                    <p className="text-sm text-muted-foreground">{sv.driver} &middot; {sv.type}</p>
                   </div>
-                  <div className={`px-4 py-2 rounded-lg ${getStatusColor(selectedVehicle.status)} text-white text-sm font-bold flex items-center gap-2`}>
-                    <Activity className="w-4 h-4" />
-                    {getStatusText(selectedVehicle.status)}
+                  <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg ${st.bg}`}>
+                    <Activity className={`w-3.5 h-3.5 ${sv.status === "activo" ? "text-emerald-500" : sv.status === "alerta" ? "text-red-500" : "text-blue-400"}`} />
+                    <span className={`text-xs font-bold ${sv.status === "activo" ? "text-emerald-600 dark:text-emerald-400" : sv.status === "alerta" ? "text-red-600 dark:text-red-400" : "text-blue-600 dark:text-blue-400"}`}>
+                      {t(st.i18nKey)}
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Map Placeholder */}
-              <div className="relative h-64 bg-muted/20">
+              <div className="relative h-56 bg-muted/10 border-b border-border">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <MapPin className="w-12 h-12 text-gold mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Lat: {selectedVehicle.lat.toFixed(4)}, Lng: {selectedVehicle.lng.toFixed(4)}
+                    <div className="w-14 h-14 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-3">
+                      <MapPin className="w-7 h-7 text-gold" />
+                    </div>
+                    <p className="text-sm text-muted-foreground font-mono">
+                      {sv.lat.toFixed(4)}, {sv.lng.toFixed(4)}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">{selectedVehicle.route}</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">{sv.route}</p>
                   </div>
                 </div>
-                <div className="absolute top-4 right-4">
-                  <div className="bg-card rounded-lg px-3 py-2 shadow-lg border border-border flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full bg-green-500 ${liveUpdate ? 'animate-pulse' : ''}`} />
-                    <span className="text-xs font-medium text-foreground">Actualización en vivo</span>
+                <div className="absolute top-3 right-3">
+                  <div className="bg-card/90 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-border flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full bg-emerald-500 ${pulse ? "animate-pulse" : ""}`} />
+                    <span className="text-[10px] font-semibold text-foreground">{t("liveDemo.liveUpdate")}</span>
+                  </div>
+                </div>
+                <div className="absolute bottom-3 left-3">
+                  <div className="bg-card/90 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-border flex items-center gap-2">
+                    <Clock className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-[10px] text-muted-foreground">{sv.lastUpdate}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Telemetry */}
-              <div className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-muted/30 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Gauge className="w-4 h-4 text-blue-500" />
-                      <span className="text-xs text-muted-foreground">Velocidad</span>
-                    </div>
-                    <p className="font-heading font-bold text-2xl text-foreground">
-                      {selectedVehicle.speed}
-                      <span className="text-sm text-muted-foreground ml-1">km/h</span>
-                    </p>
-                  </div>
-
-                  <div className="bg-muted/30 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Fuel className="w-4 h-4 text-orange-500" />
-                      <span className="text-xs text-muted-foreground">Combustible</span>
-                    </div>
-                    <p className="font-heading font-bold text-2xl text-foreground">
-                      {selectedVehicle.fuel}
-                      <span className="text-sm text-muted-foreground ml-1">%</span>
-                    </p>
-                    <div className="w-full bg-muted rounded-full h-1.5 mt-2">
-                      <div
-                        className={`h-1.5 rounded-full ${
-                          selectedVehicle.fuel > 50 ? 'bg-green-500' :
-                          selectedVehicle.fuel > 30 ? 'bg-yellow-500' : 'bg-red-500'
-                        }`}
-                        style={{ width: `${selectedVehicle.fuel}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-muted/30 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Battery className="w-4 h-4 text-green-500" />
-                      <span className="text-xs text-muted-foreground">Batería</span>
-                    </div>
-                    <p className="font-heading font-bold text-2xl text-foreground">
-                      {selectedVehicle.battery}
-                      <span className="text-sm text-muted-foreground ml-1">%</span>
-                    </p>
-                    <div className="w-full bg-muted rounded-full h-1.5 mt-2">
-                      <div
-                        className="h-1.5 rounded-full bg-green-500"
-                        style={{ width: `${selectedVehicle.battery}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-muted/30 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Signal className="w-4 h-4 text-purple-500" />
-                      <span className="text-xs text-muted-foreground">Señal</span>
-                    </div>
-                    <p className="font-heading font-bold text-2xl text-foreground">
-                      {selectedVehicle.signal}
-                      <span className="text-sm text-muted-foreground ml-1">/5</span>
-                    </p>
-                    <div className="flex gap-1 mt-2">
-                      {[1, 2, 3, 4, 5].map((bar) => (
-                        <div
-                          key={bar}
-                          className={`flex-1 h-1.5 rounded-full ${
-                            bar <= selectedVehicle.signal ? 'bg-purple-500' : 'bg-muted'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
+              {/* Telemetry Grid */}
+              <div className="p-5">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <TelemetryCard icon={Gauge} label={t("liveDemo.speed")} value={sv.speed} unit="km/h" color="text-blue-500" />
+                  <TelemetryCard icon={Fuel} label={t("liveDemo.fuel")} value={sv.fuel} unit="%" color="text-orange-500" progress={sv.fuel} />
+                  <TelemetryCard icon={Battery} label={t("liveDemo.battery")} value={sv.battery} unit="%" color="text-emerald-500" progress={sv.battery} />
+                  <TelemetryCard icon={Signal} label={t("liveDemo.signal")} value={`${sv.signal}/5`} unit="" color="text-purple-500" />
                 </div>
 
                 {/* Additional Info */}
-                <div className="mt-6 grid grid-cols-3 gap-4 pt-6 border-t border-border">
+                <div className="mt-4 grid grid-cols-3 gap-3 pt-4 border-t border-border">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Tipo</p>
-                    <p className="text-sm font-medium text-foreground">{selectedVehicle.type}</p>
+                    <p className="text-[10px] text-muted-foreground mb-0.5 uppercase tracking-wider">{t("liveDemo.mileage")}</p>
+                    <p className="text-sm font-bold text-foreground">{sv.km.toLocaleString()} km</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Kilometraje</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {selectedVehicle.km.toLocaleString()} km
+                    <p className="text-[10px] text-muted-foreground mb-0.5 uppercase tracking-wider">{t("liveDemo.engine")}</p>
+                    <p className={`text-sm font-bold ${sv.engineOn ? "text-emerald-500" : "text-muted-foreground"}`}>
+                      {sv.engineOn ? t("liveDemo.engineOn") : t("liveDemo.engineOff")}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Motor</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {selectedVehicle.engineOn ? (
-                        <span className="text-green-500">Encendido</span>
-                      ) : (
-                        <span className="text-gray-500">Apagado</span>
-                      )}
+                    <p className="text-[10px] text-muted-foreground mb-0.5 uppercase tracking-wider">{t("liveDemo.signal")}</p>
+                    <p className={`text-sm font-bold ${sv.locked ? "text-emerald-500" : "text-yellow-500"}`}>
+                      {sv.signal}/5
                     </p>
                   </div>
                 </div>
@@ -272,21 +243,27 @@ const LiveDemoSection = () => {
 
         {/* CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.6 }}
           className="mt-12 text-center"
         >
-          <p className="text-muted-foreground mb-4">
-            ¿Quieres ver esto en acción con tu propia flota?
-          </p>
-          <a
-            href="/demo"
-            className="inline-flex items-center gap-2 bg-gold text-white px-8 py-3 rounded-lg font-heading font-bold hover:bg-gold/90 transition-colors"
-          >
-            <Zap className="w-5 h-5" />
-            Solicitar Demo Personalizada
-          </a>
+          <p className="text-muted-foreground mb-5">{t("liveDemo.ctaText")}</p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Button asChild size="lg" className="bg-gradient-to-r from-gold to-yellow-500 font-heading font-bold text-navy hover:from-gold/90 hover:to-yellow-500/90 shadow-[0_0_25px_rgba(212,175,55,0.2)] group">
+              <a href="/demo">
+                <Zap className="w-4 h-4 mr-2" />
+                {t("liveDemo.ctaButton")}
+                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
+              </a>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-border hover:bg-muted font-heading font-semibold group">
+              <a href="#pricing">
+                {t("pricing.cta")}
+                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
+              </a>
+            </Button>
+          </div>
         </motion.div>
       </div>
     </section>

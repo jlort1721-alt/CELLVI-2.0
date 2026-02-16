@@ -2,6 +2,7 @@ import { lazy, Suspense, memo } from "react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import PlatformStatsSection from "@/components/PlatformStatsSection";
+import ScrollProgress from "@/components/ScrollProgress";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
@@ -17,6 +18,7 @@ const SecuritySection = lazy(() => import("@/components/SecuritySection"));
 const APISection = lazy(() => import("@/components/APISection"));
 const UseCasesSection = lazy(() => import("@/components/UseCasesSection"));
 const PricingSection = lazy(() => import("@/components/PricingSection"));
+const PricingCalculator = lazy(() => import("@/components/PricingCalculator"));
 const FAQSection = lazy(() => import("@/components/FAQSection"));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
 const GallerySection = lazy(() => import("@/components/GallerySection"));
@@ -24,6 +26,7 @@ const PoliciesSection = lazy(() => import("@/components/PoliciesSection"));
 const ClientsSection = lazy(() => import("@/components/ClientsSection"));
 const BlogSection = lazy(() => import("@/components/BlogSection"));
 const ContactSection = lazy(() => import("@/components/ContactSection"));
+const CTABanner = lazy(() => import("@/components/CTABanner"));
 const FAQChatbot = lazy(() => import("@/components/FAQChatbot"));
 const InstallPWA = lazy(() => import("@/components/InstallPWA"));
 
@@ -40,7 +43,6 @@ const Index = memo(() => {
     enabled: true,
     trackWebVitals: true,
     onReport: (metrics) => {
-      // Log to analytics in production
       if (metrics.LCP && metrics.LCP > 2500) {
         console.warn('[Performance] LCP is high:', metrics.LCP);
       }
@@ -49,6 +51,7 @@ const Index = memo(() => {
 
   return (
     <div className="min-h-screen bg-background">
+      <ScrollProgress />
       <Navbar />
       <main id="main-content" role="main" tabIndex={-1}>
         {/* Above the fold - load immediately */}
@@ -70,6 +73,17 @@ const Index = memo(() => {
 
         <Suspense fallback={<SectionLoader />}>
           <ServicesSection />
+        </Suspense>
+
+        {/* CTA Banner after Services */}
+        <Suspense fallback={null}>
+          <CTABanner
+            headingKey="cta.midPageHeading"
+            subtextKey="cta.midPageSubtext"
+            ctaKey="cta.midPageButton"
+            ctaHref="#pricing"
+            variant="gold"
+          />
         </Suspense>
 
         <Suspense fallback={<SectionLoader />}>
@@ -94,6 +108,21 @@ const Index = memo(() => {
 
         <Suspense fallback={<SectionLoader />}>
           <PricingSection />
+        </Suspense>
+
+        <Suspense fallback={<SectionLoader />}>
+          <PricingCalculator />
+        </Suspense>
+
+        {/* CTA Banner after Pricing */}
+        <Suspense fallback={null}>
+          <CTABanner
+            headingKey="cta.preContactHeading"
+            subtextKey="cta.preContactSubtext"
+            ctaKey="cta.preContactButton"
+            ctaHref="#contacto"
+            variant="navy"
+          />
         </Suspense>
 
         <Suspense fallback={<SectionLoader />}>
