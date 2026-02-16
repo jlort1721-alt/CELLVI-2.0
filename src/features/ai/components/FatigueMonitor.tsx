@@ -24,6 +24,7 @@ import {
   History,
 } from 'lucide-react';
 import { VisionGuard, type FatigueState, type FatigueMetrics } from '../lib/visionGuard';
+// MediaPipe integration available in '../lib/mediaPipeIntegration' for future enhancement
 import {
   useCreateSession,
   useEndSession,
@@ -62,7 +63,7 @@ export default function FatigueMonitor() {
       let previousAlertCount = 0;
 
       intervalRef.current = setInterval(async () => {
-        // Analyze frame (in production, this would use actual video)
+        // Analyze frame (simulated - MediaPipe integration available for future enhancement)
         const currentMetrics = visionGuard.current.analyzeFrame();
         setMetrics(currentMetrics);
 

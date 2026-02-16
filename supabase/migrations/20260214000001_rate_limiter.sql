@@ -62,12 +62,12 @@ $$;
 -- ============================================================================
 
 -- Schedule cleanup every hour
--- Note: Requires pg_cron extension to be enabled
-SELECT cron.schedule(
-  'cleanup-rate-limits',
-  '0 * * * *', -- Every hour at minute 0
-  'SELECT public.cleanup_old_rate_limits()'
-);
+-- Note: Requires pg_cron extension to be enabled (COMMENTED OUT - not available in this Supabase plan)
+-- SELECT cron.schedule(
+--   'cleanup-rate-limits',
+--   '0 * * * *', -- Every hour at minute 0
+--   'SELECT public.cleanup_old_rate_limits()'
+-- );
 
 -- ============================================================================
 -- ROW LEVEL SECURITY

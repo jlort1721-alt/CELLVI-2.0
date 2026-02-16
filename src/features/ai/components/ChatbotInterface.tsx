@@ -24,6 +24,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { NeuroCore, type ChatMessage } from '../lib/neuroCore';
+import { RAGChatbot } from '../lib/claudeIntegration';
 import {
   useConversations,
   useConversation,
@@ -33,6 +34,7 @@ import {
   useKnowledgeBaseStats,
 } from '../hooks/useChatbot';
 import { env } from '@/config/env';
+import { supabase } from '@/lib/supabase';
 
 export default function ChatbotInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -40,8 +42,20 @@ export default function ChatbotInterface() {
   const [isTyping, setIsTyping] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [showConversations, setShowConversations] = useState(false);
+  const [ragReady, setRagReady] = useState(false);
+  const [ragError, setRagError] = useState<string | null>(null);
+  const [knowledgeBase, setKnowledgeBase] = useState<
+    Array<{
+      id: string;
+      title: string;
+      content: string;
+      category: string;
+      embedding?: number[];
+    }>
+  >([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const neuroCore = useRef(new NeuroCore());
+  const ragChatbot = useRef<RAGChatbot | null>(null);
   const { toast } = useToast();
 
   // Supabase hooks (only used when not in demo mode)
@@ -79,6 +93,77 @@ export default function ChatbotInterface() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Initialize RAGChatbot when not in demo mode
+  useEffect(() => {
+    const initializeRAG = async () => {
+      if (!useMockData && !ragReady) {
+        try {
+          setRagError(null);
+
+          // Fetch knowledge base documents from Supabase
+          const { data: documents, error } = await supabase
+            .from('chatbot_knowledge_base')
+            .select('id, title, category, content, tags')
+            .eq('published', true);
+
+          if (error) throw error;
+
+          if (!documents || documents.length === 0) {
+            throw new Error('No se encontraron documentos en la base de conocimiento');
+          }
+
+          // Initialize RAGChatbot and OpenAI Embeddings
+          ragChatbot.current = new RAGChatbot();
+          const { OpenAIEmbeddings } = await import('../lib/claudeIntegration');
+          const embeddingsAPI = new OpenAIEmbeddings();
+
+          // Generate embeddings for each document
+          const documentsWithEmbeddings = await Promise.all(
+            documents.map(async (doc: any) => {
+              try {
+                const embedding = await embeddingsAPI.generateEmbedding(doc.content);
+                return {
+                  id: doc.id,
+                  title: doc.title,
+                  category: doc.category,
+                  content: doc.content,
+                  embedding,
+                };
+              } catch (embeddingError) {
+                console.error(`Error generating embedding for doc ${doc.id}:`, embeddingError);
+                return {
+                  id: doc.id,
+                  title: doc.title,
+                  category: doc.category,
+                  content: doc.content,
+                };
+              }
+            })
+          );
+
+          setKnowledgeBase(documentsWithEmbeddings);
+          setRagReady(true);
+
+          toast({
+            title: '✅ RAG Inicializado',
+            description: `${documentsWithEmbeddings.length} documentos cargados para consulta`,
+          });
+        } catch (error: any) {
+          console.error('Error initializing RAG:', error);
+          setRagError(error.message || 'Error al inicializar RAG');
+
+          toast({
+            title: '⚠️ RAG No Disponible',
+            description: 'Continuando en modo demo. ' + (error.message || ''),
+            variant: 'destructive',
+          });
+        }
+      }
+    };
+
+    initializeRAG();
+  }, [useMockData, ragReady, toast]);
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
@@ -118,9 +203,35 @@ export default function ChatbotInterface() {
         });
       }
 
-      // Simulate AI response delay
-      setTimeout(async () => {
-        const response = await neuroCore.current.chat(userInput);
+      // Generate AI response (real RAG or simulated)
+      const generateResponse = async () => {
+        let response: ChatMessage;
+
+        if (!useMockData && ragReady && ragChatbot.current && knowledgeBase.length > 0) {
+          // REAL: Use RAGChatbot with Claude API
+          const ragResponse = await ragChatbot.current.chat(userInput, knowledgeBase);
+
+          response = {
+            id: `assistant-${Date.now()}`,
+            role: 'assistant',
+            content: ragResponse.content,
+            timestamp: new Date(),
+            metadata: {
+              confidence: ragResponse.confidence,
+              sources: ragResponse.sources,
+              suggestedActions: (ragResponse.suggestedActions || []).map((action) => ({
+                type: action.type as 'navigate' | 'generate_report' | 'create_alert' | 'schedule_maintenance',
+                label: action.label,
+                description: action.description,
+                data: {},
+              })),
+            },
+          };
+        } else {
+          // SIMULATED: Use NeuroCore for demo
+          response = await neuroCore.current.chat(userInput);
+        }
+
         setMessages((prev) => [...prev, response]);
 
         // Save AI response to Supabase when not in demo mode
@@ -132,12 +243,15 @@ export default function ChatbotInterface() {
 
           toast({
             title: '✅ Mensaje guardado',
-            description: 'Conversación guardada en Supabase',
+            description: ragReady ? 'Respuesta de Claude API guardada' : 'Conversación guardada',
           });
         }
 
         setIsTyping(false);
-      }, 1000);
+      };
+
+      // Add slight delay for better UX
+      setTimeout(generateResponse, 500);
     } catch (error) {
       toast({
         title: '❌ Error',
@@ -490,7 +604,7 @@ export default function ChatbotInterface() {
                 <>
                   <div className="flex items-center justify-between p-2 bg-secondary rounded">
                     <span className="text-xs font-medium">Total Documentos</span>
-                    <Badge variant="default">{kbStats.totalDocuments}</Badge>
+                    <Badge variant="default">{kbStats.total}</Badge>
                   </div>
                   <div className="flex items-center justify-between p-2 bg-secondary rounded">
                     <span className="text-xs font-medium">Manuales de Vehículos</span>
