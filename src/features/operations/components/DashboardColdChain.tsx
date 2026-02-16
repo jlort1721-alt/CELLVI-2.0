@@ -310,11 +310,11 @@ const DashboardColdChain = () => {
 
   // Pie chart data for status distribution
   const statusDistribution = useMemo(() => [
-    { name: "Normal", value: stats.normal, fill: "#22c55e" },
-    { name: "Advertencia", value: stats.warning, fill: "#eab308" },
-    { name: "Crítico", value: stats.critical, fill: "#ef4444" },
-    ...(stats.offline > 0 ? [{ name: "Sin Conexión", value: stats.offline, fill: "#6b7280" }] : []),
-  ], [stats]);
+    { name: t("coldChain.statusNormal"), value: stats.normal, fill: "#22c55e" },
+    { name: t("coldChain.statusWarning"), value: stats.warning, fill: "#eab308" },
+    { name: t("coldChain.statusCritical"), value: stats.critical, fill: "#ef4444" },
+    ...(stats.offline > 0 ? [{ name: t("coldChain.statusOffline"), value: stats.offline, fill: "#6b7280" }] : []),
+  ], [stats, t]);
 
   // Deviations per unit for analytics
   const deviationsPerUnit = useMemo(() =>
@@ -338,7 +338,7 @@ const DashboardColdChain = () => {
   if (!selectedUnit) {
     return (
       <div className="flex items-center justify-center h-64 text-sidebar-foreground/50 text-sm">
-        No hay unidades de cadena de frío disponibles.
+        {t("coldChain.noUnitsAvailable")}
       </div>
     );
   }
@@ -354,19 +354,19 @@ const DashboardColdChain = () => {
             <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/10">
               <Thermometer className="w-6 h-6 text-blue-400" />
             </div>
-            Cold Chain Command Center
+            {t("coldChain.title")}
           </h2>
           <p className="text-[11px] text-sidebar-foreground/40 mt-1 flex items-center gap-2">
-            Monitoreo térmico empresarial — Pharma, Food & Logistics
+            {t("coldChain.subtitle")}
             <span className="flex items-center gap-1 text-[9px] font-bold">
               {isLiveMode ? (
-                <span className="flex items-center gap-1 text-green-500"><div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> LIVE</span>
+                <span className="flex items-center gap-1 text-green-500"><div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> {t("coldChain.live")}</span>
               ) : (
-                <span className="flex items-center gap-1 text-sidebar-foreground/30"><WifiOff className="w-3 h-3" /> OFFLINE</span>
+                <span className="flex items-center gap-1 text-sidebar-foreground/30"><WifiOff className="w-3 h-3" /> {t("coldChain.offline")}</span>
               )}
             </span>
             <span className="text-[8px] text-sidebar-foreground/20">
-              Sync: {lastSync.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              {t("coldChain.sync")}: {lastSync.toLocaleTimeString(i18n.language === "en" ? "en-US" : "es-CO", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
             </span>
           </p>
         </div>
@@ -377,30 +377,30 @@ const DashboardColdChain = () => {
             className={`h-8 px-3 text-[10px] rounded-xl ${isLiveMode ? "text-green-500 bg-green-500/5 hover:bg-green-500/10" : "text-sidebar-foreground/40 hover:bg-white/5"}`}
           >
             {isLiveMode ? <Wifi className="w-3 h-3 mr-1.5" /> : <WifiOff className="w-3 h-3 mr-1.5" />}
-            {isLiveMode ? "Live" : "Paused"}
+            {isLiveMode ? t("coldChain.live") : t("coldChain.paused")}
           </Button>
           <Button size="sm" variant="ghost" onClick={refreshData} className="h-8 px-3 text-[10px] text-sidebar-foreground/40 hover:bg-white/5 rounded-xl">
-            <RefreshCw className="w-3 h-3 mr-1.5" /> Sync
+            <RefreshCw className="w-3 h-3 mr-1.5" /> {t("coldChain.sync")}
           </Button>
           <Button size="sm" variant="outline" className="text-[10px] h-8 bg-gold/5 border-gold/20 text-gold hover:bg-gold/10 rounded-xl px-3">
-            <Download className="w-3 h-3 mr-1.5" /> Exportar RNDC
+            <Download className="w-3 h-3 mr-1.5" /> {t("coldChain.exportRndc")}
           </Button>
           <Button size="sm" variant="outline" className="text-[10px] h-8 bg-purple-500/5 border-purple-500/20 text-purple-400 hover:bg-purple-500/10 rounded-xl px-3">
-            <FileCheck className="w-3 h-3 mr-1.5" /> Informe GDP
+            <FileCheck className="w-3 h-3 mr-1.5" /> {t("coldChain.reportGdp")}
           </Button>
         </div>
       </motion.div>
 
       {/* ── KPI Row ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3">
-        <KPICard icon={Truck} label="Unidades Activas" value={stats.total} color="text-blue-400" trend="up" />
-        <KPICard icon={CheckCircle} label="En Rango Normal" value={stats.normal} color="text-green-500" trend="up" />
-        <KPICard icon={AlertTriangle} label="En Advertencia" value={stats.warning} color="text-yellow-500" trend={stats.warning > 0 ? "down" : "neutral"} />
-        <KPICard icon={XCircle} label="Estado Crítico" value={stats.critical} color="text-red-500" trend={stats.critical > 0 ? "down" : "neutral"} />
-        <KPICard icon={ShieldCheck} label="SLA Cumplimiento" value={`${stats.slaFulfillment}%`} color="text-gold" trend="up" subValue={`${stats.pharmaUnits} pharma`} />
-        <KPICard icon={Award} label="Compliance Avg" value={`${stats.avgCompliance}%`} color="text-purple-400" trend={stats.avgCompliance >= 90 ? "up" : "down"} />
-        <KPICard icon={Bell} label="Alertas Activas" value={alertCounts.total} color="text-orange-400" subValue={`${alertCounts.critical} críticas`} />
-        <KPICard icon={Battery} label="Batería Prom." value={`${stats.avgBattery}%`} color="text-cyan-400" trend={stats.avgBattery > 70 ? "up" : "down"} />
+        <KPICard icon={Truck} label={t("coldChain.activeUnits")} value={stats.total} color="text-blue-400" trend="up" />
+        <KPICard icon={CheckCircle} label={t("coldChain.inNormalRange")} value={stats.normal} color="text-green-500" trend="up" />
+        <KPICard icon={AlertTriangle} label={t("coldChain.inWarning")} value={stats.warning} color="text-yellow-500" trend={stats.warning > 0 ? "down" : "neutral"} />
+        <KPICard icon={XCircle} label={t("coldChain.criticalStatus")} value={stats.critical} color="text-red-500" trend={stats.critical > 0 ? "down" : "neutral"} />
+        <KPICard icon={ShieldCheck} label={t("coldChain.slaCompliance")} value={`${stats.slaFulfillment}%`} color="text-gold" trend="up" subValue={`${stats.pharmaUnits} pharma`} />
+        <KPICard icon={Award} label={t("coldChain.complianceAvg")} value={`${stats.avgCompliance}%`} color="text-purple-400" trend={stats.avgCompliance >= 90 ? "up" : "down"} />
+        <KPICard icon={Bell} label={t("coldChain.activeAlerts")} value={alertCounts.total} color="text-orange-400" subValue={`${alertCounts.critical} ${t("coldChain.criticalLabel")}`} />
+        <KPICard icon={Battery} label={t("coldChain.avgBattery")} value={`${stats.avgBattery}%`} color="text-cyan-400" trend={stats.avgBattery > 70 ? "up" : "down"} />
       </div>
 
       {/* ── Tabs Navigation ────────────────────────────────────────── */}
@@ -408,10 +408,10 @@ const DashboardColdChain = () => {
         <motion.div variants={itemVariants}>
           <TabsList className="bg-sidebar/60 border border-white/5 p-1 rounded-xl h-auto gap-1">
             <TabsTrigger value="overview" className="data-[state=active]:bg-gold/10 data-[state=active]:text-gold rounded-lg text-[10px] font-bold uppercase tracking-wider px-4 py-2">
-              <Eye className="w-3 h-3 mr-1.5" /> Overview
+              <Eye className="w-3 h-3 mr-1.5" /> {t("coldChain.tabOverview")}
             </TabsTrigger>
             <TabsTrigger value="alerts" className="data-[state=active]:bg-red-500/10 data-[state=active]:text-red-400 rounded-lg text-[10px] font-bold uppercase tracking-wider px-4 py-2 relative">
-              <Bell className="w-3 h-3 mr-1.5" /> Alertas
+              <Bell className="w-3 h-3 mr-1.5" /> {t("coldChain.tabAlerts")}
               {alertCounts.total > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
                   {alertCounts.total}
@@ -526,7 +526,7 @@ const DashboardColdChain = () => {
                       </h3>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className={`flex items-center gap-1 text-[9px] font-bold ${selectedCfg.color} ${selectedCfg.bg} px-2 py-0.5 rounded-lg border ${selectedCfg.border}`}>
-                          <div className={`w-1.5 h-1.5 rounded-full ${selectedCfg.pulse} animate-pulse`} /> {selectedCfg.label.toUpperCase()}
+                          <div className={`w-1.5 h-1.5 rounded-full ${selectedCfg.pulse} animate-pulse`} /> {t(selectedCfg.labelKey).toUpperCase()}
                         </span>
                         <span className="text-[9px] text-sidebar-foreground/30">Sensor: {selectedUnit.sensorId} ({selectedUnit.sensorType})</span>
                         <span className="text-[9px] text-sidebar-foreground/30">Trip: {selectedUnit.tripId}</span>
@@ -773,7 +773,7 @@ const DashboardColdChain = () => {
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="text-[10px] font-bold text-sidebar-foreground">{unit?.vehiclePlate}</span>
                         <span className="text-[9px] font-bold text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">{record.standard}</span>
-                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${statusCfg.bg} ${statusCfg.color}`}>{statusCfg.label}</span>
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${statusCfg.bg} ${statusCfg.color}`}>{t(statusCfg.labelKey)}</span>
                       </div>
                       <div className="flex items-center gap-3 text-[8px] text-sidebar-foreground/30">
                         <span>Trip: {record.tripId}</span>
