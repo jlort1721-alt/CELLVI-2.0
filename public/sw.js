@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `asegurar-${CACHE_VERSION}`;
 const STATIC_CACHE = `asegurar-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `asegurar-dynamic-${CACHE_VERSION}`;

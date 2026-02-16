@@ -27,11 +27,19 @@ if (import.meta.env.VITE_LOGROCKET_ID) {
 
 createRoot(document.getElementById("root")!).render(<App />);
 
-// Register Service Worker for PWA
+// Register Service Worker for PWA (ONLY in production)
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      // SW registration failed silently
+  if (import.meta.env.PROD) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch(() => {
+        // SW registration failed silently
+      });
     });
-  });
+  } else {
+    // In development: unregister any existing SW to prevent stale cache issues
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((reg) => reg.unregister());
+    });
+    caches.keys().then((names) => names.forEach((name) => caches.delete(name)));
+  }
 }
