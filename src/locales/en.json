@@ -9,7 +9,7 @@
     "pqr": "PQR",
     "blog": "Resources",
     "contacto": "Contact",
-    "demoCellvi": "CELLVI DEMO",
+    "demoCellvi": "ASEGURAR DEMO",
     "rastreaTuActivo": "TRACK YOUR ASSET",
     "empresa": "Company",
     "soluciones": "Solutions",
@@ -48,7 +48,7 @@
     "requestQuote": "Request Quote"
   },
   "hero": {
-    "badge": "CELLVI 2.0 Platform — Guaranteed Operational Continuity",
+    "badge": "ASEGURAR LTDA Platform — Guaranteed Operational Continuity",
     "title1": "Total Visibility of",
     "titleHighlight": "Your Operation",
     "title2": "in Real Time",
@@ -112,7 +112,7 @@
     "svc11Desc": "Push-To-Talk over cellular network with national/international coverage, dedicated fleet channels, and encrypted communications."
   },
   "platform": {
-    "badge": "CELLVI 2.0 Platform",
+    "badge": "ASEGURAR LTDA Platform",
     "title": "Command Center for Your Operation",
     "subtitle": "Unified control panel with real-time operational variables, cryptographically sealed digital evidence, and auditable reports.",
     "feat1": "Remote Lock",
@@ -136,10 +136,10 @@
     "sec4": "Isolated Multi-Tenancy",
     "sec4Desc": "Logical segregation per organization with Row Level Security. Each tenant operates in a fully isolated data space.",
     "apiBadge": "API & Integrations",
-    "apiIntegrationTitle": "Integrate CELLVI with Your System",
+    "apiIntegrationTitle": "Integrate ASEGURAR with Your System",
     "apiIntegrationDesc": "Connect your existing ERP, CRM, or custom software with our robust RESTful API.",
     "apiTitle": "Documented RESTful API",
-    "apiSubtitle": "Integrate CELLVI with your ERP, TMS, or dispatch system. Real-time webhooks, OAuth2, and OpenAPI 3.1 documentation.",
+    "apiSubtitle": "Integrate ASEGURAR with your ERP, TMS, or dispatch system. Real-time webhooks, OAuth2, and OpenAPI 3.1 documentation.",
     "api1": "RESTful API v2",
     "api1Desc": "50+ documented endpoints with OpenAPI 3.1, semantic versioning, cursor pagination, and configurable rate limiting.",
     "api2": "Real-Time Webhooks",

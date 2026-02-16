@@ -90,7 +90,7 @@ export const env: EnvConfig = {
   },
 
   app: {
-    name: getEnv('VITE_APP_NAME', 'CELLVI 2.0'),
+    name: getEnv('VITE_APP_NAME', 'ASEGURAR LTDA'),
     version: getEnv('VITE_APP_VERSION', '2.5.4'),
     env: (getEnv('VITE_APP_ENV', 'development') as any),
   },

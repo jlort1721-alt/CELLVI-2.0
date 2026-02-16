@@ -1,10 +1,10 @@
 openapi: "3.1.0"
 info:
-  title: ASEGURAR LTDA — CELLVI 2.0 API
+  title: ASEGURAR LTDA — API v2
   version: "2.0.0"
   description: |
     API de telemetría, gestión de flotas, cadena de frío, auditoría y facturación
-    para la plataforma CELLVI 2.0 de ASEGURAR LTDA.
+    para la plataforma de ASEGURAR LTDA.
 
     ## Autenticación
     Todos los endpoints requieren Bearer token JWT excepto los marcados como públicos.

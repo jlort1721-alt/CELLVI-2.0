@@ -53,7 +53,7 @@ const Footer = ({ id }: { id?: string }) => {
             <ul className="space-y-2.5 text-sm">
               <li><a href="/dashboard" className="text-white/40 hover:text-gold transition-colors flex items-center gap-1">Dashboard <ExternalLink className="w-2.5 h-2.5" /></a></li>
               <li><a href="/tracking" className="text-white/40 hover:text-gold transition-colors flex items-center gap-1">Tracking GPS <ExternalLink className="w-2.5 h-2.5" /></a></li>
-              <li><a href="/demo" className="text-white/40 hover:text-gold transition-colors flex items-center gap-1">Demo CELLVI <ExternalLink className="w-2.5 h-2.5" /></a></li>
+              <li><a href="/demo" className="text-white/40 hover:text-gold transition-colors flex items-center gap-1">Demo ASEGURAR <ExternalLink className="w-2.5 h-2.5" /></a></li>
               <li><a href="/pqr" className="text-white/40 hover:text-gold transition-colors flex items-center gap-1">{t("footer.pqrChannel")} <ExternalLink className="w-2.5 h-2.5" /></a></li>
             </ul>
           </div>

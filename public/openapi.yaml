@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: CELLVI 2.0 API
+  title: ASEGURAR LTDA API
   description: >
     API RESTful para la plataforma de telemática y monitoreo satelital ASEGURAR LTDA.
     Provee acceso programático a flotas, dispositivos, evidencias y reportes.

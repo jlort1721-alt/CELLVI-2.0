@@ -9,7 +9,7 @@
     "pqr": "PQR",
     "blog": "Recursos",
     "contacto": "Contacto",
-    "demoCellvi": "DEMO CELLVI",
+    "demoCellvi": "DEMO ASEGURAR",
     "rastreaTuActivo": "RASTREA TU ACTIVO",
     "empresa": "Empresa",
     "soluciones": "Soluciones",
@@ -48,7 +48,7 @@
     "requestQuote": "Solicitar Cotización"
   },
   "hero": {
-    "badge": "Plataforma CELLVI 2.0 — Continuidad Operacional Garantizada",
+    "badge": "Plataforma ASEGURAR LTDA — Continuidad Operacional Garantizada",
     "title1": "Visibilidad Total de",
     "titleHighlight": "Su Operación",
     "title2": "en Tiempo Real",
@@ -112,7 +112,7 @@
     "svc11Desc": "Push-To-Talk sobre red celular con cobertura nacional e internacional, canales dedicados por flota y cifrado de comunicaciones."
   },
   "platform": {
-    "badge": "Plataforma CELLVI 2.0",
+    "badge": "Plataforma ASEGURAR LTDA",
     "title": "Command Center para su Operación",
     "subtitle": "Panel de control unificado con variables operativas en tiempo real, evidencia digital sellada criptográficamente y reportes auditables.",
     "feat1": "Bloqueo Remoto",
@@ -136,10 +136,10 @@
     "sec4": "Multi-Tenancy Aislado",
     "sec4Desc": "Segregación lógica por organización con Row Level Security. Cada tenant opera en un espacio de datos completamente aislado.",
     "apiBadge": "API & Integraciones",
-    "apiIntegrationTitle": "Integre CELLVI con su Sistema",
+    "apiIntegrationTitle": "Integre ASEGURAR con su Sistema",
     "apiIntegrationDesc": "Conecte su ERP, CRM o software personalizado con nuestra robusta API RESTful.",
     "apiTitle": "API RESTful Documentada",
-    "apiSubtitle": "Integre CELLVI con su ERP, TMS o sistema de despacho. Webhooks en tiempo real, OAuth2 y documentación OpenAPI 3.1.",
+    "apiSubtitle": "Integre ASEGURAR con su ERP, TMS o sistema de despacho. Webhooks en tiempo real, OAuth2 y documentación OpenAPI 3.1.",
     "api1": "API RESTful v2",
     "api1Desc": "50+ endpoints documentados con OpenAPI 3.1, versionado semántico, paginación cursor y rate limiting configurable.",
     "api2": "Webhooks en Tiempo Real",
@@ -151,7 +151,7 @@
   },
   "pricing": {
     "badge": "Estrategia de Precios",
-    "title": "Planes de Servicio CELLVI",
+    "title": "Planes de Servicio ASEGURAR",
     "subtitle": "Precios por activo monitoreado con SLAs definidos, sin costos ocultos. Escale su operación con add-ons modulares y comisiones para partners.",
     "recommended": "MÁS POPULAR",
     "cta": "Solicitar Cotización",
@@ -174,7 +174,7 @@
     "feat1": "Rastreo GPS en tiempo real",
     "feat2": "Alertas de velocidad y geocercas",
     "feat3": "Reportes PDF/Excel básicos",
-    "feat4": "App móvil CELLVI",
+    "feat4": "App móvil ASEGURAR",
     "feat5": "Soporte técnico en horario laboral",
     "feat6": "Cadena de custodia digital",
     "feat7": "API RESTful v2 completa",
@@ -214,7 +214,7 @@
     "fair_rule4_title": "Uso de mensajería satelital",
     "fair_rule4_body": "Los mensajes satelitales se facturan por unidad transmitida. Un mensaje equivale a un reporte de posición (≤ 50 bytes). Mensajes de firmware OTA o configuración remota cuentan como 3x mensajes estándar. Se aplican tarifas diferenciadas por región de cobertura.",
     "fair_rule5_title": "Prohibición de sublicenciamiento",
-    "fair_rule5_body": "La plataforma CELLVI no puede ser sublicenciada ni revendida sin acuerdo de Partner vigente. El acceso API no autoriza la creación de productos derivados que compitan con CELLVI. Partners autorizados tienen derecho a co-branding según su nivel.",
+    "fair_rule5_body": "La plataforma ASEGURAR no puede ser sublicenciada ni revendida sin acuerdo de Partner vigente. El acceso API no autoriza la creación de productos derivados que compitan con ASEGURAR. Partners autorizados tienen derecho a co-branding según su nivel.",
     "fair_rule6_title": "Política anti-abuso y suspensión",
     "fair_rule6_body": "ASEGURAR LTDA se reserva el derecho de suspender cuentas que: (a) generen tráfico artificial para manipular métricas, (b) utilicen la API para scraping masivo, (c) compartan credenciales entre organizaciones, o (d) violen las leyes de protección de datos (Ley 1581/2012). Antes de cualquier suspensión se emite notificación con 72 horas para corrección.",
     "calcTitle": "Calculador de Precios",
@@ -276,7 +276,7 @@
     "t1Name": "Carlos Erazo",
     "t1Company": "Coopsetrans",
     "t1Role": "Gerente de Operaciones",
-    "t1Text": "Desde que implementamos CELLVI 2.0 hemos reducido los incidentes de seguridad en un 40%. La cadena de custodia digital y las alertas en tiempo real nos dan trazabilidad total ante auditorías.",
+    "t1Text": "Desde que implementamos ASEGURAR LTDA hemos reducido los incidentes de seguridad en un 40%. La cadena de custodia digital y las alertas en tiempo real nos dan trazabilidad total ante auditorías.",
     "t2Name": "María Fernanda López",
     "t2Company": "Lácteos Santa María",
     "t2Role": "Directora de Logística",
@@ -292,7 +292,7 @@
     "img1": "Sede Principal — Pasto",
     "img2": "Flota Técnica Nacional",
     "img3": "Centro de Operaciones 24/7",
-    "img4": "Plataforma CELLVI 2.0",
+    "img4": "Plataforma ASEGURAR LTDA",
     "close": "Cerrar",
     "prev": "Anterior",
     "next": "Siguiente",
@@ -301,7 +301,7 @@
   "blog": {
     "badge": "Recursos",
     "title": "Centro de Conocimiento",
-    "subtitle": "Documentación técnica, mejores prácticas operacionales y actualizaciones de la plataforma CELLVI.",
+    "subtitle": "Documentación técnica, mejores prácticas operacionales y actualizaciones de la plataforma ASEGURAR.",
     "readMore": "Leer más",
     "post1Date": "22 Mayo 2025",
     "post1Author": "Rómulo Bolaños",
@@ -338,7 +338,7 @@
   "clients": {
     "badge": "Partners & Clientes",
     "title": "Empresas que Confían en Nuestra Operación",
-    "subtitle": "Operadores de transporte, cadenas logísticas y empresas industriales que han elegido CELLVI como su plataforma de control.",
+    "subtitle": "Operadores de transporte, cadenas logísticas y empresas industriales que han elegido ASEGURAR como su plataforma de control.",
     "paymentMethods": "Medios de Pago Autorizados"
   },
   "ristra": {
@@ -368,7 +368,7 @@
     "errorMessage": "Error al enviar. Intente nuevamente o contáctenos por WhatsApp."
   },
   "footer": {
-    "description": "Red de Telecomunicaciones autorizada por MinTIC. Proveedor GPS registrado ante Policía Nacional y RUNT. Plataforma CELLVI con SLA 99.9%.",
+    "description": "Red de Telecomunicaciones autorizada por MinTIC. Proveedor GPS registrado ante Policía Nacional y RUNT. Plataforma ASEGURAR con SLA 99.9%.",
     "products": "Soluciones",
     "utilities": "Recursos",
     "socialMedia": "Redes Corporativas",
@@ -515,7 +515,7 @@
     "placeholder": "Escriba su consulta...",
     "helloResponse": "Bienvenido. Soy el asistente de ASEGURAR LTDA. Puedo informarle sobre soluciones de monitoreo, planes de servicio, SLAs, API, seguridad o cobertura.",
     "thanksResponse": "Con gusto. Si requiere atención personalizada, un especialista puede contactarlo: +57 318 750 0962 o asegurar.limitada@gmail.com.",
-    "defaultResponse": "Para esa consulta le recomiendo hablar con un especialista:\n📞 +57 318 750 0962\n📧 asegurar.limitada@gmail.com\n\nTambién puedo informarle sobre: soluciones, planes, SLA, API, seguridad, cobertura o CELLVI."
+    "defaultResponse": "Para esa consulta le recomiendo hablar con un especialista:\n📞 +57 318 750 0962\n📧 asegurar.limitada@gmail.com\n\nTambién puedo informarle sobre: soluciones, planes, SLA, API, seguridad, cobertura o ASEGURAR."
   },
   "notFound": {
     "message": "Página no encontrada",
@@ -532,11 +532,11 @@
     "badge": "Preguntas Frecuentes",
     "title": "Resolvemos Sus Dudas",
     "subtitle": "Respuestas a las consultas más frecuentes de nuestros clientes empresariales.",
-    "sla_q": "¿Qué SLA garantiza CELLVI 2.0?",
+    "sla_q": "¿Qué SLA garantiza ASEGURAR LTDA?",
     "sla_a": "Garantizamos un SLA del 99.9% de disponibilidad. En caso de incumplimiento, se aplican créditos automáticos proporcionales al tiempo de inactividad según el plan contratado.",
     "security_q": "¿Cómo se protegen mis datos de telemetría?",
     "security_a": "Todos los datos se cifran con AES-256 en reposo y TLS 1.3 en tránsito. Cada evento se sella con SHA-256 y se almacena en una cadena de custodia inmutable verificable.",
-    "integration_q": "¿Puedo integrar CELLVI con mi ERP o TMS?",
+    "integration_q": "¿Puedo integrar ASEGURAR con mi ERP o TMS?",
     "integration_a": "Sí. Ofrecemos una API RESTful v2 con 50+ endpoints documentados en OpenAPI 3.1, webhooks firmados con HMAC-SHA256, y SDKs para Python, Node.js y .NET.",
     "support_q": "¿Qué incluye el soporte técnico?",
     "support_a": "El soporte varía por plan: horario laboral (SMB), dedicado (Professional), 24/7 con SLA <15 min (Business/Enterprise). Todos incluyen acceso a documentación técnica y centro de conocimiento.",
@@ -602,7 +602,7 @@
   },
   "cta": {
     "midPageHeading": "¿Listo para Proteger su Operación?",
-    "midPageSubtext": "Únase a más de 500 empresas que monitorean con CELLVI",
+    "midPageSubtext": "Únase a más de 500 empresas que monitorean con ASEGURAR",
     "midPageButton": "Solicitar Cotización",
     "preContactHeading": "¿Aún Tiene Preguntas?",
     "preContactSubtext": "Nuestros especialistas están listos para ayudarle",
@@ -630,7 +630,7 @@
     "comercioExteriorDesc": "Seguridad en cadena logística",
     "videovigilancia": "Videovigilancia",
     "videovigilanciaDesc": "CCTV y monitoreo remoto",
-    "cellvi": "CELLVI 2.0",
+    "cellvi": "ASEGURAR LTDA",
     "cellviDesc": "Plataforma de monitoreo en tiempo real",
     "seguridad": "Seguridad",
     "seguridadDesc": "Encriptación y protección de datos",

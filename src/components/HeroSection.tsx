@@ -123,7 +123,7 @@ const HeroSection = () => {
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </a>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 font-heading font-semibold text-base px-8 h-12 group backdrop-blur-sm bg-white/5">
+            <Button asChild size="lg" className="border border-white/20 bg-white/5 text-white hover:bg-white/10 font-heading font-semibold text-base px-8 h-12 group backdrop-blur-sm">
               <a href="/demo">
                 <Play className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
                 {t("hero.cta2")}

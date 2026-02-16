@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Thermometer, Droplets, AlertTriangle, CheckCircle, XCircle, TrendingUp,
@@ -20,10 +21,10 @@ import type { ColdChainUnit, ColdChainAlert, ComplianceRecord, ColdChainEvent } 
 // ── Config ────────────────────────────────────────────────────────────
 
 const statusConfig = {
-  normal: { color: "text-green-500", bg: "bg-green-500/10", border: "border-green-500/20", icon: CheckCircle, label: "Normal", pulse: "bg-green-500" },
-  warning: { color: "text-yellow-500", bg: "bg-yellow-500/10", border: "border-yellow-500/20", icon: AlertTriangle, label: "Advertencia", pulse: "bg-yellow-500" },
-  critical: { color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20", icon: XCircle, label: "Crítico", pulse: "bg-red-500" },
-  offline: { color: "text-gray-500", bg: "bg-gray-500/10", border: "border-gray-500/20", icon: WifiOff, label: "Sin Conexión", pulse: "bg-gray-500" },
+  normal: { color: "text-green-500", bg: "bg-green-500/10", border: "border-green-500/20", icon: CheckCircle, labelKey: "coldChain.statusNormal", pulse: "bg-green-500" },
+  warning: { color: "text-yellow-500", bg: "bg-yellow-500/10", border: "border-yellow-500/20", icon: AlertTriangle, labelKey: "coldChain.statusWarning", pulse: "bg-yellow-500" },
+  critical: { color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20", icon: XCircle, labelKey: "coldChain.statusCritical", pulse: "bg-red-500" },
+  offline: { color: "text-gray-500", bg: "bg-gray-500/10", border: "border-gray-500/20", icon: WifiOff, labelKey: "coldChain.statusOffline", pulse: "bg-gray-500" },
 };
 
 const severityConfig = {
@@ -32,11 +33,11 @@ const severityConfig = {
   info: { color: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/20", icon: Activity },
 };
 
-const classificationConfig: Record<string, { label: string; color: string }> = {
-  pharma: { label: "Farmacéutico", color: "text-purple-400" },
-  frozen: { label: "Congelado", color: "text-cyan-400" },
-  refrigerated: { label: "Refrigerado", color: "text-blue-400" },
-  "ambient-controlled": { label: "Ambiente Ctrl.", color: "text-orange-400" },
+const classificationConfig: Record<string, { labelKey: string; color: string }> = {
+  pharma: { labelKey: "coldChain.classPharma", color: "text-purple-400" },
+  frozen: { labelKey: "coldChain.classFrozen", color: "text-cyan-400" },
+  refrigerated: { labelKey: "coldChain.classRefrigerated", color: "text-blue-400" },
+  "ambient-controlled": { labelKey: "coldChain.classAmbient", color: "text-orange-400" },
 };
 
 const eventTypeConfig: Record<string, { icon: React.ElementType; color: string }> = {
@@ -52,9 +53,9 @@ const eventTypeConfig: Record<string, { icon: React.ElementType; color: string }
 };
 
 const complianceStatusConfig = {
-  compliant: { label: "Cumple", color: "text-green-500", bg: "bg-green-500/10" },
-  non_compliant: { label: "No Cumple", color: "text-red-500", bg: "bg-red-500/10" },
-  pending_review: { label: "En Revisión", color: "text-yellow-500", bg: "bg-yellow-500/10" },
+  compliant: { labelKey: "coldChain.complianceCompliant", color: "text-green-500", bg: "bg-green-500/10" },
+  non_compliant: { labelKey: "coldChain.complianceNonCompliant", color: "text-red-500", bg: "bg-red-500/10" },
+  pending_review: { labelKey: "coldChain.compliancePending", color: "text-yellow-500", bg: "bg-yellow-500/10" },
 };
 
 const containerVariants = {
@@ -97,6 +98,7 @@ KPICard.displayName = "KPICard";
 const UnitCard = React.memo(({ unit, isSelected, onClick }: {
   unit: ColdChainUnit; isSelected: boolean; onClick: () => void;
 }) => {
+  const { t } = useTranslation();
   const cfg = statusConfig[unit.status];
   const classCfg = classificationConfig[unit.cargoClassification];
 
@@ -115,11 +117,11 @@ const UnitCard = React.memo(({ unit, isSelected, onClick }: {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="font-heading font-bold text-sidebar-foreground text-sm tracking-tight">{unit.vehiclePlate}</span>
-          <span className={`text-[8px] font-bold ${classCfg?.color ?? "text-gray-400"} bg-white/5 px-1.5 py-0.5 rounded`}>{classCfg?.label ?? unit.cargoClassification}</span>
+          <span className={`text-[8px] font-bold ${classCfg?.color ?? "text-gray-400"} bg-white/5 px-1.5 py-0.5 rounded`}>{classCfg ? t(classCfg.labelKey) : unit.cargoClassification}</span>
         </div>
         <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-bold ${cfg.bg} ${cfg.color}`}>
           <div className={`w-1.5 h-1.5 rounded-full ${cfg.pulse} ${unit.status !== "offline" ? "animate-pulse" : ""}`} />
-          {cfg.label}
+          {t(cfg.labelKey)}
         </div>
       </div>
 
@@ -174,6 +176,7 @@ UnitCard.displayName = "UnitCard";
 const AlertRow = React.memo(({ alert, onAcknowledge }: {
   alert: ColdChainAlert; onAcknowledge: (id: string) => void;
 }) => {
+  const { t, i18n } = useTranslation();
   const cfg = severityConfig[alert.severity];
   const Icon = cfg.icon;
 
@@ -200,11 +203,11 @@ const AlertRow = React.memo(({ alert, onAcknowledge }: {
         <div className="flex items-center gap-2 mt-1.5">
           <Clock className="w-2.5 h-2.5 text-sidebar-foreground/20" />
           <span className="text-[8px] text-sidebar-foreground/25">
-            {new Date(alert.timestamp).toLocaleString("es-CO", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" })}
+            {new Date(alert.timestamp).toLocaleString(i18n.language === "en" ? "en-US" : "es-CO", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" })}
           </span>
           {alert.value !== undefined && alert.threshold !== undefined && (
             <span className="text-[8px] text-sidebar-foreground/25">
-              Valor: {alert.value} / Umbral: {alert.threshold}
+              {t("coldChain.valueThreshold", { value: alert.value, threshold: alert.threshold })}
             </span>
           )}
         </div>
@@ -225,6 +228,7 @@ const AlertRow = React.memo(({ alert, onAcknowledge }: {
 AlertRow.displayName = "AlertRow";
 
 const EventTimelineItem = React.memo(({ event, isLast }: { event: ColdChainEvent; isLast: boolean }) => {
+  const { i18n } = useTranslation();
   const cfg = eventTypeConfig[event.type] ?? { icon: CircleDot, color: "text-sidebar-foreground/30" };
   const Icon = cfg.icon;
 
@@ -240,7 +244,7 @@ const EventTimelineItem = React.memo(({ event, isLast }: { event: ColdChainEvent
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-bold text-sidebar-foreground/60 capitalize">{event.type.replace(/_/g, " ")}</span>
           <span className="text-[8px] text-sidebar-foreground/25">
-            {new Date(event.timestamp).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
+            {new Date(event.timestamp).toLocaleTimeString(i18n.language === "en" ? "en-US" : "es-CO", { hour: "2-digit", minute: "2-digit" })}
           </span>
         </div>
         <p className="text-[9px] text-sidebar-foreground/40 mt-0.5 leading-relaxed">{event.description}</p>
@@ -251,6 +255,7 @@ const EventTimelineItem = React.memo(({ event, isLast }: { event: ColdChainEvent
 EventTimelineItem.displayName = "EventTimelineItem";
 
 const ComplianceRow = React.memo(({ record }: { record: ComplianceRecord }) => {
+  const { t, i18n } = useTranslation();
   const statusCfg = complianceStatusConfig[record.status];
 
   return (
@@ -261,12 +266,12 @@ const ComplianceRow = React.memo(({ record }: { record: ComplianceRecord }) => {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <span className="text-[10px] font-bold text-sidebar-foreground">{record.standard}</span>
-          <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${statusCfg.bg} ${statusCfg.color}`}>{statusCfg.label}</span>
+          <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${statusCfg.bg} ${statusCfg.color}`}>{t(statusCfg.labelKey)}</span>
         </div>
         <div className="flex items-center gap-3 text-[8px] text-sidebar-foreground/30">
           <span>Cert: {record.certNumber}</span>
           <span>Desv: {record.deviations}</span>
-          <span>Vence: {new Date(record.expiresAt).toLocaleDateString("es-CO")}</span>
+          <span>Vence: {new Date(record.expiresAt).toLocaleDateString(i18n.language === "en" ? "en-US" : "es-CO")}</span>
         </div>
       </div>
       <div className="text-right">
@@ -291,6 +296,7 @@ const DashboardColdChain = () => {
     updateSearch, updateStatusFilter, updateClassificationFilter, toggleSort,
     setIsLiveMode, refreshData,
   } = useColdChain();
+  const { t, i18n } = useTranslation();
 
   // Chart data for analytics: compliance by standard
   const complianceByStandard = useMemo(() => {
@@ -447,7 +453,7 @@ const DashboardColdChain = () => {
                     : "text-sidebar-foreground/30 hover:text-sidebar-foreground/50 hover:bg-white/5 border border-transparent"
                     }`}
                 >
-                  {s === "all" ? "Todos" : statusConfig[s].label}
+                  {s === "all" ? t("coldChain.allFilter") : t(statusConfig[s].labelKey)}
                 </button>
               ))}
             </div>
@@ -461,7 +467,7 @@ const DashboardColdChain = () => {
                     : "text-sidebar-foreground/30 hover:text-sidebar-foreground/50 hover:bg-white/5 border border-transparent"
                     }`}
                 >
-                  {c === "all" ? "Tipo: Todos" : classificationConfig[c]?.label ?? c}
+                  {c === "all" ? t("coldChain.allType") : classificationConfig[c] ? t(classificationConfig[c].labelKey) : c}
                 </button>
               ))}
             </div>

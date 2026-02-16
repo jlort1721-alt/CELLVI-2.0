@@ -260,7 +260,7 @@ const syncPQRData = async () => {
 
 // ── Push Notifications ──
 self.addEventListener('push', (event) => {
-  let data = { title: 'CELLVI 2.0', body: 'Nueva notificación', icon: '/logo.png' };
+  let data = { title: 'ASEGURAR LTDA', body: 'Nueva notificación', icon: '/logo.png' };
 
   try {
     if (event.data) {
@@ -277,7 +277,7 @@ self.addEventListener('push', (event) => {
     icon: data.icon || '/logo.png',
     badge: '/logo.png',
     vibrate: [200, 100, 200],
-    tag: data.tag || 'cellvi-notification',
+    tag: data.tag || 'asegurar-notification',
     renotify: true,
     requireInteraction: data.severity === 'critical',
     data: {
@@ -404,7 +404,7 @@ const refreshAlerts = async () => {
 
     // If new critical alerts, show notification
     if (data.length > 0 && data.some(alert => alert.isNew)) {
-      await self.registration.showNotification('CELLVI 2.0 - Alerta Crítica', {
+      await self.registration.showNotification('ASEGURAR LTDA - Alerta Crítica', {
         body: `${data.length} alerta(s) crítica(s) requieren atención`,
         icon: '/logo.png',
         badge: '/badge-icon.png',
