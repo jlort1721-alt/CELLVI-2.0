@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { organizationalAreas, type OrganizationalArea } from '../lib/orgData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,11 @@ import {
   ArrowUpRight, ArrowDownRight, Minus, Sparkles
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+// Lazy load de dashboards específicos
+const PresidenciaView = lazy(() => import('../components/areas/PresidenciaView'));
+const GerenciaGeneralView = lazy(() => import('../components/areas/GerenciaGeneralView'));
+const JefeRedView = lazy(() => import('../components/areas/JefeRedView'));
 
 const iconMap = {
   Crown, Briefcase, Network, Shield, ClipboardList,
@@ -182,37 +187,59 @@ export default function AsegurarIADashboard() {
   }, 0) / organizationalAreas.length;
 
   if (selectedArea) {
+    // Renderizar dashboard específico si existe
+    const renderSpecificDashboard = () => {
+      switch (selectedArea.id) {
+        case 'presidencia':
+          return <PresidenciaView />;
+        case 'gerencia-general':
+          return <GerenciaGeneralView />;
+        case 'jefe-red':
+          return <JefeRedView />;
+        default:
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle>Dashboard de {selectedArea.name}</CardTitle>
+                <CardDescription>
+                  Vista detallada del área operativa
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12 text-muted-foreground">
+                  <Sparkles className="w-12 h-12 mx-auto mb-4 text-gold" />
+                  <p className="text-lg font-semibold mb-2">Dashboard en Construcción</p>
+                  <p className="text-sm">
+                    El dashboard específico para {selectedArea.name} está siendo desarrollado.
+                  </p>
+                  <p className="text-sm mt-2">
+                    Incluirá: KPIs detallados, gestión de equipo, tareas, y herramientas específicas del área.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          );
+      }
+    };
+
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <Button variant="outline" onClick={() => setSelectedArea(null)}>
             ← Volver a Vista General
           </Button>
-          <Badge className="text-lg px-4 py-2">
+          <Badge className="text-lg px-4 py-2" style={{ backgroundColor: selectedArea.color }}>
             {selectedArea.code}. {selectedArea.name}
           </Badge>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Dashboard de {selectedArea.name}</CardTitle>
-            <CardDescription>
-              Vista detallada del área operativa
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-12 text-muted-foreground">
-              <Sparkles className="w-12 h-12 mx-auto mb-4 text-gold" />
-              <p className="text-lg font-semibold mb-2">Dashboard en Construcción</p>
-              <p className="text-sm">
-                El dashboard específico para {selectedArea.name} está siendo desarrollado.
-              </p>
-              <p className="text-sm mt-2">
-                Incluirá: KPIs detallados, gestión de equipo, tareas, y herramientas específicas del área.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <Suspense fallback={
+          <div className="flex items-center justify-center h-64">
+            <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+          </div>
+        }>
+          {renderSpecificDashboard()}
+        </Suspense>
       </div>
     );
   }

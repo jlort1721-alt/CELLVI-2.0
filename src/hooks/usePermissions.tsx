@@ -23,6 +23,9 @@ const ROLE_PERMISSIONS: Record<AppRole, string[]> = {
     "admin.billing",
     "admin.users",
     "asegurar_ia.view",
+    "ai.route_optimizer",
+    "ai.fatigue_detection",
+    "ai.chatbot",
   ],
 
   manager: [
@@ -34,6 +37,9 @@ const ROLE_PERMISSIONS: Record<AppRole, string[]> = {
     "reports.read",
     "compliance.read",
     "asegurar_ia.view",
+    "ai.route_optimizer",
+    "ai.fatigue_detection",
+    "ai.chatbot",
   ],
 
   operator: [
@@ -43,6 +49,9 @@ const ROLE_PERMISSIONS: Record<AppRole, string[]> = {
     "operations.read",
     "control.read",
     "reports.read",
+    "ai.route_optimizer",
+    "ai.fatigue_detection",
+    "ai.chatbot",
   ],
 
   auditor: [

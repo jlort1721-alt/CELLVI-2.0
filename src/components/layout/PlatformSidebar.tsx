@@ -1,7 +1,7 @@
 import {
   ChevronLeft, LayoutDashboard, Route, MapPin, Fuel, FileText, Map,
   Thermometer, Shield, Zap, User, Bell, Radio, Settings, Satellite, Scale, Signal,
-  Sparkles,
+  Sparkles, Navigation, Eye, Bot,
 } from "lucide-react";
 import { useUIStore, type ActiveModule } from "@/stores/uiStore";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -76,6 +76,14 @@ const menuSections: MenuSection[] = [
     title: "Organización",
     items: [
       { id: "asegurar-ia", label: "Asegurar IA", icon: Sparkles, permission: "asegurar_ia.view" },
+    ],
+  },
+  {
+    title: "Inteligencia Artificial",
+    items: [
+      { id: "route-genius", label: "Route Genius", icon: Navigation, permission: "ai.route_optimizer" },
+      { id: "vision-guard", label: "Vision Guard", icon: Eye, permission: "ai.fatigue_detection" },
+      { id: "neuro-core", label: "Neuro-Core", icon: Bot, permission: "ai.chatbot" },
     ],
   },
 ];

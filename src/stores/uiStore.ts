@@ -9,7 +9,8 @@ export type ActiveModule =
   | 'policy-engine' | 'gnss-security' | 'evidence' | 'audit-log' | 'reports' | 'compliance' | 'rndc'
   | 'billing' | 'admin'
   | 'evidence-verifier' | 'gateway-monitor'
-  | 'asegurar-ia';
+  | 'asegurar-ia'
+  | 'route-genius' | 'vision-guard' | 'neuro-core';
 
 interface UIState {
   sidebarOpen: boolean;

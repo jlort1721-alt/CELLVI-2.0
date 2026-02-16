@@ -34,6 +34,9 @@ const GatewayMonitor = lazy(() => import("@/features/monitoring/components/Gatew
 const DashboardPredictive = lazy(() => import("@/features/fleet/components/DashboardPredictive"));
 const DashboardRNDC = lazy(() => import("@/features/fleet/components/DashboardRNDC"));
 const AsegurarIADashboard = lazy(() => import("@/features/asegurar-ia/pages/AsegurarIADashboard"));
+const RouteOptimizerPanel = lazy(() => import("@/features/ai/components/RouteOptimizerPanel"));
+const FatigueMonitor = lazy(() => import("@/features/ai/components/FatigueMonitor"));
+const ChatbotInterface = lazy(() => import("@/features/ai/components/ChatbotInterface"));
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center h-64" role="status" aria-label="Cargando módulo">
@@ -109,6 +112,9 @@ const Platform = () => {
       case "predictive": return <DashboardPredictive />;
       case "rndc": return <DashboardRNDC />;
       case "asegurar-ia": return <AsegurarIADashboard />;
+      case "route-genius": return <RouteOptimizerPanel />;
+      case "vision-guard": return <FatigueMonitor />;
+      case "neuro-core": return <ChatbotInterface />;
       default: return <DashboardOverview />;
     }
   };
@@ -139,6 +145,9 @@ const Platform = () => {
       predictive: 'Predictivo',
       rndc: 'RNDC',
       'asegurar-ia': 'Asegurar IA',
+      'route-genius': 'Route Genius',
+      'vision-guard': 'Vision Guard',
+      'neuro-core': 'Neuro-Core',
     };
 
     const moduleName = moduleNames[activeModule] || 'Vista General';
