@@ -1,0 +1,707 @@
+/**
+ * API Gateway Edge Function - Modular Router Architecture
+ *
+ * Security Hardening Applied:
+ * ✅ Zod schema validation for all endpoints (prevents mass assignment)
+ * ✅ tenant_id injected server-side only (never accepted from client)
+ * ✅ CORS allowlist (no wildcard)
+ * ✅ Modular handler-based routing (replaces 519-line monolith)
+ * ✅ Pagination, search, and filtering for all GET endpoints
+ * ✅ Full CRUD operations for all resources
+ * ✅ Structured error responses
+ * ✅ Input sanitization and UUID validation
+ */
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { createRouter, RouteContext } from "./router.ts";
+import {
+  ValidationError,
+  formatValidationError,
+  createErrorResponse,
+} from "./validation.ts";
+
+// Import all handlers
+import * as vehiclesHandler from "./handlers/vehicles.ts";
+import * as driversHandler from "./handlers/drivers.ts";
+import * as tripsHandler from "./handlers/trips.ts";
+import * as ordersHandler from "./handlers/orders.ts";
+import * as workOrdersHandler from "./handlers/work-orders.ts";
+import * as alertsHandler from "./handlers/alerts.ts";
+import * as geofencesHandler from "./handlers/geofences.ts";
+import * as inventoryHandler from "./handlers/inventory.ts";
+import * as fuelLogsHandler from "./handlers/fuel-logs.ts";
+
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error("Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+}
+
+// CORS Allowlist - NEVER use "*" in production
+const ALLOWED_ORIGINS = [
+  "https://cellvi.com",
+  "https://www.cellvi.com",
+  "https://asegurar.com.co",
+  "https://www.asegurar.com.co",
+  "https://staging.cellvi.com",
+  "https://preview.cellvi.com",
+  Deno.env.get("DEV_ORIGIN"), // For local development (e.g., http://localhost:8080)
+].filter((origin): origin is string => Boolean(origin));
+
+// ============================================================================
+// CORS UTILITIES
+// ============================================================================
+
+function getCorsHeaders(requestOrigin: string | null): HeadersInit {
+  const allowedOrigin = requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)
+    ? requestOrigin
+    : "";
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Methods": "POST, GET, PATCH, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
+    "Access-Control-Max-Age": "86400", // 24 hours
+  };
+}
+
+// ============================================================================
+// ROUTE REGISTRATION
+// ============================================================================
+
+function registerRoutes() {
+  const router = createRouter();
+
+  // ========================================================================
+  // VEHICLES - /vehicles
+  // ========================================================================
+  router.get("/vehicles", vehiclesHandler.listVehicles);
+  router.get("/vehicles/:id", vehiclesHandler.getVehicle);
+  router.post("/vehicles", vehiclesHandler.createVehicle);
+  router.patch("/vehicles/:id", vehiclesHandler.updateVehicle);
+  router.delete("/vehicles/:id", vehiclesHandler.deleteVehicle);
+
+  // ========================================================================
+  // DRIVERS - /drivers
+  // ========================================================================
+  router.get("/drivers", driversHandler.listDrivers);
+  router.get("/drivers/:id", driversHandler.getDriver);
+  router.post("/drivers", driversHandler.createDriver);
+  router.patch("/drivers/:id", driversHandler.updateDriver);
+  router.delete("/drivers/:id", driversHandler.deleteDriver);
+
+  // ========================================================================
+  // TRIPS - /trips
+  // ========================================================================
+  router.get("/trips", tripsHandler.listTrips);
+  router.get("/trips/:id", tripsHandler.getTrip);
+  router.post("/trips", tripsHandler.createTrip);
+  router.patch("/trips/:id", tripsHandler.updateTrip);
+  router.delete("/trips/:id", tripsHandler.deleteTrip);
+
+  // ========================================================================
+  // ORDERS - /orders
+  // ========================================================================
+  router.get("/orders", ordersHandler.listOrders);
+  router.get("/orders/:id", ordersHandler.getOrder);
+  router.post("/orders", ordersHandler.createOrder);
+  router.patch("/orders/:id", ordersHandler.updateOrder);
+  router.delete("/orders/:id", ordersHandler.deleteOrder);
+
+  // ========================================================================
+  // WORK ORDERS - /work-orders
+  // ========================================================================
+  router.get("/work-orders", workOrdersHandler.listWorkOrders);
+  router.get("/work-orders/:id", workOrdersHandler.getWorkOrder);
+  router.post("/work-orders", workOrdersHandler.createWorkOrder);
+  router.patch("/work-orders/:id", workOrdersHandler.updateWorkOrder);
+  router.delete("/work-orders/:id", workOrdersHandler.deleteWorkOrder);
+
+  // ========================================================================
+  // ALERTS - /alerts
+  // ========================================================================
+  router.get("/alerts", alertsHandler.listAlerts);
+  router.get("/alerts/:id", alertsHandler.getAlert);
+  router.post("/alerts", alertsHandler.createAlert);
+  router.patch("/alerts/:id/acknowledge", alertsHandler.acknowledgeAlert);
+  router.delete("/alerts/:id", alertsHandler.deleteAlert);
+
+  // ========================================================================
+  // GEOFENCES - /geofences
+  // ========================================================================
+  router.get("/geofences", geofencesHandler.listGeofences);
+  router.get("/geofences/:id", geofencesHandler.getGeofence);
+  router.post("/geofences", geofencesHandler.createGeofence);
+  router.patch("/geofences/:id", geofencesHandler.updateGeofence);
+  router.delete("/geofences/:id", geofencesHandler.deleteGeofence);
+
+  // ========================================================================
+  // INVENTORY - /inventory
+  // ========================================================================
+  router.get("/inventory", inventoryHandler.listInventory);
+  router.get("/inventory/:id", inventoryHandler.getInventoryItem);
+  router.post("/inventory", inventoryHandler.createInventoryItem);
+  router.patch("/inventory/:id", inventoryHandler.updateInventoryItem);
+  router.delete("/inventory/:id", inventoryHandler.deleteInventoryItem);
+
+  // ========================================================================
+  // FUEL LOGS - /fuel-logs
+  // ========================================================================
+  router.get("/fuel-logs", fuelLogsHandler.listFuelLogs);
+  router.get("/fuel-logs/:id", fuelLogsHandler.getFuelLog);
+  router.post("/fuel-logs", fuelLogsHandler.createFuelLog);
+  router.patch("/fuel-logs/:id", fuelLogsHandler.updateFuelLog);
+  router.delete("/fuel-logs/:id", fuelLogsHandler.deleteFuelLog);
+
+  return router;
+}
+
+// ============================================================================
+// MAIN HANDLER
+// ============================================================================
+
+serve(async (req: Request) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  try {
+    // ========================================================================
+    // AUTHENTICATION & AUTHORIZATION
+    // ========================================================================
+
+    // Check for API key
+    const apiKey = req.headers.get("x-api-key");
+    if (!apiKey) {
+      const response = createErrorResponse("Missing x-api-key header", 401);
+      const newHeaders = new Headers(response.headers);
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        newHeaders.set(key, value);
+      });
+      return new Response(response.body, {
+        status: response.status,
+        headers: newHeaders,
+      });
+    }
+
+    // Validate API key and get tenant
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const { data: tenant, error: tenantError } = await supabase
+      .from("tenants")
+      .select("id, name, status, api_key_expires_at")
+      .eq("api_key", apiKey)
+      .single();
+
+    if (tenantError || !tenant) {
+      console.error("Invalid API key attempt:", { error: tenantError?.message });
+      const response = createErrorResponse("Invalid API key", 403);
+      const newHeaders = new Headers(response.headers);
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        newHeaders.set(key, value);
+      });
+      return new Response(response.body, {
+        status: response.status,
+        headers: newHeaders,
+      });
+    }
+
+    // Check tenant status
+    if (tenant.status !== "active") {
+      const response = createErrorResponse(`Tenant is ${tenant.status}`, 403);
+      const newHeaders = new Headers(response.headers);
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        newHeaders.set(key, value);
+      });
+      return new Response(response.body, {
+        status: response.status,
+        headers: newHeaders,
+      });
+    }
+
+    // Check API key expiration (if applicable)
+    if (tenant.api_key_expires_at) {
+      const expiresAt = new Date(tenant.api_key_expires_at);
+      if (expiresAt < new Date()) {
+        const response = createErrorResponse("API key has expired", 403);
+        const newHeaders = new Headers(response.headers);
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          newHeaders.set(key, value);
+        });
+        return new Response(response.body, {
+          status: response.status,
+          headers: newHeaders,
+        });
+      }
+    }
+
+    const tenantId = tenant.id;
+
+    // ========================================================================
+    // ROUTING WITH MODULAR ROUTER
+    // ========================================================================
+
+    const router = registerRoutes();
+    const url = new URL(req.url);
+
+    // Create route context
+    const context: RouteContext = {
+      tenantId,
+      supabase,
+      url,
+    };
+
+    // Handle request with router
+    const handlerResponse = await router.handle(req, context);
+
+    // Add CORS headers to handler response
+    const newHeaders = new Headers(handlerResponse.headers);
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      newHeaders.set(key, value);
+    });
+
+    return new Response(handlerResponse.body, {
+      status: handlerResponse.status,
+      headers: newHeaders,
+    });
+
+  } catch (error) {
+    console.error("Request error:", error);
+
+    // Handle validation errors
+    if (error instanceof ValidationError) {
+      const errorBody = formatValidationError(error);
+      const newHeaders = new Headers(corsHeaders);
+      newHeaders.set("content-type", "application/json");
+
+      return new Response(
+        JSON.stringify(errorBody),
+        {
+          status: 400,
+          headers: newHeaders,
+        }
+      );
+    }
+
+    // Handle other errors
+    const errorResponse = createErrorResponse(
+      "Internal server error",
+      500,
+      {
+        message: error instanceof Error ? error.message : "Unknown error",
+      }
+    );
+
+    const newHeaders = new Headers(errorResponse.headers);
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      newHeaders.set(key, value);
+    });
+
+    return new Response(errorResponse.body, {
+      status: errorResponse.status,
+      headers: newHeaders,
+    });
+  }
+});
+
+      const rawBody = await req.json();
+
+      // ✅ CRITICAL: Validate BEFORE touching database
+      const validatedData = validateRequest(schemas["POST /orders"], rawBody);
+
+      // Insert with server-side tenant_id (never from client)
+      const { data: order, error: insertError } = await supabase
+        .from("orders")
+        .insert({
+          ...validatedData,
+          tenant_id: tenantId, // ✅ SERVER-SIDE ONLY
+          status: "pending",
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("Order insert error:", insertError);
+        return createErrorResponse("Failed to create order", 500, {
+          details: insertError.message,
+        });
+      }
+
+      return createSuccessResponse(order, 201);
+    }
+
+    // ========================================================================
+    // POST /trips - Create Trip
+    // ========================================================================
+    if (method === "POST" && path === "/trips") {
+      const rawBody = await req.json();
+      const validatedData = validateRequest(schemas["POST /trips"], rawBody);
+
+      const { data: trip, error: insertError } = await supabase
+        .from("trips")
+        .insert({
+          ...validatedData,
+          tenant_id: tenantId,
+          status: "scheduled",
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("Trip insert error:", insertError);
+        return createErrorResponse("Failed to create trip", 500, {
+          details: insertError.message,
+        });
+      }
+
+      return createSuccessResponse(trip, 201);
+    }
+
+    // ========================================================================
+    // POST /work-orders - Create Work Order
+    // ========================================================================
+    if (method === "POST" && path === "/work-orders") {
+      const rawBody = await req.json();
+      const validatedData = validateRequest(schemas["POST /work-orders"], rawBody);
+
+      const { data: workOrder, error: insertError } = await supabase
+        .from("work_orders")
+        .insert({
+          ...validatedData,
+          tenant_id: tenantId,
+          status: "pending",
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("Work order insert error:", insertError);
+        return createErrorResponse("Failed to create work order", 500, {
+          details: insertError.message,
+        });
+      }
+
+      return createSuccessResponse(workOrder, 201);
+    }
+
+    // ========================================================================
+    // POST /vehicles - Create Vehicle
+    // ========================================================================
+    if (method === "POST" && path === "/vehicles") {
+      const rawBody = await req.json();
+      const validatedData = validateRequest(schemas["POST /vehicles"], rawBody);
+
+      const { data: vehicle, error: insertError } = await supabase
+        .from("vehicles")
+        .insert({
+          ...validatedData,
+          tenant_id: tenantId,
+          status: "active",
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("Vehicle insert error:", insertError);
+        return createErrorResponse("Failed to create vehicle", 500, {
+          details: insertError.message,
+        });
+      }
+
+      return createSuccessResponse(vehicle, 201);
+    }
+
+    // ========================================================================
+    // PATCH /vehicles/:id - Update Vehicle
+    // ========================================================================
+    if (method === "PATCH" && path.startsWith("/vehicles/")) {
+      const vehicleId = path.split("/")[2];
+      if (!vehicleId) {
+        return createErrorResponse("Missing vehicle ID", 400);
+      }
+
+      const rawBody = await req.json();
+      const validatedData = validateRequest(schemas["PATCH /vehicles/:id"], rawBody);
+
+      // Ensure tenant owns this vehicle
+      const { data: existing, error: fetchError } = await supabase
+        .from("vehicles")
+        .select("id")
+        .eq("id", vehicleId)
+        .eq("tenant_id", tenantId)
+        .single();
+
+      if (fetchError || !existing) {
+        return createErrorResponse("Vehicle not found", 404);
+      }
+
+      const { data: vehicle, error: updateError } = await supabase
+        .from("vehicles")
+        .update({
+          ...validatedData,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", vehicleId)
+        .eq("tenant_id", tenantId)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error("Vehicle update error:", updateError);
+        return createErrorResponse("Failed to update vehicle", 500, {
+          details: updateError.message,
+        });
+      }
+
+      return createSuccessResponse(vehicle, 200);
+    }
+
+    // ========================================================================
+    // POST /drivers - Create Driver
+    // ========================================================================
+    if (method === "POST" && path === "/drivers") {
+      const rawBody = await req.json();
+      const validatedData = validateRequest(schemas["POST /drivers"], rawBody);
+
+      const { data: driver, error: insertError } = await supabase
+        .from("drivers")
+        .insert({
+          ...validatedData,
+          tenant_id: tenantId,
+          status: "active",
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("Driver insert error:", insertError);
+        return createErrorResponse("Failed to create driver", 500, {
+          details: insertError.message,
+        });
+      }
+
+      return createSuccessResponse(driver, 201);
+    }
+
+    // ========================================================================
+    // POST /alerts - Create Alert
+    // ========================================================================
+    if (method === "POST" && path === "/alerts") {
+      const rawBody = await req.json();
+      const validatedData = validateRequest(schemas["POST /alerts"], rawBody);
+
+      const { data: alert, error: insertError } = await supabase
+        .from("alerts")
+        .insert({
+          ...validatedData,
+          tenant_id: tenantId,
+          status: "open",
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("Alert insert error:", insertError);
+        return createErrorResponse("Failed to create alert", 500, {
+          details: insertError.message,
+        });
+      }
+
+      return createSuccessResponse(alert, 201);
+    }
+
+    // ========================================================================
+    // PATCH /alerts/:id/acknowledge - Acknowledge Alert
+    // ========================================================================
+    if (method === "PATCH" && path.match(/^\/alerts\/[^/]+\/acknowledge$/)) {
+      const alertId = path.split("/")[2];
+      const rawBody = await req.json();
+      const validatedData = validateRequest(schemas["PATCH /alerts/:id/acknowledge"], rawBody);
+
+      // Ensure tenant owns this alert
+      const { data: existing, error: fetchError } = await supabase
+        .from("alerts")
+        .select("id")
+        .eq("id", alertId)
+        .eq("tenant_id", tenantId)
+        .single();
+
+      if (fetchError || !existing) {
+        return createErrorResponse("Alert not found", 404);
+      }
+
+      const { data: alert, error: updateError } = await supabase
+        .from("alerts")
+        .update({
+          status: "acknowledged",
+          acknowledged_at: new Date().toISOString(),
+          notes: validatedData.notes,
+        })
+        .eq("id", alertId)
+        .eq("tenant_id", tenantId)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error("Alert acknowledge error:", updateError);
+        return createErrorResponse("Failed to acknowledge alert", 500, {
+          details: updateError.message,
+        });
+      }
+
+      return createSuccessResponse(alert, 200);
+    }
+
+    // ========================================================================
+    // POST /geofences - Create Geofence
+    // ========================================================================
+    if (method === "POST" && path === "/geofences") {
+      const rawBody = await req.json();
+      const validatedData = validateRequest(schemas["POST /geofences"], rawBody);
+
+      const { data: geofence, error: insertError } = await supabase
+        .from("geofences")
+        .insert({
+          ...validatedData,
+          tenant_id: tenantId,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("Geofence insert error:", insertError);
+        return createErrorResponse("Failed to create geofence", 500, {
+          details: insertError.message,
+        });
+      }
+
+      return createSuccessResponse(geofence, 201);
+    }
+
+    // ========================================================================
+    // POST /inventory - Create Inventory Item
+    // ========================================================================
+    if (method === "POST" && path === "/inventory") {
+      const rawBody = await req.json();
+      const validatedData = validateRequest(schemas["POST /inventory"], rawBody);
+
+      const { data: item, error: insertError } = await supabase
+        .from("inventory_items")
+        .insert({
+          ...validatedData,
+          tenant_id: tenantId,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("Inventory insert error:", insertError);
+        return createErrorResponse("Failed to create inventory item", 500, {
+          details: insertError.message,
+        });
+      }
+
+      return createSuccessResponse(item, 201);
+    }
+
+    // ========================================================================
+    // POST /fuel-logs - Create Fuel Log
+    // ========================================================================
+    if (method === "POST" && path === "/fuel-logs") {
+      const rawBody = await req.json();
+      const validatedData = validateRequest(schemas["POST /fuel-logs"], rawBody);
+
+      const { data: fuelLog, error: insertError } = await supabase
+        .from("fuel_logs")
+        .insert({
+          ...validatedData,
+          tenant_id: tenantId,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("Fuel log insert error:", insertError);
+        return createErrorResponse("Failed to create fuel log", 500, {
+          details: insertError.message,
+        });
+      }
+
+      return createSuccessResponse(fuelLog, 201);
+    }
+
+    // ========================================================================
+    // 404 - Route Not Found
+    // ========================================================================
+    return createErrorResponse("Endpoint not found", 404, {
+      path,
+      method,
+      availableEndpoints: [
+        "POST /orders",
+        "POST /trips",
+        "POST /work-orders",
+        "POST /vehicles",
+        "PATCH /vehicles/:id",
+        "POST /drivers",
+        "POST /alerts",
+        "PATCH /alerts/:id/acknowledge",
+        "POST /geofences",
+        "POST /inventory",
+        "POST /fuel-logs",
+      ],
+    });
+
+  } catch (error) {
+    console.error("Request error:", error);
+
+    // Handle validation errors
+    if (error instanceof ValidationError) {
+      const response = new Response(
+        JSON.stringify(formatValidationError(error)),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "content-type": "application/json" },
+        }
+      );
+      return response;
+    }
+
+    // Handle other errors
+    const errorResponse = createErrorResponse(
+      "Internal server error",
+      500,
+      {
+        message: error instanceof Error ? error.message : "Unknown error",
+      }
+    );
+
+    const newHeaders = new Headers(errorResponse.headers);
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      newHeaders.set(key, value);
+    });
+
+    return new Response(errorResponse.body, {
+      status: errorResponse.status,
+      headers: newHeaders,
+    });
+  }
+});

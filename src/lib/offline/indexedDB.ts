@@ -1,364 +1,482 @@
 /**
- * IndexedDB Wrapper for Offline-First Data Persistence
- * Provides schema versioning, CRUD operations, and conflict detection
+ * IndexedDB Wrapper for Offline-First Architecture
+ *
+ * Provides a robust, versioned IndexedDB layer for:
+ * - Offline data caching
+ * - Mutation queue persistence
+ * - Conflict detection
+ * - Query result caching
+ *
+ * @example
+ * const db = await openDB();
+ * await db.vehicles.put(vehicle);
+ * const allVehicles = await db.vehicles.getAll();
  */
 
-const DB_NAME = 'cellvi_offline_db';
+import { openDB, DBSchema, IDBPDatabase } from 'idb';
+
+// ============================================================================
+// SCHEMA DEFINITION
+// ============================================================================
+
+export interface CellviDB extends DBSchema {
+  // Cached data from API
+  vehicles: {
+    key: string; // UUID
+    value: {
+      id: string;
+      data: any;
+      lastModified: number;
+      version: number;
+      syncedAt?: number;
+    };
+    indexes: {
+      'by-lastModified': number;
+      'by-syncedAt': number;
+    };
+  };
+
+  drivers: {
+    key: string;
+    value: {
+      id: string;
+      data: any;
+      lastModified: number;
+      version: number;
+      syncedAt?: number;
+    };
+    indexes: {
+      'by-lastModified': number;
+      'by-syncedAt': number;
+    };
+  };
+
+  trips: {
+    key: string;
+    value: {
+      id: string;
+      data: any;
+      lastModified: number;
+      version: number;
+      syncedAt?: number;
+    };
+    indexes: {
+      'by-lastModified': number;
+      'by-syncedAt': number;
+    };
+  };
+
+  workOrders: {
+    key: string;
+    value: {
+      id: string;
+      data: any;
+      lastModified: number;
+      version: number;
+      syncedAt?: number;
+    };
+    indexes: {
+      'by-lastModified': number;
+      'by-syncedAt': number;
+    };
+  };
+
+  // Mutation queue for offline operations
+  mutationQueue: {
+    key: string; // UUID
+    value: {
+      id: string;
+      type: 'create' | 'update' | 'delete';
+      resource: string; // 'vehicles', 'drivers', etc.
+      resourceId?: string;
+      data: any;
+      createdAt: number;
+      retryCount: number;
+      lastError?: string;
+      status: 'pending' | 'processing' | 'failed' | 'synced';
+    };
+    indexes: {
+      'by-status': string;
+      'by-createdAt': number;
+      'by-resource': string;
+    };
+  };
+
+  // Conflict tracking
+  conflicts: {
+    key: string;
+    value: {
+      id: string;
+      resource: string;
+      resourceId: string;
+      localVersion: any;
+      serverVersion: any;
+      detectedAt: number;
+      resolvedAt?: number;
+      resolution?: 'local' | 'server' | 'merged';
+    };
+    indexes: {
+      'by-detectedAt': number;
+      'by-resource': string;
+    };
+  };
+
+  // Query cache for read operations
+  queryCache: {
+    key: string; // query hash
+    value: {
+      queryKey: string;
+      data: any;
+      cachedAt: number;
+      expiresAt: number;
+    };
+    indexes: {
+      'by-expiresAt': number;
+    };
+  };
+
+  // Metadata
+  metadata: {
+    key: string;
+    value: any;
+  };
+}
+
+const DB_NAME = 'cellvi-offline-db';
 const DB_VERSION = 1;
 
-/**
- * Database Stores
- */
-export const STORES = {
-  MUTATIONS: 'offline_mutations',      // Queued mutations waiting to sync
-  CACHED_DATA: 'cached_data',         // Cached entities for offline read
-  CONFLICT_LOG: 'conflict_log',       // Conflict resolution history
-} as const;
+// ============================================================================
+// DATABASE INITIALIZATION
+// ============================================================================
 
-/**
- * Mutation Record
- */
-export interface MutationRecord {
-  id: string;
-  type: 'create' | 'update' | 'delete';
-  entity: string;
-  entityId?: string;
-  data: Record<string, unknown>;
-  timestamp: number;
-  userId: string;
-  hash: string;                       // Content hash for deduplication
-  retryCount: number;
-  status: 'pending' | 'syncing' | 'success' | 'error';
-  error?: string;
-  priority: number;                   // Higher = more important
-}
+let dbInstance: IDBPDatabase<CellviDB> | null = null;
 
-/**
- * Cached Data Record
- */
-export interface CachedDataRecord {
-  id: string;
-  entity: string;
-  data: Record<string, unknown>;
-  timestamp: number;
-  version: number;                    // For conflict detection
-  lastSyncedAt: number | null;
-}
-
-/**
- * Conflict Record
- */
-export interface ConflictRecord {
-  id: string;
-  mutationId: string;
-  entity: string;
-  entityId: string;
-  localVersion: number;
-  serverVersion: number;
-  localData: Record<string, unknown>;
-  serverData: Record<string, unknown>;
-  timestamp: number;
-  resolved: boolean;
-  resolution?: 'local' | 'server' | 'merged';
-}
-
-/**
- * Open IndexedDB connection
- */
-export const openDB = (): Promise<IDBDatabase> => {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-
-      // Mutations Store
-      if (!db.objectStoreNames.contains(STORES.MUTATIONS)) {
-        const mutationsStore = db.createObjectStore(STORES.MUTATIONS, { keyPath: 'id' });
-        mutationsStore.createIndex('status', 'status', { unique: false });
-        mutationsStore.createIndex('priority', 'priority', { unique: false });
-        mutationsStore.createIndex('timestamp', 'timestamp', { unique: false });
-        mutationsStore.createIndex('entity', 'entity', { unique: false });
-      }
-
-      // Cached Data Store
-      if (!db.objectStoreNames.contains(STORES.CACHED_DATA)) {
-        const cachedDataStore = db.createObjectStore(STORES.CACHED_DATA, { keyPath: 'id' });
-        cachedDataStore.createIndex('entity', 'entity', { unique: false });
-        cachedDataStore.createIndex('timestamp', 'timestamp', { unique: false });
-      }
-
-      // Conflict Log Store
-      if (!db.objectStoreNames.contains(STORES.CONFLICT_LOG)) {
-        const conflictStore = db.createObjectStore(STORES.CONFLICT_LOG, { keyPath: 'id' });
-        conflictStore.createIndex('mutationId', 'mutationId', { unique: false });
-        conflictStore.createIndex('resolved', 'resolved', { unique: false });
-        conflictStore.createIndex('timestamp', 'timestamp', { unique: false });
-      }
-    };
-  });
-};
-
-/**
- * Add a mutation to the queue
- */
-export const addMutation = async (mutation: Omit<MutationRecord, 'id' | 'timestamp' | 'retryCount' | 'status'>): Promise<string> => {
-  const db = await openDB();
-  const id = crypto.randomUUID();
-
-  const record: MutationRecord = {
-    ...mutation,
-    id,
-    timestamp: Date.now(),
-    retryCount: 0,
-    status: 'pending',
-  };
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORES.MUTATIONS], 'readwrite');
-    const store = transaction.objectStore(STORES.MUTATIONS);
-    const request = store.add(record);
-
-    request.onsuccess = () => resolve(id);
-    request.onerror = () => reject(request.error);
-  });
-};
-
-/**
- * Get all pending mutations (ordered by priority, then timestamp)
- */
-export const getPendingMutations = async (): Promise<MutationRecord[]> => {
-  const db = await openDB();
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORES.MUTATIONS], 'readonly');
-    const store = transaction.objectStore(STORES.MUTATIONS);
-    const index = store.index('status');
-    const request = index.getAll('pending');
-
-    request.onsuccess = () => {
-      // Sort by priority DESC, then timestamp ASC
-      const mutations = request.result.sort((a, b) => {
-        if (a.priority !== b.priority) return b.priority - a.priority;
-        return a.timestamp - b.timestamp;
-      });
-      resolve(mutations);
-    };
-    request.onerror = () => reject(request.error);
-  });
-};
-
-/**
- * Update mutation status
- */
-export const updateMutationStatus = async (
-  id: string,
-  updates: Partial<Pick<MutationRecord, 'status' | 'error' | 'retryCount'>>
-): Promise<void> => {
-  const db = await openDB();
-
-  return new Promise(async (resolve, reject) => {
-    const transaction = db.transaction([STORES.MUTATIONS], 'readwrite');
-    const store = transaction.objectStore(STORES.MUTATIONS);
-    const getRequest = store.get(id);
-
-    getRequest.onsuccess = () => {
-      const record = getRequest.result;
-      if (!record) {
-        reject(new Error(`Mutation ${id} not found`));
-        return;
-      }
-
-      const updated = { ...record, ...updates };
-      const putRequest = store.put(updated);
-
-      putRequest.onsuccess = () => resolve();
-      putRequest.onerror = () => reject(putRequest.error);
-    };
-    getRequest.onerror = () => reject(getRequest.error);
-  });
-};
-
-/**
- * Delete mutation from queue
- */
-export const deleteMutation = async (id: string): Promise<void> => {
-  const db = await openDB();
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORES.MUTATIONS], 'readwrite');
-    const store = transaction.objectStore(STORES.MUTATIONS);
-    const request = store.delete(id);
-
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
-};
-
-/**
- * Cache data for offline read access
- */
-export const cacheData = async (entity: string, data: Record<string, unknown>[], version: number = 1): Promise<void> => {
-  const db = await openDB();
-  const timestamp = Date.now();
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORES.CACHED_DATA], 'readwrite');
-    const store = transaction.objectStore(STORES.CACHED_DATA);
-
-    // Clear old cache for this entity
-    const index = store.index('entity');
-    const request = index.openCursor(IDBKeyRange.only(entity));
-
-    request.onsuccess = (event) => {
-      const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-      if (cursor) {
-        cursor.delete();
-        cursor.continue();
-      } else {
-        // Add new cached data
-        data.forEach((item) => {
-          const record: CachedDataRecord = {
-            id: `${entity}_${item.id}`,
-            entity,
-            data: item,
-            timestamp,
-            version,
-            lastSyncedAt: timestamp,
-          };
-          store.add(record);
-        });
-      }
-    };
-
-    transaction.oncomplete = () => resolve();
-    transaction.onerror = () => reject(transaction.error);
-  });
-};
-
-/**
- * Get cached data for an entity
- */
-export const getCachedData = async (entity: string): Promise<Record<string, unknown>[]> => {
-  const db = await openDB();
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORES.CACHED_DATA], 'readonly');
-    const store = transaction.objectStore(STORES.CACHED_DATA);
-    const index = store.index('entity');
-    const request = index.getAll(entity);
-
-    request.onsuccess = () => {
-      const records = request.result as CachedDataRecord[];
-      resolve(records.map((r) => r.data));
-    };
-    request.onerror = () => reject(request.error);
-  });
-};
-
-/**
- * Log a conflict for resolution
- */
-export const logConflict = async (conflict: Omit<ConflictRecord, 'id' | 'timestamp' | 'resolved'>): Promise<string> => {
-  const db = await openDB();
-  const id = crypto.randomUUID();
-
-  const record: ConflictRecord = {
-    ...conflict,
-    id,
-    timestamp: Date.now(),
-    resolved: false,
-  };
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORES.CONFLICT_LOG], 'readwrite');
-    const store = transaction.objectStore(STORES.CONFLICT_LOG);
-    const request = store.add(record);
-
-    request.onsuccess = () => resolve(id);
-    request.onerror = () => reject(request.error);
-  });
-};
-
-/**
- * Get unresolved conflicts
- */
-export const getUnresolvedConflicts = async (): Promise<ConflictRecord[]> => {
-  const db = await openDB();
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORES.CONFLICT_LOG], 'readonly');
-    const store = transaction.objectStore(STORES.CONFLICT_LOG);
-    const index = store.index('resolved');
-    const request = index.getAll(false);
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-};
-
-/**
- * Resolve a conflict
- */
-export const resolveConflict = async (id: string, resolution: 'local' | 'server' | 'merged'): Promise<void> => {
-  const db = await openDB();
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORES.CONFLICT_LOG], 'readwrite');
-    const store = transaction.objectStore(STORES.CONFLICT_LOG);
-    const getRequest = store.get(id);
-
-    getRequest.onsuccess = () => {
-      const record = getRequest.result;
-      if (!record) {
-        reject(new Error(`Conflict ${id} not found`));
-        return;
-      }
-
-      const updated = { ...record, resolved: true, resolution };
-      const putRequest = store.put(updated);
-
-      putRequest.onsuccess = () => resolve();
-      putRequest.onerror = () => reject(putRequest.error);
-    };
-    getRequest.onerror = () => reject(getRequest.error);
-  });
-};
-
-/**
- * Clear all data (for logout/reset)
- */
-export const clearAllData = async (): Promise<void> => {
-  const db = await openDB();
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(
-      [STORES.MUTATIONS, STORES.CACHED_DATA, STORES.CONFLICT_LOG],
-      'readwrite'
-    );
-
-    transaction.objectStore(STORES.MUTATIONS).clear();
-    transaction.objectStore(STORES.CACHED_DATA).clear();
-    transaction.objectStore(STORES.CONFLICT_LOG).clear();
-
-    transaction.oncomplete = () => resolve();
-    transaction.onerror = () => reject(transaction.error);
-  });
-};
-
-/**
- * Generate content hash for deduplication
- */
-export const generateHash = (data: Record<string, unknown>): string => {
-  const str = JSON.stringify(data);
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
+export async function openCellviDB(): Promise<IDBPDatabase<CellviDB>> {
+  if (dbInstance) {
+    return dbInstance;
   }
-  return hash.toString(36);
-};
+
+  dbInstance = await openDB<CellviDB>(DB_NAME, DB_VERSION, {
+    upgrade(db, oldVersion, newVersion, transaction) {
+      console.log(`[IndexedDB] Upgrading from version ${oldVersion} to ${newVersion}`);
+
+      // Create stores if they don't exist
+      if (!db.objectStoreNames.contains('vehicles')) {
+        const vehiclesStore = db.createObjectStore('vehicles', { keyPath: 'id' });
+        vehiclesStore.createIndex('by-lastModified', 'lastModified');
+        vehiclesStore.createIndex('by-syncedAt', 'syncedAt');
+      }
+
+      if (!db.objectStoreNames.contains('drivers')) {
+        const driversStore = db.createObjectStore('drivers', { keyPath: 'id' });
+        driversStore.createIndex('by-lastModified', 'lastModified');
+        driversStore.createIndex('by-syncedAt', 'syncedAt');
+      }
+
+      if (!db.objectStoreNames.contains('trips')) {
+        const tripsStore = db.createObjectStore('trips', { keyPath: 'id' });
+        tripsStore.createIndex('by-lastModified', 'lastModified');
+        tripsStore.createIndex('by-syncedAt', 'syncedAt');
+      }
+
+      if (!db.objectStoreNames.contains('workOrders')) {
+        const workOrdersStore = db.createObjectStore('workOrders', { keyPath: 'id' });
+        workOrdersStore.createIndex('by-lastModified', 'lastModified');
+        workOrdersStore.createIndex('by-syncedAt', 'syncedAt');
+      }
+
+      if (!db.objectStoreNames.contains('mutationQueue')) {
+        const queueStore = db.createObjectStore('mutationQueue', { keyPath: 'id' });
+        queueStore.createIndex('by-status', 'status');
+        queueStore.createIndex('by-createdAt', 'createdAt');
+        queueStore.createIndex('by-resource', 'resource');
+      }
+
+      if (!db.objectStoreNames.contains('conflicts')) {
+        const conflictsStore = db.createObjectStore('conflicts', { keyPath: 'id' });
+        conflictsStore.createIndex('by-detectedAt', 'detectedAt');
+        conflictsStore.createIndex('by-resource', 'resource');
+      }
+
+      if (!db.objectStoreNames.contains('queryCache')) {
+        const cacheStore = db.createObjectStore('queryCache', { keyPath: 'queryKey' });
+        cacheStore.createIndex('by-expiresAt', 'expiresAt');
+      }
+
+      if (!db.objectStoreNames.contains('metadata')) {
+        db.createObjectStore('metadata');
+      }
+
+      console.log('[IndexedDB] Database upgrade complete');
+    },
+    blocked() {
+      console.warn('[IndexedDB] Database upgrade blocked. Close other tabs.');
+    },
+    blocking() {
+      console.warn('[IndexedDB] This connection is blocking a newer version.');
+      dbInstance?.close();
+      dbInstance = null;
+    },
+    terminated() {
+      console.error('[IndexedDB] Database connection terminated unexpectedly');
+      dbInstance = null;
+    },
+  });
+
+  console.log('[IndexedDB] Database opened successfully');
+  return dbInstance;
+}
+
+// ============================================================================
+// RESOURCE OPERATIONS
+// ============================================================================
+
+export async function putResource<T extends keyof CellviDB>(
+  store: T,
+  id: string,
+  data: any,
+  version: number = Date.now()
+): Promise<void> {
+  const db = await openCellviDB();
+
+  await db.put(store as any, {
+    id,
+    data,
+    lastModified: Date.now(),
+    version,
+    syncedAt: undefined, // Will be set when synced
+  });
+}
+
+export async function getResource<T extends keyof CellviDB>(
+  store: T,
+  id: string
+): Promise<any | null> {
+  const db = await openCellviDB();
+  const record = await db.get(store as any, id);
+  return record?.data || null;
+}
+
+export async function getAllResources<T extends keyof CellviDB>(
+  store: T
+): Promise<any[]> {
+  const db = await openCellviDB();
+  const records = await db.getAll(store as any);
+  return records.map(r => r.data);
+}
+
+export async function deleteResource<T extends keyof CellviDB>(
+  store: T,
+  id: string
+): Promise<void> {
+  const db = await openCellviDB();
+  await db.delete(store as any, id);
+}
+
+export async function clearStore<T extends keyof CellviDB>(
+  store: T
+): Promise<void> {
+  const db = await openCellviDB();
+  await db.clear(store as any);
+}
+
+// ============================================================================
+// QUERY CACHE OPERATIONS
+// ============================================================================
+
+export async function cacheQuery(
+  queryKey: string,
+  data: any,
+  ttlMs: number = 5 * 60 * 1000 // 5 minutes default
+): Promise<void> {
+  const db = await openCellviDB();
+  const now = Date.now();
+
+  await db.put('queryCache', {
+    queryKey,
+    data,
+    cachedAt: now,
+    expiresAt: now + ttlMs,
+  });
+}
+
+export async function getCachedQuery(
+  queryKey: string
+): Promise<any | null> {
+  const db = await openCellviDB();
+  const cached = await db.get('queryCache', queryKey);
+
+  if (!cached) return null;
+
+  // Check if expired
+  if (cached.expiresAt < Date.now()) {
+    await db.delete('queryCache', queryKey);
+    return null;
+  }
+
+  return cached.data;
+}
+
+export async function invalidateQueryCache(
+  pattern?: string
+): Promise<void> {
+  const db = await openCellviDB();
+
+  if (!pattern) {
+    // Clear all cache
+    await db.clear('queryCache');
+    return;
+  }
+
+  // Clear matching queries
+  const allKeys = await db.getAllKeys('queryCache');
+  const keysToDelete = allKeys.filter(key =>
+    typeof key === 'string' && key.includes(pattern)
+  );
+
+  await Promise.all(
+    keysToDelete.map(key => db.delete('queryCache', key))
+  );
+}
+
+// ============================================================================
+// CLEANUP OPERATIONS
+// ============================================================================
+
+/**
+ * Remove expired cache entries
+ */
+export async function cleanupExpiredCache(): Promise<number> {
+  const db = await openCellviDB();
+  const now = Date.now();
+
+  const tx = db.transaction('queryCache', 'readwrite');
+  const index = tx.store.index('by-expiresAt');
+
+  let deletedCount = 0;
+  let cursor = await index.openCursor(IDBKeyRange.upperBound(now));
+
+  while (cursor) {
+    await cursor.delete();
+    deletedCount++;
+    cursor = await cursor.continue();
+  }
+
+  await tx.done;
+
+  if (deletedCount > 0) {
+    console.log(`[IndexedDB] Cleaned up ${deletedCount} expired cache entries`);
+  }
+
+  return deletedCount;
+}
+
+/**
+ * Get database statistics
+ */
+export async function getDatabaseStats(): Promise<{
+  vehicles: number;
+  drivers: number;
+  trips: number;
+  workOrders: number;
+  pendingMutations: number;
+  conflicts: number;
+  cacheSize: number;
+  totalSize: number;
+}> {
+  const db = await openCellviDB();
+
+  const [vehicles, drivers, trips, workOrders, mutations, conflicts, cache] = await Promise.all([
+    db.count('vehicles'),
+    db.count('drivers'),
+    db.count('trips'),
+    db.count('workOrders'),
+    db.countFromIndex('mutationQueue', 'by-status', 'pending'),
+    db.count('conflicts'),
+    db.count('queryCache'),
+  ]);
+
+  return {
+    vehicles,
+    drivers,
+    trips,
+    workOrders,
+    pendingMutations: mutations,
+    conflicts,
+    cacheSize: cache,
+    totalSize: vehicles + drivers + trips + workOrders + mutations + conflicts + cache,
+  };
+}
+
+/**
+ * Export all data for debugging
+ */
+export async function exportDatabase(): Promise<any> {
+  const db = await openCellviDB();
+
+  const [vehicles, drivers, trips, workOrders, mutations, conflicts, cache] = await Promise.all([
+    db.getAll('vehicles'),
+    db.getAll('drivers'),
+    db.getAll('trips'),
+    db.getAll('workOrders'),
+    db.getAll('mutationQueue'),
+    db.getAll('conflicts'),
+    db.getAll('queryCache'),
+  ]);
+
+  return {
+    version: DB_VERSION,
+    exportedAt: new Date().toISOString(),
+    data: {
+      vehicles,
+      drivers,
+      trips,
+      workOrders,
+      mutations,
+      conflicts,
+      cache,
+    },
+  };
+}
+
+/**
+ * Clear all data (use with caution!)
+ */
+export async function clearAllData(): Promise<void> {
+  const db = await openCellviDB();
+
+  await Promise.all([
+    db.clear('vehicles'),
+    db.clear('drivers'),
+    db.clear('trips'),
+    db.clear('workOrders'),
+    db.clear('mutationQueue'),
+    db.clear('conflicts'),
+    db.clear('queryCache'),
+    db.clear('metadata'),
+  ]);
+
+  console.log('[IndexedDB] All data cleared');
+}
+
+// ============================================================================
+// METADATA OPERATIONS
+// ============================================================================
+
+export async function setMetadata(key: string, value: any): Promise<void> {
+  const db = await openCellviDB();
+  await db.put('metadata', value, key);
+}
+
+export async function getMetadata(key: string): Promise<any | null> {
+  const db = await openCellviDB();
+  return (await db.get('metadata', key)) || null;
+}
+
+// Initialize cleanup on module load
+if (typeof window !== 'undefined') {
+  // Clean up expired cache every 5 minutes
+  setInterval(() => {
+    cleanupExpiredCache().catch(console.error);
+  }, 5 * 60 * 1000);
+}

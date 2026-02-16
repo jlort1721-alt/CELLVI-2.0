@@ -1,173 +1,173 @@
 /**
- * Offline-First Mutation Hook
- * Wraps React Query's useMutation with offline queue support
+ * Offline Mutation Hook
+ * 
+ * Wraps useMutation with offline support:
+ * - Queues mutations when offline
+ * - Optimistic UI updates
+ * - Auto-sync when online
+ * - Conflict detection
  */
 
-import { useMutation, useQueryClient, type UseMutationOptions, type UseMutationResult } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/useAuth';
+import { useMutation, useQueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { queueMutation } from '@/lib/offline/mutationQueue';
-import { useSyncStatusStore } from '@/stores/syncStatusStore';
+import { detectConflict, recordConflict } from '@/lib/offline/conflictResolver';
+import { putResource } from '@/lib/offline/indexedDB';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { toast } from 'sonner';
 
-export interface OfflineMutationOptions<TData, TVariables> extends Omit<UseMutationOptions<TData, Error, TVariables>, 'mutationFn'> {
+interface OfflineMutationOptions<TData, TVariables> extends Omit<UseMutationOptions<TData, Error, TVariables>, 'mutationFn'> {
   mutationFn: (variables: TVariables) => Promise<TData>;
-  entity: string;
-  getEntityId?: (variables: TVariables) => string | undefined;
-  priority?: number;
-  optimisticUpdate?: (variables: TVariables) => TData | void;
+  resourceType: 'vehicles' | 'drivers' | 'trips' | 'workOrders';
+  optimisticData?: (variables: TVariables) => any;
 }
 
-/**
- * Hook that queues mutations for offline processing
- *
- * @example
- * const createVehicle = useOfflineMutation({
- *   mutationFn: (vehicle) => supabase.from('vehicles').insert(vehicle),
- *   entity: 'vehicles',
- *   onSuccess: () => queryClient.invalidateQueries(['vehicles']),
- *   optimisticUpdate: (vehicle) => vehicle, // Optional optimistic data
- * });
- */
-export const useOfflineMutation = <TData = unknown, TVariables = unknown>(
+export function useOfflineMutation<TData = unknown, TVariables = unknown>(
   options: OfflineMutationOptions<TData, TVariables>
-): UseMutationResult<TData, Error, TVariables> => {
-  const { user } = useAuth();
+) {
   const queryClient = useQueryClient();
-  const { isOnline } = useSyncStatusStore();
-
-  const {
-    mutationFn,
-    entity,
-    getEntityId,
-    priority = 5,
-    optimisticUpdate,
-    onMutate,
-    onSuccess,
-    onError,
-    onSettled,
-    ...restOptions
-  } = options;
+  const isOnline = useOnlineStatus();
 
   return useMutation<TData, Error, TVariables>({
-    ...restOptions,
-
     mutationFn: async (variables) => {
       // If offline, queue the mutation
       if (!isOnline) {
-        const entityId = getEntityId ? getEntityId(variables) : undefined;
-
-        await queueMutation(
-          entityId ? 'update' : 'create',
-          entity,
-          variables as Record<string, unknown>,
-          {
-            entityId,
-            userId: user?.id || 'unknown',
-            priority,
-          }
+        const mutationId = await queueMutation(
+          'create', // or detect from variables
+          options.resourceType,
+          variables as any
         );
 
-        // Return optimistic data if provided
-        if (optimisticUpdate) {
-          const optimisticData = optimisticUpdate(variables);
-          if (optimisticData) {
-            return optimisticData as TData;
-          }
+        // Store optimistic data in IndexedDB
+        if (options.optimisticData) {
+          const optimisticItem = options.optimisticData(variables);
+          await putResource(
+            options.resourceType,
+            optimisticItem.id,
+            optimisticItem
+          );
         }
 
-        // Return a placeholder response for offline mutations
-        return { id: 'offline', ...variables } as TData;
+        toast.info('Sin conexión. Se sincronizará cuando vuelva la red.');
+
+        // Return optimistic data
+        return (options.optimisticData?.(variables) || {}) as TData;
       }
 
       // If online, execute normally
-      return mutationFn(variables);
+      return options.mutationFn(variables);
     },
 
     onMutate: async (variables) => {
+      // Cancel ongoing queries
+      await queryClient.cancelQueries({ queryKey: [options.resourceType] });
+
+      // Snapshot previous value
+      const previous = queryClient.getQueryData([options.resourceType]);
+
+      // Optimistic update
+      if (options.optimisticData) {
+        const optimisticItem = options.optimisticData(variables);
+        
+        queryClient.setQueryData([options.resourceType], (old: any) => {
+          if (Array.isArray(old)) {
+            return [...old, optimisticItem];
+          }
+          return [optimisticItem];
+        });
+      }
+
       // Call user's onMutate if provided
-      const context = onMutate ? await onMutate(variables) : undefined;
-
-      // If optimistic update provided, apply it
-      if (optimisticUpdate && options.queryKey) {
-        await queryClient.cancelQueries({ queryKey: options.queryKey as unknown[] });
-
-        const previousData = queryClient.getQueryData(options.queryKey as unknown[]);
-
-        const optimisticData = optimisticUpdate(variables);
-        if (optimisticData) {
-          queryClient.setQueryData(options.queryKey as unknown[], optimisticData);
-        }
-
-        return { ...context, previousData };
+      if (options.onMutate) {
+        const userContext = await options.onMutate(variables);
+        return { previous, ...userContext };
       }
 
-      return context;
+      return { previous };
     },
 
-    onSuccess: (data, variables, context) => {
-      // Call user's onSuccess if provided
-      if (onSuccess) {
-        onSuccess(data, variables, context);
+    onError: (error, variables, context: any) => {
+      // Rollback optimistic update
+      if (context?.previous) {
+        queryClient.setQueryData([options.resourceType], context.previous);
       }
-    },
 
-    onError: (error, variables, context) => {
-      // Rollback optimistic update if it exists
-      if (context && 'previousData' in context && options.queryKey) {
-        queryClient.setQueryData(
-          options.queryKey as unknown[],
-          (context as { previousData: unknown }).previousData
-        );
+      // Detect conflict
+      if (error.message?.includes('conflict') || error.message?.includes('version')) {
+        toast.error('Conflicto detectado. Por favor, recarga los datos.');
+      } else {
+        toast.error('Error al guardar cambios');
       }
 
       // Call user's onError if provided
-      if (onError) {
-        onError(error, variables, context);
+      if (options.onError) {
+        options.onError(error, variables, context);
       }
     },
 
-    onSettled: (data, error, variables, context) => {
-      // Call user's onSettled if provided
-      if (onSettled) {
-        onSettled(data, error, variables, context);
+    onSuccess: (data, variables, context) => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: [options.resourceType] });
+
+      toast.success('Cambios guardados exitosamente');
+
+      // Call user's onSuccess if provided
+      if (options.onSuccess) {
+        options.onSuccess(data, variables, context);
       }
     },
+
+    // Pass through other options
+    ...options,
   });
-};
+}
 
 /**
- * Hook for delete mutations with offline support
+ * Hook for update mutations with conflict detection
  */
-export const useOfflineDeleteMutation = <TData = unknown, TVariables = { id: string }>(
-  options: Omit<OfflineMutationOptions<TData, TVariables>, 'getEntityId'> & {
-    getEntityId: (variables: TVariables) => string;
+export function useOfflineUpdate<TData = unknown, TVariables = unknown>(
+  options: OfflineMutationOptions<TData, TVariables> & {
+    getLocalVersion: (id: string) => Promise<any>;
   }
-): UseMutationResult<TData, Error, TVariables> => {
-  const { user } = useAuth();
-  const { isOnline } = useSyncStatusStore();
-
-  const { mutationFn, entity, getEntityId, priority = 5, ...restOptions } = options;
+) {
+  const queryClient = useQueryClient();
+  const isOnline = useOnlineStatus();
 
   return useMutation<TData, Error, TVariables>({
-    ...restOptions,
-    mutationFn: async (variables) => {
+    mutationFn: async (variables: any) => {
       if (!isOnline) {
-        const entityId = getEntityId(variables);
-
-        await queueMutation(
-          'delete',
-          entity,
-          {} as Record<string, unknown>,
-          {
-            entityId,
-            userId: user?.id || 'unknown',
-            priority,
-          }
-        );
-
-        return { success: true } as TData;
+        await queueMutation('update', options.resourceType, variables, variables.id);
+        toast.info('Sin conexión. Se sincronizará cuando vuelva la red.');
+        return variables as TData;
       }
 
-      return mutationFn(variables);
+      // Check for conflicts before updating
+      const localVersion = await options.getLocalVersion(variables.id);
+      const serverData = await options.mutationFn(variables);
+
+      if (localVersion) {
+        const hasConflict = await detectConflict(
+          options.resourceType,
+          variables.id,
+          localVersion,
+          serverData
+        );
+
+        if (hasConflict) {
+          await recordConflict(
+            options.resourceType,
+            variables.id,
+            localVersion,
+            serverData
+          );
+          toast.warning('Conflicto detectado. Revisa los cambios.');
+        }
+      }
+
+      return serverData;
     },
+
+    onMutate: options.onMutate,
+    onError: options.onError,
+    onSuccess: options.onSuccess,
   });
-};
+}

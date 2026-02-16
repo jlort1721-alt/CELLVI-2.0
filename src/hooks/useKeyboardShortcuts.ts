@@ -1,204 +1,122 @@
 /**
- * Keyboard Shortcuts Hook
- * Provides global keyboard navigation and command shortcuts
- * WCAG 2.1 Success Criterion 2.1.1 (Keyboard Accessible)
+ * Global Keyboard Shortcuts
+ * Provides application-wide keyboard navigation
  */
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { announce } from '@/components/accessibility/LiveRegion';
 
-export interface KeyboardShortcut {
+interface ShortcutConfig {
   key: string;
-  ctrl?: boolean;
-  alt?: boolean;
-  shift?: boolean;
-  meta?: boolean; // Command on Mac
-  description: string;
+  ctrlKey?: boolean;
+  shiftKey?: boolean;
+  metaKey?: boolean;
   action: () => void;
-  preventDefault?: boolean;
-  enabled?: boolean;
+  description: string;
 }
 
-interface UseKeyboardShortcutsOptions {
-  shortcuts: KeyboardShortcut[];
-  enabled?: boolean;
-  announceShortcut?: boolean;
+const shortcuts: ShortcutConfig[] = [];
+
+export function registerShortcut(config: ShortcutConfig) {
+  shortcuts.push(config);
 }
 
-export const useKeyboardShortcuts = (options: UseKeyboardShortcutsOptions) => {
-  const { shortcuts, enabled = true, announceShortcut = false } = options;
-  const shortcutsRef = useRef(shortcuts);
+export function useCommonShortcuts() {
+  const navigate = useNavigate();
 
-  // Update ref when shortcuts change
   useEffect(() => {
-    shortcutsRef.current = shortcuts;
-  }, [shortcuts]);
-
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (!enabled) return;
-
-      // Don't trigger shortcuts when typing in inputs/textareas
-      const target = event.target as HTMLElement;
-      if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable
-      ) {
-        // Exception: Allow Escape key
-        if (event.key !== 'Escape') {
-          return;
-        }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + K - Search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        // Open search modal (implement based on your UI)
+        console.log('Search shortcut triggered');
       }
 
-      // Find matching shortcut
-      const matchingShortcut = shortcutsRef.current.find((shortcut) => {
-        if (shortcut.enabled === false) return false;
+      // / - Focus search
+      if (e.key === '/' && !isInputFocused()) {
+        e.preventDefault();
+        focusSearch();
+      }
 
-        const keyMatch = event.key.toLowerCase() === shortcut.key.toLowerCase();
-        const ctrlMatch = shortcut.ctrl ? event.ctrlKey || event.metaKey : !event.ctrlKey;
-        const altMatch = shortcut.alt ? event.altKey : !event.altKey;
-        const shiftMatch = shortcut.shift ? event.shiftKey : !event.shiftKey;
-        const metaMatch = shortcut.meta ? event.metaKey : !event.metaKey;
+      // Cmd/Ctrl + D - Dashboard
+      if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
+        e.preventDefault();
+        navigate('/platform');
+      }
 
-        return keyMatch && ctrlMatch && altMatch && shiftMatch && (shortcut.ctrl ? true : metaMatch);
+      // Cmd/Ctrl + T - Tracking
+      if ((e.metaKey || e.ctrlKey) && e.key === 't') {
+        e.preventDefault();
+        navigate('/tracking');
+      }
+
+      // Cmd/Ctrl + M - Maintenance
+      if ((e.metaKey || e.ctrlKey) && e.key === 'm') {
+        e.preventDefault();
+        navigate('/mantenimiento');
+      }
+
+      // Esc - Close modals/dialogs
+      if (e.key === 'Escape') {
+        closeTopModal();
+      }
+
+      // Check registered shortcuts
+      shortcuts.forEach(shortcut => {
+        const matchesKey = e.key === shortcut.key;
+        const matchesCtrl = !shortcut.ctrlKey || e.ctrlKey;
+        const matchesMeta = !shortcut.metaKey || e.metaKey;
+        const matchesShift = !shortcut.shiftKey || e.shiftKey;
+
+        if (matchesKey && matchesCtrl && matchesMeta && matchesShift) {
+          e.preventDefault();
+          shortcut.action();
+        }
       });
-
-      if (matchingShortcut) {
-        if (matchingShortcut.preventDefault !== false) {
-          event.preventDefault();
-        }
-
-        matchingShortcut.action();
-
-        if (announceShortcut) {
-          announce(`Atajo activado: ${matchingShortcut.description}`, 'polite');
-        }
-      }
-    },
-    [enabled, announceShortcut]
-  );
-
-  useEffect(() => {
-    if (!enabled) return;
+    };
 
     window.addEventListener('keydown', handleKeyDown);
 
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [enabled, handleKeyDown]);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
+}
 
+function isInputFocused(): boolean {
+  const activeElement = document.activeElement;
+  return (
+    activeElement instanceof HTMLInputElement ||
+    activeElement instanceof HTMLTextAreaElement ||
+    activeElement?.getAttribute('contenteditable') === 'true'
+  );
+}
+
+function focusSearch() {
+  const searchInput = document.querySelector<HTMLInputElement>('input[type="search"], input[placeholder*="Buscar" i], input[placeholder*="Search" i]');
+  searchInput?.focus();
+}
+
+function closeTopModal() {
+  const escButton = document.querySelector('[data-dialog-close], [data-modal-close]') as HTMLButtonElement;
+  escButton?.click();
+}
+
+/**
+ * Display keyboard shortcuts help
+ */
+export function useShortcutHelp() {
   return {
-    shortcuts: shortcutsRef.current,
+    shortcuts: [
+      { key: 'Cmd/Ctrl + K', description: 'Buscar' },
+      { key: '/', description: 'Enfocar búsqueda' },
+      { key: 'Cmd/Ctrl + D', description: 'Dashboard' },
+      { key: 'Cmd/Ctrl + T', description: 'Rastreo' },
+      { key: 'Cmd/Ctrl + M', description: 'Mantenimiento' },
+      { key: 'Esc', description: 'Cerrar modal' },
+      ...shortcuts.map(s => ({
+        key: `${s.ctrlKey ? 'Ctrl + ' : ''}${s.metaKey ? 'Cmd + ' : ''}${s.shiftKey ? 'Shift + ' : ''}${s.key}`,
+        description: s.description,
+      })),
+    ],
   };
-};
-
-/**
- * Common application shortcuts
- */
-export const useCommonShortcuts = () => {
-  const navigate = useNavigate();
-
-  const shortcuts: KeyboardShortcut[] = [
-    // Navigation
-    {
-      key: 'g',
-      description: 'Ir al dashboard general',
-      action: () => navigate('/platform'),
-    },
-    {
-      key: 'm',
-      description: 'Ir al mapa de rastreo',
-      action: () => navigate('/platform/tracking'),
-    },
-    {
-      key: 'a',
-      description: 'Ir a alertas',
-      action: () => navigate('/platform/alerts'),
-    },
-    {
-      key: 'r',
-      description: 'Ir a reportes',
-      action: () => navigate('/platform/reports'),
-    },
-    {
-      key: 'i',
-      description: 'Ir a inspecciones',
-      action: () => navigate('/platform/checklist'),
-    },
-
-    // Search
-    {
-      key: 'k',
-      ctrl: true,
-      description: 'Abrir búsqueda global',
-      action: () => {
-        const searchInput = document.getElementById('search-input') as HTMLInputElement;
-        searchInput?.focus();
-      },
-    },
-    {
-      key: '/',
-      description: 'Enfocar búsqueda',
-      action: () => {
-        const searchInput = document.getElementById('search-input') as HTMLInputElement;
-        searchInput?.focus();
-      },
-    },
-
-    // UI
-    {
-      key: 'Escape',
-      description: 'Cerrar modal/diálogo',
-      action: () => {
-        // Trigger escape on topmost dialog
-        const dialogs = document.querySelectorAll('[role="dialog"]');
-        if (dialogs.length > 0) {
-          const topDialog = dialogs[dialogs.length - 1];
-          const closeButton = topDialog.querySelector('[aria-label*="Cerrar"], [aria-label*="Close"]');
-          if (closeButton instanceof HTMLElement) {
-            closeButton.click();
-          }
-        }
-      },
-      preventDefault: false,
-    },
-
-    // Help
-    {
-      key: '?',
-      shift: true,
-      description: 'Mostrar atajos de teclado',
-      action: () => {
-        announce('Presiona las teclas mostradas para navegar rápidamente', 'polite');
-        // You can implement a modal showing all shortcuts here
-      },
-    },
-  ];
-
-  useKeyboardShortcuts({
-    shortcuts,
-    enabled: true,
-    announceShortcut: false,
-  });
-
-  return shortcuts;
-};
-
-/**
- * Format shortcut for display
- */
-export const formatShortcut = (shortcut: KeyboardShortcut): string => {
-  const parts: string[] = [];
-
-  if (shortcut.ctrl) parts.push('Ctrl');
-  if (shortcut.alt) parts.push('Alt');
-  if (shortcut.shift) parts.push('Shift');
-  if (shortcut.meta) parts.push('Cmd');
-
-  parts.push(shortcut.key.toUpperCase());
-
-  return parts.join(' + ');
-};
+}

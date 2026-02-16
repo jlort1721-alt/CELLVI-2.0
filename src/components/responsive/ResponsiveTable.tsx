@@ -1,10 +1,9 @@
 /**
  * Responsive Table Component
- * Automatically switches between table layout (desktop) and card layout (mobile)
- * WCAG 2.1 AA Compliant with proper ARIA attributes
+ * Switches to card layout on mobile devices
  */
 
-import React from 'react';
+import { ReactNode } from 'react';
 import {
   Table,
   TableBody,
@@ -13,182 +12,103 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
+import { Card, CardContent } from '@/components/ui/card';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
-export interface Column<T = any> {
-  key: string;
-  label: string;
-  render?: (value: any, row: T) => React.ReactNode;
+interface Column<T> {
+  header: string;
+  accessor: keyof T | ((row: T) => ReactNode);
+  mobileLabel?: string;
   className?: string;
-  mobileLabel?: string; // Custom label for mobile view
-  hiddenOnMobile?: boolean; // Hide this column on mobile
-  sortable?: boolean;
 }
 
-export interface ResponsiveTableProps<T = any> {
-  columns: Column<T>[];
+interface ResponsiveTableProps<T> {
   data: T[];
-  keyExtractor: (row: T, index: number) => string;
+  columns: Column<T>[];
+  keyExtractor: (row: T) => string;
+  mobileCardRender?: (row: T) => ReactNode;
   onRowClick?: (row: T) => void;
-  isLoading?: boolean;
-  emptyMessage?: string;
-  className?: string;
-  breakpoint?: 'sm' | 'md' | 'lg'; // When to switch to card layout
-  cardClassName?: string;
 }
 
-export function ResponsiveTable<T = any>({
-  columns,
+export function ResponsiveTable<T>({
   data,
+  columns,
   keyExtractor,
+  mobileCardRender,
   onRowClick,
-  isLoading = false,
-  emptyMessage = 'No hay datos disponibles',
-  className,
-  breakpoint = 'md',
-  cardClassName,
 }: ResponsiveTableProps<T>) {
-  const breakpointClass = {
-    sm: 'sm:table',
-    md: 'md:table',
-    lg: 'lg:table',
-  }[breakpoint];
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
-  if (isLoading) {
+  const getCellValue = (row: T, column: Column<T>) => {
+    if (typeof column.accessor === 'function') {
+      return column.accessor(row);
+    }
+    return row[column.accessor] as ReactNode;
+  };
+
+  // Mobile card view
+  if (isMobile) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+      <div className="space-y-4">
+        {data.map((row) => (
+          <Card
+            key={keyExtractor(row)}
+            className={onRowClick ? 'cursor-pointer hover:bg-accent transition-colors' : ''}
+            onClick={() => onRowClick?.(row)}
+          >
+            <CardContent className="p-4">
+              {mobileCardRender ? (
+                mobileCardRender(row)
+              ) : (
+                <div className="space-y-2">
+                  {columns.map((column, idx) => (
+                    <div key={idx} className="flex justify-between items-start">
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {column.mobileLabel || column.header}:
+                      </span>
+                      <span className="text-sm text-right ml-2">
+                        {getCellValue(row, column)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   }
 
-  if (data.length === 0) {
-    return (
-      <div className="flex items-center justify-center p-8 text-muted-foreground text-sm">
-        {emptyMessage}
-      </div>
-    );
-  }
-
-  const visibleColumns = columns.filter((col) => !col.hiddenOnMobile);
-  const mobileColumns = columns.filter((col) => !col.hiddenOnMobile);
-
+  // Desktop table view
   return (
-    <>
-      {/* Desktop Table View */}
-      <div className={cn(`hidden ${breakpointClass}`, className)}>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {visibleColumns.map((column) => (
-                <TableHead key={column.key} className={column.className}>
-                  {column.label}
-                </TableHead>
+    <div className="rounded-md border overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {columns.map((column, idx) => (
+              <TableHead key={idx} className={column.className}>
+                {column.header}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.map((row) => (
+            <TableRow
+              key={keyExtractor(row)}
+              className={onRowClick ? 'cursor-pointer' : ''}
+              onClick={() => onRowClick?.(row)}
+            >
+              {columns.map((column, idx) => (
+                <TableCell key={idx} className={column.className}>
+                  {getCellValue(row, column)}
+                </TableCell>
               ))}
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((row, index) => {
-              const key = keyExtractor(row, index);
-              return (
-                <TableRow
-                  key={key}
-                  onClick={() => onRowClick?.(row)}
-                  className={onRowClick ? 'cursor-pointer hover:bg-muted/50' : ''}
-                >
-                  {visibleColumns.map((column) => {
-                    const value = (row as any)[column.key];
-                    return (
-                      <TableCell key={column.key} className={column.className}>
-                        {column.render ? column.render(value, row) : value}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Mobile Card View */}
-      <div className={cn(`block ${breakpointClass}:hidden space-y-3`, className)}>
-        {data.map((row, index) => {
-          const key = keyExtractor(row, index);
-          return (
-            <div
-              key={key}
-              onClick={() => onRowClick?.(row)}
-              className={cn(
-                'rounded-lg border bg-card p-4 space-y-2',
-                onRowClick && 'cursor-pointer hover:bg-muted/50 active:bg-muted',
-                cardClassName
-              )}
-              role="button"
-              tabIndex={onRowClick ? 0 : undefined}
-              onKeyDown={(e) => {
-                if (onRowClick && (e.key === 'Enter' || e.key === ' ')) {
-                  e.preventDefault();
-                  onRowClick(row);
-                }
-              }}
-            >
-              {mobileColumns.map((column) => {
-                const value = (row as any)[column.key];
-                const label = column.mobileLabel || column.label;
-
-                return (
-                  <div key={column.key} className="flex justify-between items-start gap-2">
-                    <span className="text-xs font-medium text-muted-foreground min-w-[100px]">
-                      {label}:
-                    </span>
-                    <span className="text-sm text-right flex-1">
-                      {column.render ? column.render(value, row) : value}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
-    </>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
-
-/**
- * Simple responsive table wrapper for common use cases
- */
-export const SimpleResponsiveTable = <T extends Record<string, any>>({
-  data,
-  exclude = [],
-  ...props
-}: Omit<ResponsiveTableProps<T>, 'columns' | 'keyExtractor'> & {
-  exclude?: string[];
-}) => {
-  if (data.length === 0) {
-    return (
-      <div className="flex items-center justify-center p-8 text-muted-foreground text-sm">
-        {props.emptyMessage || 'No hay datos disponibles'}
-      </div>
-    );
-  }
-
-  // Auto-generate columns from first row
-  const firstRow = data[0];
-  const columns: Column<T>[] = Object.keys(firstRow)
-    .filter((key) => !exclude.includes(key))
-    .map((key) => ({
-      key,
-      label: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
-    }));
-
-  return (
-    <ResponsiveTable
-      {...props}
-      columns={columns}
-      data={data}
-      keyExtractor={(row, index) => (row.id as string) || `row-${index}`}
-    />
-  );
-};
