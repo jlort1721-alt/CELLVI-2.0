@@ -1,8 +1,10 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpRight, CheckCircle, Clock, AlertTriangle, Shield, User, Zap } from 'lucide-react';
 import type { EscalationEvent } from '../types/agentTypes';
 import { Button } from '@/components/ui/button';
+
+const STATUS_ORDER: Record<string, number> = { pending: 0, acknowledged: 1, resolved: 2 };
 
 const severityColors: Record<string, string> = {
   speed_anomaly: 'text-orange-500',
@@ -119,9 +121,9 @@ const EscalationManager = memo(({ escalations, onAcknowledge, onResolve }: {
   onAcknowledge: (id: string) => void;
   onResolve: (id: string) => void;
 }) => {
-  const pending = escalations.filter((e) => e.status === 'pending');
-  const acknowledged = escalations.filter((e) => e.status === 'acknowledged');
-  const resolved = escalations.filter((e) => e.status === 'resolved');
+  const pending = useMemo(() => escalations.filter((e) => e.status === 'pending'), [escalations]);
+  const acknowledged = useMemo(() => escalations.filter((e) => e.status === 'acknowledged'), [escalations]);
+  const resolved = useMemo(() => escalations.filter((e) => e.status === 'resolved'), [escalations]);
 
   return (
     <div className="rounded-3xl border bg-sidebar/40 backdrop-blur-xl border-white/5 p-5 shadow-2xl">
@@ -157,10 +159,7 @@ const EscalationManager = memo(({ escalations, onAcknowledge, onResolve }: {
           </div>
         ) : (
           escalations
-            .sort((a, b) => {
-              const statusOrder: Record<string, number> = { pending: 0, acknowledged: 1, resolved: 2 };
-              return (statusOrder[a.status] ?? 0) - (statusOrder[b.status] ?? 0);
-            })
+            .sort((a, b) => (STATUS_ORDER[a.status] ?? 0) - (STATUS_ORDER[b.status] ?? 0))
             .map((escalation) => (
               <EscalationItem
                 key={escalation.id}

@@ -139,14 +139,10 @@ function useNavGroups(): NavGroup[] {
 
 /** Shared trigger classnames - override shadcn defaults for dark theme */
 const triggerCx =
-  "text-primary-foreground/80 hover:text-gold data-[state=open]:text-gold text-sm font-medium bg-transparent hover:bg-gold/5 focus:bg-gold/5 data-[state=open]:bg-gold/5 data-[active]:bg-transparent";
+  "text-primary-foreground/70 hover:text-gold data-[state=open]:text-gold text-[13px] font-semibold tracking-wide bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent data-[active]:bg-transparent";
 
 /** Active state trigger classnames when section is visible */
 const triggerActiveCx = "text-gold";
-
-/** Shared dropdown content panel classnames */
-const contentPanelCx =
-  "bg-navy/98 backdrop-blur-lg border border-gold/20 rounded-xl shadow-2xl shadow-black/30 p-3";
 
 /** Check if any section in a group is currently visible */
 function isGroupActive(groupSections: string[], visibleSections: string[]): boolean {
@@ -164,24 +160,24 @@ const DropdownLinkItem: FC<{ link: NavLink; onClick?: () => void }> = ({ link, o
       <a
         href={link.href}
         onClick={onClick}
-        className="flex items-center gap-3 rounded-lg p-2.5 transition-colors hover:bg-gold/5 group/link"
+        className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-white/[0.04] group/link"
       >
         {Icon && (
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gold/10 transition-colors group-hover/link:bg-gold/20">
-            <Icon className="h-4 w-4 text-gold" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gold/[0.08] border border-gold/[0.12] transition-all duration-200 group-hover/link:bg-gold/15 group-hover/link:border-gold/25">
+            <Icon className="h-3.5 w-3.5 text-gold/80 group-hover/link:text-gold transition-colors" />
           </div>
         )}
-        <div className="min-w-0">
-          <div className="text-sm font-semibold text-primary-foreground/90 group-hover/link:text-gold transition-colors">
+        <div className="min-w-0 flex-1">
+          <div className="text-[13px] font-semibold text-white/85 group-hover/link:text-gold transition-colors leading-tight">
             {link.label}
           </div>
           {link.desc && (
-            <div className="text-[11px] leading-tight text-primary-foreground/40 mt-0.5">
+            <div className="text-[11px] leading-snug text-white/35 mt-0.5 group-hover/link:text-white/45 transition-colors">
               {link.desc}
             </div>
           )}
         </div>
-        <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-primary-foreground/20 opacity-0 transition-all group-hover/link:opacity-100 group-hover/link:text-gold" />
+        <ChevronRight className="ml-auto h-3 w-3 shrink-0 text-white/15 opacity-0 -translate-x-1 transition-all duration-200 group-hover/link:opacity-100 group-hover/link:translate-x-0 group-hover/link:text-gold/60" />
       </a>
     </NavigationMenuLink>
   );
@@ -232,22 +228,25 @@ const DesktopNav: FC = () => {
 
               <NavigationMenuContent
                 className={cn(
-                  contentPanelCx,
-                  group.wide ? "w-[540px]" : "w-[320px]",
+                  "p-2",
+                  group.wide ? "w-[520px]" : "w-[300px]",
                 )}
               >
-                {/* Section header inside panel */}
-                <div className="px-2 pt-1 pb-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary-foreground/30">
+                {/* Section label */}
+                <div className="px-3 pt-1.5 pb-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gold/50">
                     {group.label}
                   </p>
                 </div>
 
+                {/* Subtle separator */}
+                <div className="mx-3 mb-1.5 h-px bg-white/[0.06]" />
+
                 <div
                   className={cn(
                     group.wide
-                      ? "grid grid-cols-2 gap-0.5"
-                      : "flex flex-col gap-0.5",
+                      ? "grid grid-cols-2 gap-px"
+                      : "flex flex-col gap-px",
                   )}
                 >
                   {group.links.map((link) => (
@@ -272,11 +271,11 @@ const MobileSectionGroup: FC<{
   links: NavLink[];
   onNavigate: () => void;
 }> = ({ label, links, onNavigate }) => (
-  <div className="py-2">
-    <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-primary-foreground/30">
+  <div className="py-3">
+    <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-[0.15em] text-gold/50">
       {label}
     </p>
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col gap-px">
       {links.map((link) => {
         const Icon = link.icon;
         return (
@@ -284,15 +283,19 @@ const MobileSectionGroup: FC<{
             key={link.href + link.label}
             href={link.href}
             onClick={onNavigate}
-            className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-gold/5"
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-white/[0.04] group/mlink"
           >
-            {Icon && <Icon className="h-4 w-4 shrink-0 text-gold" />}
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-primary-foreground/80">
+            {Icon && (
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gold/[0.08] border border-gold/[0.12]">
+                <Icon className="h-3.5 w-3.5 text-gold/80" />
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-semibold text-white/80 group-hover/mlink:text-gold transition-colors">
                 {link.label}
               </div>
               {link.desc && (
-                <div className="text-[10px] text-primary-foreground/30 leading-tight">
+                <div className="text-[11px] text-white/30 leading-snug mt-0.5">
                   {link.desc}
                 </div>
               )}

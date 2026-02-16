@@ -355,7 +355,7 @@ const FleetMap = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
-              LIVE FEED: {filteredVehicles.length}/{Object.keys(vehicles).length} UNITS
+              {t("fleetMap.liveFeed", { filtered: filteredVehicles.length, total: Object.keys(vehicles).length })}
             </span>
           </div>
         </div>
@@ -378,7 +378,7 @@ const FleetMap = () => {
               </h2>
               <p className="text-xs text-sidebar-foreground/40 mt-1">{selectedVehicle.id.slice(0, 8)}...</p>
             </div>
-            <button type="button" onClick={() => setSelectedVehicleId(null)} className="text-sidebar-foreground/40 hover:text-sidebar-foreground" title="Cerrar panel">
+            <button type="button" onClick={() => setSelectedVehicleId(null)} className="text-sidebar-foreground/40 hover:text-sidebar-foreground" title={t("fleetMap.closePanel")}>
               <X size={20} />
             </button>
           </div>
@@ -389,7 +389,7 @@ const FleetMap = () => {
                 'bg-sidebar-accent border-sidebar-border'
               }`}>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-sidebar-foreground/40">Estado</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-sidebar-foreground/40">{t("fleetMap.status")}</span>
                 {selectedVehicle.status === 'alert' && <AlertTriangle size={16} className="text-red-500" />}
               </div>
               <div className="text-2xl font-bold text-sidebar-foreground capitalize flex items-center gap-2">
@@ -400,17 +400,17 @@ const FleetMap = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-sidebar-accent/50 p-3 rounded border border-sidebar-border">
-                <span className="text-[10px] text-sidebar-foreground/50 block mb-1">VELOCIDAD</span>
+                <span className="text-[10px] text-sidebar-foreground/50 block mb-1">{t("fleetMap.speed")}</span>
                 <span className="text-lg font-mono text-sidebar-foreground">{Math.round(selectedVehicle.speed)} <span className="text-xs text-sidebar-foreground/50">km/h</span></span>
               </div>
               <div className="bg-sidebar-accent/50 p-3 rounded border border-sidebar-border">
-                <span className="text-[10px] text-sidebar-foreground/50 block mb-1">RUMBO</span>
+                <span className="text-[10px] text-sidebar-foreground/50 block mb-1">{t("fleetMap.heading")}</span>
                 <span className="text-lg font-mono text-sidebar-foreground">{Math.round(selectedVehicle.heading)}°</span>
               </div>
               <div className="bg-sidebar-accent/50 p-3 rounded border border-sidebar-border col-span-2 flex items-center gap-3">
                 <Clock size={16} className="text-sidebar-foreground/50" />
                 <div>
-                  <span className="text-[10px] text-sidebar-foreground/50 block">ÚLTIMO REPORTE</span>
+                  <span className="text-[10px] text-sidebar-foreground/50 block">{t("fleetMap.lastReport")}</span>
                   <span className="text-sm font-mono text-sidebar-foreground">
                     {new Date(selectedVehicle.last_updated).toLocaleTimeString()}
                   </span>
@@ -418,7 +418,7 @@ const FleetMap = () => {
               </div>
             </div>
 
-            <div className="space-y-2 pt-4 border-t border-slate-800">
+            <div className="space-y-2 pt-4 border-t border-sidebar-border">
               <button
                 onClick={() => {
                   const route = routeRecords.find((r) => r.plate === selectedVehicle.plate) || routeRecords[0];
@@ -434,13 +434,13 @@ const FleetMap = () => {
                 }}
                 className="w-full py-2 bg-gold/10 hover:bg-gold/20 text-gold rounded text-sm font-medium transition-colors flex items-center justify-center gap-2 border border-gold/20"
               >
-                <Play size={14} /> Replay de Ruta
+                <Play size={14} /> {t("fleetMap.routeReplay")}
               </button>
               <button className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors flex items-center justify-center gap-2">
-                <History size={14} /> Ver Historial
+                <History size={14} /> {t("fleetMap.viewHistory")}
               </button>
-              <button className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-sm font-medium transition-colors border border-slate-700">
-                Deshabilitar Motor (Remoto)
+              <button className="w-full py-2 bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-foreground/70 rounded text-sm font-medium transition-colors border border-sidebar-border">
+                {t("fleetMap.disableEngine")}
               </button>
             </div>
           </div>

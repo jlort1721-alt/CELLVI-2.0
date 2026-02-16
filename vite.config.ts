@@ -37,9 +37,9 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'CELLVI 2.0 Logistics',
-        short_name: 'CELLVI',
-        description: 'Plataforma de Logística Enterprise con GPS, RNDC, y Gestión de Flotas',
+        name: 'ASEGURAR LTDA - Monitoreo GPS y Rastreo Satelital',
+        short_name: 'ASEGURAR',
+        description: 'Plataforma de Monitoreo GPS, Rastreo Satelital y Gestión de Flotas',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',

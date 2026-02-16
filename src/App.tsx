@@ -16,7 +16,7 @@ import RoutePlanner from './features/fleet/components/RoutePlanner';
 import MaintenanceDashboard from './features/maintenance/pages/MaintenanceDashboard';
 import DriverRoute from './features/driver/pages/DriverRoute';
 import InstallPrompt from './components/pwa/InstallPrompt';
-import { CELLVIAssistant } from "@/components/AIChatWidget";
+import { AsegurarAssistant } from "@/components/AIChatWidget";
 import PublicLedgerVerifier from './pages/public/VerifyLedger';
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SkipLinks } from "@/components/accessibility/SkipLinks";
@@ -80,7 +80,7 @@ const PageLoader = () => (
   <div className="h-screen w-screen flex items-center justify-center bg-navy">
     <div className="flex flex-col items-center gap-3">
       <div className="w-10 h-10 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
-      <span className="text-xs text-primary-foreground/40 font-heading tracking-wider">CELLVI 2.0</span>
+      <span className="text-xs text-primary-foreground/40 font-heading tracking-wider">ASEGURAR LTDA</span>
     </div>
   </div>
 );
@@ -133,7 +133,7 @@ const AppContent = () => {
         <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFound /></Suspense>} />
       </Routes>
       <CookieBanner />
-      <CELLVIAssistant />
+      <AsegurarAssistant />
     </>
   );
 };

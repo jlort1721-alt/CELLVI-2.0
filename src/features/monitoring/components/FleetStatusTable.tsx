@@ -25,6 +25,13 @@ const statusColor: Record<string, string> = {
   apagado: "bg-gray-500",
 };
 
+const statusLabelKey: Record<string, string> = {
+  activo: "fleetTable.active",
+  detenido: "fleetTable.stopped",
+  alerta: "fleetTable.alert",
+  apagado: "fleetTable.off",
+};
+
 const VehicleRow = memo(({ vehicle, onViewMap, onViewDetail }: {
   vehicle: Vehicle;
   onViewMap: (id: string) => void;
@@ -170,13 +177,13 @@ export const FleetStatusTable = memo(({ vehicles, activeCount, loadingVehicles }
     <div className="rounded-xl p-4 border bg-sidebar border-sidebar-border h-[400px] flex flex-col">
       <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <h3 className="font-heading font-bold text-sidebar-foreground text-sm flex items-center gap-2">
-          <Shield className="w-4 h-4 text-gold" /> Estado de Flota
+          <Shield className="w-4 h-4 text-gold" /> {t("fleetTable.title")}
         </h3>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="ghost" onClick={handleExportCSV} className="h-6 px-2 text-[9px] text-sidebar-foreground/40" title="Exportar CSV">
             <Download className="w-3 h-3 mr-1" /> CSV
           </Button>
-          <span className="text-[10px] text-sidebar-foreground/40">{activeCount} activos</span>
+          <span className="text-[10px] text-sidebar-foreground/40">{t("fleetTable.activeCount", { count: activeCount })}</span>
         </div>
       </div>
 
@@ -189,21 +196,21 @@ export const FleetStatusTable = memo(({ vehicles, activeCount, loadingVehicles }
             onClick={() => setStatusFilter(s)}
             className={`px-2 py-0.5 rounded text-[9px] font-bold transition-colors ${statusFilter === s ? "bg-gold/15 text-gold" : "text-sidebar-foreground/30 hover:text-sidebar-foreground/50"}`}
           >
-            {s === "all" ? "Todos" : statusLabel[s]} ({counts[s]})
+            {s === "all" ? t("fleetTable.all", "Todos") : t(statusLabelKey[s])} ({counts[s]})
           </button>
         ))}
       </div>
 
       {/* Sort headers */}
       <div className="flex items-center gap-2 px-2.5 mb-1 flex-shrink-0 text-[8px] text-sidebar-foreground/25 uppercase font-bold tracking-wider">
-        {([["plate", "Placa"], ["status", "Estado"], ["speed", "Vel."], ["fuel", "Comb."], ["signal", "Señal"]] as [SortField, string][]).map(([field, label]) => (
+        {([["plate", "fleetTable.plate"], ["status", "fleetTable.status"], ["speed", "fleetTable.speed"], ["fuel", "fleetTable.fuelShort"], ["signal", "fleetTable.signal"]] as [SortField, string][]).map(([field, labelKey]) => (
           <button
             key={field}
             type="button"
             onClick={() => toggleSort(field)}
             className={`flex items-center gap-0.5 hover:text-sidebar-foreground/50 ${sortField === field ? "text-gold" : ""}`}
           >
-            {label}
+            {t(labelKey)}
             {sortField === field && <ChevronDown className={`w-2 h-2 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />}
           </button>
         ))}
@@ -212,9 +219,9 @@ export const FleetStatusTable = memo(({ vehicles, activeCount, loadingVehicles }
       {/* Virtualized vehicle list */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1">
         {loadingVehicles ? (
-          <div className="text-xs text-center py-10 text-muted-foreground">Cargando flota...</div>
+          <div className="text-xs text-center py-10 text-muted-foreground">{t("fleetTable.loading")}</div>
         ) : sorted.length === 0 ? (
-          <div className="text-xs text-center py-10 text-sidebar-foreground/20">Sin vehículos en este filtro</div>
+          <div className="text-xs text-center py-10 text-sidebar-foreground/20">{t("fleetTable.noVehicles")}</div>
         ) : (
           <div style={{ height: `${virtualizer.getTotalSize()}px`, width: "100%", position: "relative" }}>
             {virtualizer.getVirtualItems().map((virtualItem) => (
@@ -241,9 +248,9 @@ export const FleetStatusTable = memo(({ vehicles, activeCount, loadingVehicles }
       </div>
 
       <div className="pt-3 border-t border-sidebar-border mt-2 flex justify-between text-[10px] text-sidebar-foreground/40">
-        <span>Total: {vehicles?.length ?? 0}</span>
-        <span>Mostrando: {sorted.length}</span>
-        <span>Activos: {activeCount}</span>
+        <span>{t("fleetTable.total", { count: vehicles?.length ?? 0 })}</span>
+        <span>{t("fleetTable.showing", { count: sorted.length })}</span>
+        <span>{t("fleetTable.activeLabel", { count: activeCount })}</span>
       </div>
     </div>
   );

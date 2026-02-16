@@ -93,12 +93,12 @@ const typeConfig: Record<NotificationType, { icon: typeof Bell; color: string; b
 };
 
 /* ── Filter Tabs ──────────────────────────────────────── */
-const FILTERS: { key: "all" | NotificationType; label: string }[] = [
-  { key: "all", label: "Todas" },
-  { key: "alert", label: "Alertas" },
-  { key: "warning", label: "Avisos" },
-  { key: "info", label: "Info" },
-  { key: "system", label: "Sistema" },
+const FILTERS: { key: "all" | NotificationType; labelKey: string }[] = [
+  { key: "all", labelKey: "notificationCenter.all" },
+  { key: "alert", labelKey: "notificationCenter.alerts" },
+  { key: "warning", labelKey: "notificationCenter.warnings" },
+  { key: "info", labelKey: "notificationCenter.info" },
+  { key: "system", labelKey: "notificationCenter.system" },
 ];
 
 /* ── Notification Row ─────────────────────────────────── */
@@ -109,6 +109,7 @@ const NotificationRow = memo(({
   onToggleRead: (id: string) => void;
   onDismiss: (id: string) => void;
 }) => {
+  const { t } = useTranslation();
   const config = typeConfig[notification.type];
   const Icon = config.icon;
 
@@ -146,7 +147,7 @@ const NotificationRow = memo(({
           type="button"
           onClick={() => onToggleRead(notification.id)}
           className="p-1 rounded hover:bg-sidebar-accent"
-          title={notification.read ? "Marcar como no leída" : "Marcar como leída"}
+          title={notification.read ? t("notificationCenter.markAsUnread") : t("notificationCenter.markAsRead")}
         >
           <CheckCheck className={`w-3 h-3 ${notification.read ? "text-sidebar-foreground/30" : "text-gold"}`} />
         </button>
@@ -154,7 +155,7 @@ const NotificationRow = memo(({
           type="button"
           onClick={() => onDismiss(notification.id)}
           className="p-1 rounded hover:bg-red-500/10"
-          title="Eliminar"
+          title={t("notificationCenter.delete")}
         >
           <X className="w-3 h-3 text-sidebar-foreground/30 hover:text-red-400" />
         </button>
@@ -166,6 +167,7 @@ NotificationRow.displayName = "NotificationRow";
 
 /* ── Main NotificationCenter ──────────────────────────── */
 export const NotificationCenter = memo(({ open, onClose }: { open: boolean; onClose: () => void }) => {
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>(DEMO_NOTIFICATIONS);
   const [activeFilter, setActiveFilter] = useState<"all" | NotificationType>("all");
   const { pendingOperations } = useSyncStatusStore();
@@ -218,7 +220,7 @@ export const NotificationCenter = memo(({ open, onClose }: { open: boolean; onCl
         <div className="flex items-center justify-between px-4 py-3 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4 text-gold" />
-            <h3 className="text-sm font-heading font-bold text-sidebar-foreground">Notificaciones</h3>
+            <h3 className="text-sm font-heading font-bold text-sidebar-foreground">{t("notificationCenter.title")}</h3>
             {unreadCount > 0 && (
               <span className="bg-gold/20 text-gold text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                 {unreadCount}
@@ -231,7 +233,7 @@ export const NotificationCenter = memo(({ open, onClose }: { open: boolean; onCl
                 type="button"
                 onClick={markAllRead}
                 className="text-[10px] text-sidebar-foreground/40 hover:text-gold px-2 py-1 rounded"
-                title="Marcar todas como leídas"
+                title={t("notificationCenter.markAllRead")}
               >
                 <CheckCheck className="w-3.5 h-3.5" />
               </button>
@@ -240,7 +242,7 @@ export const NotificationCenter = memo(({ open, onClose }: { open: boolean; onCl
               type="button"
               onClick={clearAll}
               className="text-[10px] text-sidebar-foreground/40 hover:text-red-400 px-2 py-1 rounded"
-              title="Limpiar leídas"
+              title={t("notificationCenter.clearRead")}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -268,7 +270,7 @@ export const NotificationCenter = memo(({ open, onClose }: { open: boolean; onCl
                   : "text-sidebar-foreground/40 hover:text-sidebar-foreground/60"
               }`}
             >
-              {f.label}
+              {t(f.labelKey)}
             </button>
           ))}
         </div>
@@ -277,7 +279,7 @@ export const NotificationCenter = memo(({ open, onClose }: { open: boolean; onCl
         {pendingOperations.length > 0 && (
           <div className="mx-3 mt-2 px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-[10px] text-yellow-400 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-            {pendingOperations.length} operación(es) pendiente(s) de sincronizar
+            {t("notificationCenter.pendingSync", { count: pendingOperations.length })}
           </div>
         )}
 
@@ -286,7 +288,7 @@ export const NotificationCenter = memo(({ open, onClose }: { open: boolean; onCl
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-sidebar-foreground/30">
               <Bell className="w-8 h-8 mb-2" />
-              <span className="text-xs">Sin notificaciones</span>
+              <span className="text-xs">{t("notificationCenter.noNotifications")}</span>
             </div>
           ) : (
             filtered.map((n) => (
@@ -303,7 +305,7 @@ export const NotificationCenter = memo(({ open, onClose }: { open: boolean; onCl
         {/* Footer */}
         <div className="px-4 py-2 border-t border-sidebar-border text-center">
           <span className="text-[9px] text-sidebar-foreground/30">
-            {notifications.length} notificación(es) total(es) - {unreadCount} sin leer
+            {t("notificationCenter.totalCount", { total: notifications.length, unread: unreadCount })}
           </span>
         </div>
       </div>

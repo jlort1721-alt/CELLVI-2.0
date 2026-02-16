@@ -40,15 +40,15 @@ const RouteReplayControl = memo(() => {
   const currentPoint = routePoints[currentIndex];
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[500] bg-sidebar/95 backdrop-blur-xl border border-slate-700 rounded-2xl shadow-2xl text-white px-5 py-3 min-w-[420px]">
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[500] bg-sidebar/95 backdrop-blur-xl border border-sidebar-border rounded-2xl shadow-2xl text-sidebar-foreground px-5 py-3 min-w-[420px]">
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-gold animate-pulse" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-gold">Replay</span>
-          <span className="text-[10px] text-slate-400 font-mono">{vehiclePlate}</span>
+          <span className="text-[10px] text-sidebar-foreground/40 font-mono">{vehiclePlate}</span>
         </div>
-        <div className="flex items-center gap-1.5 text-[9px] text-slate-500">
+        <div className="flex items-center gap-1.5 text-[9px] text-sidebar-foreground/50">
           <Clock className="w-3 h-3" />
           {currentPoint?.timestamp ? new Date(currentPoint.timestamp).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
         </div>
@@ -56,7 +56,7 @@ const RouteReplayControl = memo(() => {
 
       {/* Progress bar */}
       <div
-        className="relative h-1.5 bg-slate-800 rounded-full mb-3 cursor-pointer"
+        className="relative h-1.5 bg-sidebar-accent rounded-full mb-3 cursor-pointer"
         onClick={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const pct = (e.clientX - rect.left) / rect.width;
@@ -76,7 +76,7 @@ const RouteReplayControl = memo(() => {
       {/* Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1">
-          <button onClick={() => setReplayIndex(0)} className="p-1.5 rounded-lg hover:bg-slate-800 transition-colors" title="Al inicio">
+          <button onClick={() => setReplayIndex(0)} className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors" title="Al inicio">
             <SkipBack className="w-3.5 h-3.5" />
           </button>
           <button
@@ -86,20 +86,20 @@ const RouteReplayControl = memo(() => {
           >
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </button>
-          <button onClick={stopRouteReplay} className="p-1.5 rounded-lg hover:bg-slate-800 text-red-400 transition-colors" title="Detener">
+          <button onClick={stopRouteReplay} className="p-1.5 rounded-lg hover:bg-sidebar-accent text-red-400 transition-colors" title="Detener">
             <Square className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {/* Speed selector */}
         <div className="flex items-center gap-1">
-          <FastForward className="w-3 h-3 text-slate-500" />
+          <FastForward className="w-3 h-3 text-sidebar-foreground/50" />
           {speedOptions.map((s) => (
             <button
               key={s}
               onClick={() => setReplaySpeed(s)}
               className={`px-2 py-0.5 rounded text-[9px] font-bold transition-colors ${
-                speed === s ? 'bg-gold/20 text-gold' : 'text-slate-500 hover:text-slate-300'
+                speed === s ? 'bg-gold/20 text-gold' : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/70'
               }`}
             >
               {s}x
@@ -108,7 +108,7 @@ const RouteReplayControl = memo(() => {
         </div>
 
         {/* Info */}
-        <div className="flex items-center gap-3 text-[9px] text-slate-500 font-mono">
+        <div className="flex items-center gap-3 text-[9px] text-sidebar-foreground/50 font-mono">
           <span>{currentPoint?.speed ? `${Math.round(currentPoint.speed)} km/h` : '0 km/h'}</span>
           <span>{currentIndex + 1}/{total}</span>
         </div>

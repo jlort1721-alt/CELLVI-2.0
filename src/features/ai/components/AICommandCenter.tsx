@@ -88,11 +88,11 @@ const DecisionLogFeed = memo(({ decisions }: { decisions: AIDecisionLog[] }) => 
   });
 
   return (
-    <div ref={parentRef} className="h-full overflow-auto font-mono text-[10px] bg-slate-950/50 rounded-xl border border-white/5 p-2">
+    <div ref={parentRef} className="h-full overflow-auto font-mono text-[10px] bg-sidebar-accent/50 rounded-xl border border-white/5 p-2">
       <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
         {virtualizer.getVirtualItems().map((item) => {
           const d = decisions[item.index];
-          const typeCfg = decisionTypeConfig[d.type] || { color: 'text-slate-400', label: d.type };
+          const typeCfg = decisionTypeConfig[d.type] || { color: 'text-sidebar-foreground/40', label: d.type };
           const resCfg = resultConfig[d.result] || resultConfig.pending;
 
           return (
@@ -103,14 +103,14 @@ const DecisionLogFeed = memo(({ decisions }: { decisions: AIDecisionLog[] }) => 
               style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${item.start}px)` }}
               className={`flex items-start gap-2 py-1.5 px-2 rounded-lg transition-colors ${item.index === 0 ? 'bg-white/[0.03]' : 'hover:bg-white/[0.02]'}`}
             >
-              <span className="text-slate-600 shrink-0 w-12">{new Date(d.timestamp).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+              <span className="text-sidebar-foreground/30 shrink-0 w-12">{new Date(d.timestamp).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
               <span className={`shrink-0 w-24 text-[8px] font-bold uppercase ${typeCfg.color}`}>{typeCfg.label}</span>
               <span className={`shrink-0 text-[8px] font-bold px-1 py-0.5 rounded ${resCfg.bg} ${resCfg.color}`}>
                 {(d.confidence * 100).toFixed(0)}%
               </span>
-              <span className="text-slate-400 flex-1 truncate">{d.description}</span>
-              {d.vehiclePlate && <span className="text-slate-600 shrink-0">{d.vehiclePlate}</span>}
-              <span className="text-slate-700 shrink-0 w-10 text-right">{d.processingTimeMs}ms</span>
+              <span className="text-sidebar-foreground/40 flex-1 truncate">{d.description}</span>
+              {d.vehiclePlate && <span className="text-sidebar-foreground/30 shrink-0">{d.vehiclePlate}</span>}
+              <span className="text-sidebar-foreground/20 shrink-0 w-10 text-right">{d.processingTimeMs}ms</span>
             </div>
           );
         })}
