@@ -554,12 +554,12 @@ const DashboardColdChain = () => {
                 {/* Quick metrics row */}
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mt-5 relative z-10">
                   {[
-                    { icon: Thermometer, label: "Temp Actual", value: `${selectedUnit.currentTemp}°C`, color: selectedCfg.color },
-                    { icon: Droplets, label: "Humedad", value: `${selectedUnit.humidity}%`, color: "text-cyan-400" },
-                    { icon: Battery, label: "Batería Sensor", value: `${selectedUnit.sensorBattery}%`, color: selectedUnit.sensorBattery > 50 ? "text-green-500" : "text-yellow-500" },
-                    { icon: DoorOpen, label: "Aperturas Puerta", value: `${selectedUnit.doorOpenCount}`, color: selectedUnit.doorOpenCount > 3 ? "text-red-500" : "text-sidebar-foreground/60" },
-                    { icon: ShieldAlert, label: "Desviaciones 24h", value: `${selectedUnit.totalDeviations24h}`, color: selectedUnit.totalDeviations24h > 3 ? "text-red-500" : "text-green-500" },
-                    { icon: Award, label: "Compliance", value: `${selectedUnit.complianceScore}%`, color: selectedUnit.complianceScore >= 95 ? "text-green-500" : selectedUnit.complianceScore >= 80 ? "text-yellow-500" : "text-red-500" },
+                    { icon: Thermometer, label: t("coldChain.tempActual"), value: `${selectedUnit.currentTemp}°C`, color: selectedCfg.color },
+                    { icon: Droplets, label: t("coldChain.humiditySensor"), value: `${selectedUnit.humidity}%`, color: "text-cyan-400" },
+                    { icon: Battery, label: t("coldChain.sensorBattery"), value: `${selectedUnit.sensorBattery}%`, color: selectedUnit.sensorBattery > 50 ? "text-green-500" : "text-yellow-500" },
+                    { icon: DoorOpen, label: t("coldChain.doorOpenings"), value: `${selectedUnit.doorOpenCount}`, color: selectedUnit.doorOpenCount > 3 ? "text-red-500" : "text-sidebar-foreground/60" },
+                    { icon: ShieldAlert, label: t("coldChain.deviations24h"), value: `${selectedUnit.totalDeviations24h}`, color: selectedUnit.totalDeviations24h > 3 ? "text-red-500" : "text-green-500" },
+                    { icon: Award, label: t("coldChain.complianceLabel"), value: `${selectedUnit.complianceScore}%`, color: selectedUnit.complianceScore >= 95 ? "text-green-500" : selectedUnit.complianceScore >= 80 ? "text-yellow-500" : "text-red-500" },
                   ].map((m, i) => (
                     <div key={i} className="flex flex-col items-center p-3 rounded-xl bg-white/[0.02] border border-white/5">
                       <m.icon className={`w-3.5 h-3.5 ${m.color} mb-1.5`} />
@@ -575,17 +575,17 @@ const DashboardColdChain = () => {
                 <div className="flex items-center justify-between mb-5">
                   <div>
                     <h4 className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest flex items-center gap-2">
-                      <Activity className="w-3.5 h-3.5" /> Telemetría Térmica — 24h
+                      <Activity className="w-3.5 h-3.5" /> {t("coldChain.thermalTelemetry")}
                     </h4>
                     <div className="flex items-center gap-4 mt-2">
-                      <span className="flex items-center gap-1.5 text-[9px] text-blue-400"><div className="w-2 h-1 bg-blue-400 rounded" /> Temperatura</span>
-                      <span className="flex items-center gap-1.5 text-[9px] text-cyan-400/40"><div className="w-2 h-1 bg-cyan-400/40 rounded" /> Humedad</span>
-                      <span className="flex items-center gap-1.5 text-[9px] text-red-500"><div className="w-4 h-0 border-t border-dashed border-red-500" /> Lím. Superior</span>
-                      <span className="flex items-center gap-1.5 text-[9px] text-blue-500"><div className="w-4 h-0 border-t border-dashed border-blue-500" /> Lím. Inferior</span>
+                      <span className="flex items-center gap-1.5 text-[9px] text-blue-400"><div className="w-2 h-1 bg-blue-400 rounded" /> {t("coldChain.temperature")}</span>
+                      <span className="flex items-center gap-1.5 text-[9px] text-cyan-400/40"><div className="w-2 h-1 bg-cyan-400/40 rounded" /> {t("coldChain.humidity")}</span>
+                      <span className="flex items-center gap-1.5 text-[9px] text-red-500"><div className="w-4 h-0 border-t border-dashed border-red-500" /> {t("coldChain.upperLimit")}</span>
+                      <span className="flex items-center gap-1.5 text-[9px] text-blue-500"><div className="w-4 h-0 border-t border-dashed border-blue-500" /> {t("coldChain.lowerLimit")}</span>
                     </div>
                   </div>
                   <div className="text-right hidden md:block">
-                    <div className="text-[9px] text-sidebar-foreground/25 font-bold uppercase tracking-widest">Rango Objetivo</div>
+                    <div className="text-[9px] text-sidebar-foreground/25 font-bold uppercase tracking-widest">{t("coldChain.targetRange")}</div>
                     <div className="text-sm font-bold text-sidebar-foreground px-3 py-1 bg-white/5 rounded-xl border border-white/5 mt-1">
                       {selectedUnit.targetTempMin}°C — {selectedUnit.targetTempMax}°C
                     </div>
@@ -625,8 +625,8 @@ const DashboardColdChain = () => {
                       <ReferenceLine yAxisId="temp" y={selectedUnit.targetTempMin} stroke="#3b82f6" strokeDasharray="6 6" strokeWidth={1}
                         label={{ value: `MIN ${selectedUnit.targetTempMin}°C`, fill: "#3b82f6", fontSize: 8, fontWeight: "bold", position: "insideBottomLeft" }}
                       />
-                      <Area yAxisId="temp" type="monotone" dataKey="temp" stroke="#3b82f6" strokeWidth={2.5} fill="url(#ccTempGrad)" animationDuration={1500} name="Temperatura (°C)" />
-                      <Area yAxisId="hum" type="monotone" dataKey="humidity" stroke="rgba(6,182,212,0.3)" strokeWidth={1} fill="url(#ccHumGrad)" strokeDasharray="3 3" name="Humedad (%)" />
+                      <Area yAxisId="temp" type="monotone" dataKey="temp" stroke="#3b82f6" strokeWidth={2.5} fill="url(#ccTempGrad)" animationDuration={1500} name={`${t("coldChain.temperature")} (°C)`} />
+                      <Area yAxisId="hum" type="monotone" dataKey="humidity" stroke="rgba(6,182,212,0.3)" strokeWidth={1} fill="url(#ccHumGrad)" strokeDasharray="3 3" name={`${t("coldChain.humidity")} (%)`} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -637,13 +637,13 @@ const DashboardColdChain = () => {
                 {/* Events Timeline */}
                 <motion.div variants={itemVariants} className="rounded-3xl border bg-sidebar/40 border-white/5 p-4 shadow-xl">
                   <h4 className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5" /> Timeline de Eventos
+                    <Clock className="w-3.5 h-3.5" /> {t("coldChain.eventTimeline")}
                   </h4>
                   <div className="space-y-0 overflow-y-auto max-h-[300px] pr-1 custom-scrollbar">
                     {unitEvents.length > 0 ? unitEvents.map((event, i) => (
                       <EventTimelineItem key={event.id} event={event} isLast={i === unitEvents.length - 1} />
                     )) : (
-                      <div className="text-[10px] text-sidebar-foreground/20 text-center py-8">Sin eventos registrados</div>
+                      <div className="text-[10px] text-sidebar-foreground/20 text-center py-8">{t("coldChain.noEvents")}</div>
                     )}
                   </div>
                 </motion.div>
@@ -651,13 +651,13 @@ const DashboardColdChain = () => {
                 {/* Unit Compliance */}
                 <motion.div variants={itemVariants} className="rounded-3xl border bg-sidebar/40 border-white/5 p-4 shadow-xl">
                   <h4 className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <ShieldCheck className="w-3.5 h-3.5" /> Certificaciones
+                    <ShieldCheck className="w-3.5 h-3.5" /> {t("coldChain.certifications")}
                   </h4>
                   <div className="space-y-2 overflow-y-auto max-h-[300px] pr-1 custom-scrollbar">
                     {unitCompliance.length > 0 ? unitCompliance.map((record) => (
                       <ComplianceRow key={record.id} record={record} />
                     )) : (
-                      <div className="text-[10px] text-sidebar-foreground/20 text-center py-8">Sin certificaciones</div>
+                      <div className="text-[10px] text-sidebar-foreground/20 text-center py-8">{t("coldChain.noCertifications")}</div>
                     )}
                     {/* Compliance standards badges */}
                     <div className="flex flex-wrap gap-1.5 pt-3 border-t border-white/5 mt-3">
@@ -673,7 +673,7 @@ const DashboardColdChain = () => {
                 {/* Unit Alerts */}
                 <motion.div variants={itemVariants} className="rounded-3xl border bg-sidebar/40 border-white/5 p-4 shadow-xl">
                   <h4 className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Bell className="w-3.5 h-3.5" /> Alertas del Vehículo
+                    <Bell className="w-3.5 h-3.5" /> {t("coldChain.vehicleAlerts")}
                     {unitAlerts.filter(a => !a.acknowledged).length > 0 && (
                       <span className="ml-auto px-1.5 py-0.5 bg-red-500/10 text-red-500 text-[8px] font-bold rounded-full">
                         {unitAlerts.filter(a => !a.acknowledged).length}
@@ -687,7 +687,7 @@ const DashboardColdChain = () => {
                       )) : (
                         <div className="text-[10px] text-sidebar-foreground/20 text-center py-8 flex flex-col items-center gap-2">
                           <CheckCircle className="w-6 h-6 text-green-500/30" />
-                          Sin alertas
+                          {t("coldChain.noAlerts")}
                         </div>
                       )}
                     </AnimatePresence>
@@ -704,20 +704,20 @@ const DashboardColdChain = () => {
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-2xl p-4 border bg-red-500/5 border-red-500/10">
                 <div className="text-2xl font-bold font-heading text-red-500 tracking-tighter">{alertCounts.critical}</div>
-                <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">Críticas</div>
+                <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">{t("coldChain.criticalCount")}</div>
               </div>
               <div className="rounded-2xl p-4 border bg-yellow-500/5 border-yellow-500/10">
                 <div className="text-2xl font-bold font-heading text-yellow-500 tracking-tighter">{alertCounts.warning}</div>
-                <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">Advertencias</div>
+                <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">{t("coldChain.warningCount")}</div>
               </div>
               <div className="rounded-2xl p-4 border bg-blue-400/5 border-blue-400/10">
                 <div className="text-2xl font-bold font-heading text-blue-400 tracking-tighter">{alertCounts.info}</div>
-                <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">Informativas</div>
+                <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">{t("coldChain.infoCount")}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="outline" onClick={acknowledgeAllAlerts} className="text-[10px] h-8 rounded-xl text-green-500 border-green-500/20 hover:bg-green-500/10">
-                <BellOff className="w-3 h-3 mr-1.5" /> Confirmar Todas
+                <BellOff className="w-3 h-3 mr-1.5" /> {t("coldChain.confirmAll")}
               </Button>
             </div>
           </motion.div>
@@ -739,26 +739,26 @@ const DashboardColdChain = () => {
           <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="rounded-2xl p-4 border bg-green-500/5 border-green-500/10">
               <div className="text-2xl font-bold font-heading text-green-500 tracking-tighter">{complianceSummary.compliant}</div>
-              <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">Cumplen</div>
+              <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">{t("coldChain.compliant")}</div>
             </div>
             <div className="rounded-2xl p-4 border bg-red-500/5 border-red-500/10">
               <div className="text-2xl font-bold font-heading text-red-500 tracking-tighter">{complianceSummary.nonCompliant}</div>
-              <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">No Cumplen</div>
+              <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">{t("coldChain.nonCompliant")}</div>
             </div>
             <div className="rounded-2xl p-4 border bg-yellow-500/5 border-yellow-500/10">
               <div className="text-2xl font-bold font-heading text-yellow-500 tracking-tighter">{complianceSummary.pending}</div>
-              <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">En Revisión</div>
+              <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">{t("coldChain.underReview")}</div>
             </div>
             <div className="rounded-2xl p-4 border bg-purple-500/5 border-purple-500/10">
               <div className="text-2xl font-bold font-heading text-purple-400 tracking-tighter">{complianceSummary.rate}%</div>
-              <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">Tasa Cumplimiento</div>
+              <div className="text-[9px] text-sidebar-foreground/30 uppercase tracking-widest font-bold">{t("coldChain.complianceRate")}</div>
             </div>
           </motion.div>
 
           {/* Compliance records table */}
           <motion.div variants={itemVariants} className="rounded-3xl border bg-sidebar/40 border-white/5 p-5 shadow-2xl">
             <h4 className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <ClipboardCheck className="w-3.5 h-3.5" /> Registros de Cumplimiento Global
+              <ClipboardCheck className="w-3.5 h-3.5" /> {t("coldChain.globalComplianceRecords")}
             </h4>
             <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
               {allComplianceRecords.map((record) => {
@@ -800,7 +800,7 @@ const DashboardColdChain = () => {
             {/* Status Distribution Pie */}
             <motion.div variants={itemVariants} className="rounded-3xl border bg-sidebar/40 border-white/5 p-5 shadow-2xl">
               <h4 className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <Gauge className="w-3.5 h-3.5" /> Distribución de Estado de Flota
+                <Gauge className="w-3.5 h-3.5" /> {t("coldChain.fleetStatusDistribution")}
               </h4>
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -827,7 +827,7 @@ const DashboardColdChain = () => {
             {/* Compliance by Standard */}
             <motion.div variants={itemVariants} className="rounded-3xl border bg-sidebar/40 border-white/5 p-5 shadow-2xl">
               <h4 className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <Award className="w-3.5 h-3.5" /> Compliance Score por Estándar
+                <Award className="w-3.5 h-3.5" /> {t("coldChain.complianceByStandard")}
               </h4>
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -849,7 +849,7 @@ const DashboardColdChain = () => {
             {/* Deviations per Unit */}
             <motion.div variants={itemVariants} className="rounded-3xl border bg-sidebar/40 border-white/5 p-5 shadow-2xl">
               <h4 className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <ShieldAlert className="w-3.5 h-3.5" /> Desviaciones por Vehículo (24h)
+                <ShieldAlert className="w-3.5 h-3.5" /> {t("coldChain.deviationsPerVehicle")}
               </h4>
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -861,7 +861,7 @@ const DashboardColdChain = () => {
                       contentStyle={{ background: "rgba(10,15,30,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 10 }}
                       itemStyle={{ color: "white" }}
                     />
-                    <Bar dataKey="deviations" name="Desviaciones" fill="#ef4444" radius={[6, 6, 0, 0]} animationDuration={1200} />
+                    <Bar dataKey="deviations" name={t("coldChain.deviations")} fill="#ef4444" radius={[6, 6, 0, 0]} animationDuration={1200} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -870,7 +870,7 @@ const DashboardColdChain = () => {
             {/* Compliance Score per Unit */}
             <motion.div variants={itemVariants} className="rounded-3xl border bg-sidebar/40 border-white/5 p-5 shadow-2xl">
               <h4 className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <TrendingUp className="w-3.5 h-3.5" /> Score de Cumplimiento por Vehículo
+                <TrendingUp className="w-3.5 h-3.5" /> {t("coldChain.compliancePerVehicle")}
               </h4>
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -890,7 +890,7 @@ const DashboardColdChain = () => {
                       formatter={(value: number) => [`${value}%`, "Compliance"]}
                     />
                     <ReferenceLine y={90} stroke="#22c55e" strokeDasharray="4 4" strokeWidth={1}
-                      label={{ value: "META 90%", fill: "#22c55e", fontSize: 8, fontWeight: "bold", position: "insideTopLeft" }}
+                      label={{ value: t("coldChain.targetGoal", { value: 90 }), fill: "#22c55e", fontSize: 8, fontWeight: "bold", position: "insideTopLeft" }}
                     />
                     <Bar dataKey="compliance" name="Compliance" fill="url(#ccCompGrad)" radius={[6, 6, 0, 0]} animationDuration={1200} />
                   </BarChart>
@@ -902,7 +902,7 @@ const DashboardColdChain = () => {
           {/* Sensor health overview */}
           <motion.div variants={itemVariants} className="rounded-3xl border bg-sidebar/40 border-white/5 p-5 shadow-2xl">
             <h4 className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <Signal className="w-3.5 h-3.5" /> Salud de Sensores — Vista General
+              <Signal className="w-3.5 h-3.5" /> {t("coldChain.sensorHealth")}
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
               {filteredUnits.map(unit => {
