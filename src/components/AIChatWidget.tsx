@@ -13,10 +13,10 @@ interface Message {
     sources?: any[];
 }
 
-export function CELLVIAssistant() {
+export function AsegurarAssistant() {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
-        { role: 'assistant', content: 'Hola. Soy CELLVI Neuro-Core. ¿En qué puedo ayudarte hoy? (Ej: "Estado de flota", "Normativa RNDC")' }
+        { role: 'assistant', content: 'Hola. Soy el Asistente ASEGURAR. ¿En qué puedo ayudarte hoy? (Ej: "Estado de flota", "Normativa RNDC")' }
     ]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +50,7 @@ export function CELLVIAssistant() {
             }]);
         } catch (err) {
             console.error(err);
-            setMessages(prev => [...prev, { role: 'assistant', content: "Error de conexión con el Neuro-Core. Intente más tarde." }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: "Error de conexión con el asistente. Intente más tarde." }]);
         } finally {
             setIsLoading(false);
         }
@@ -81,7 +81,7 @@ export function CELLVIAssistant() {
                         </div>
                         <div>
                             <CardTitle className="text-sm font-bold text-white flex items-center gap-1">
-                                CELLVI Neuro-Core
+                                Asistente ASEGURAR
                                 <Sparkles className="w-3 h-3 text-gold animate-pulse" />
                             </CardTitle>
                             <p className="text-[10px] text-slate-400">Powered by RAG & Vector Search</p>
