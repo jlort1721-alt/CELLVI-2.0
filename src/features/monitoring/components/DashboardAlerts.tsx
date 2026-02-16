@@ -84,7 +84,7 @@ const DashboardAlerts = () => {
           const cfg = severityConfig[alert.severity];
           const Icon = cfg.icon;
           return (
-            <div key={alert.id} className={`rounded-xl p-4 border bg-sidebar flex items-start gap-3 ${!alert.acknowledged ? "border-" + alert.severity === "critical" ? "border-red-500/30" : "border-sidebar-border" : "border-sidebar-border"
+            <div key={alert.id} className={`rounded-xl p-4 border bg-sidebar flex items-start gap-3 ${!alert.acknowledged && alert.severity === "critical" ? "border-red-500/30" : "border-sidebar-border"
               }`}>
               <div className={`p-2 rounded-lg ${cfg.bg}`}>
                 <Icon className={`w-4 h-4 ${cfg.color}`} />

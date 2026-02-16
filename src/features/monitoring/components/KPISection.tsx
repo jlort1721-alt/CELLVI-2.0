@@ -119,7 +119,7 @@ export const KPISection = memo(({
       <KpiCard
         icon={Fuel}
         label="Eficiencia"
-        value={`${efficiency.toFixed(0)}%`}
+        value={`${(Number.isFinite(efficiency) ? efficiency : 0).toFixed(0)}%`}
         delta="Global"
         deltaType="up"
         color="#f97316"

@@ -82,7 +82,7 @@ export const FleetStatusTable = memo(({ vehicles, activeCount, loadingVehicles }
       </div>
 
       <div className="pt-3 border-t border-sidebar-border mt-2 flex justify-between text-[10px] text-sidebar-foreground/40">
-        <span>Total: {vehicles?.length || 0}</span>
+        <span>Total: {vehicles?.length ?? 0}</span>
         <span>Activos: {activeCount}</span>
       </div>
     </div>

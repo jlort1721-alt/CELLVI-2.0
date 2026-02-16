@@ -29,7 +29,16 @@ const generateSpeedHistory = () =>
   }));
 
 const DashboardAssetDetail = () => {
-  const [selectedVehicle, setSelectedVehicle] = useState(vehicles[0]);
+  const [selectedVehicle, setSelectedVehicle] = useState(vehicles[0] ?? null);
+
+  if (!selectedVehicle) {
+    return (
+      <div className="flex items-center justify-center h-64 text-sidebar-foreground/50 text-sm">
+        No hay vehículos disponibles.
+      </div>
+    );
+  }
+
   const timeline = generateTimeline(selectedVehicle.id);
   const speedHistory = generateSpeedHistory();
 
