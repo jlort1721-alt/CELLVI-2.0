@@ -526,7 +526,32 @@
     "cancel": "Cancelar",
     "save": "Guardar",
     "loading": "Cargando...",
+    "loadingApp": "Cargando ASEGURAR LTDA...",
+    "loadingModule": "Cargando módulo...",
     "back": "Volver"
+  },
+  "header": {
+    "search": "Buscar",
+    "searchShortcut": "Buscar (Ctrl+K)",
+    "profile": "Mi Perfil",
+    "settings": "Configuración",
+    "signOut": "Cerrar Sesión",
+    "syncing": "Sincronizando",
+    "syncingTitle": "Sincronizando...",
+    "offline": "Offline",
+    "offlineTitle": "Sin conexión",
+    "online": "Online",
+    "onlineTitle": "Sistema Online",
+    "user": "Usuario",
+    "role": {
+      "super_admin": "Super Admin",
+      "admin": "Administrador",
+      "manager": "Gerente",
+      "operator": "Operador",
+      "driver": "Conductor",
+      "client": "Cliente",
+      "auditor": "Auditor"
+    }
   },
   "faq": {
     "badge": "Preguntas Frecuentes",
@@ -843,5 +868,142 @@
     "deviations": "Desviaciones",
     "criticalLabel": "críticas",
     "valueThreshold": "Valor: {{value}} / Umbral: {{threshold}}"
+  },
+  "admin": {
+    "title": "Administración",
+    "tabs": {
+      "vehicles": "Vehículos",
+      "devices": "Dispositivos",
+      "drivers": "Conductores",
+      "usersRoles": "Usuarios & Roles",
+      "billing": "Facturación",
+      "organization": "Organización",
+      "settings": "Configuración"
+    },
+    "form": {
+      "plate": "Placa",
+      "brand": "Marca",
+      "model": "Modelo",
+      "year": "Año",
+      "fullName": "Nombre completo",
+      "license": "Licencia",
+      "phone": "Teléfono",
+      "imei": "IMEI",
+      "simCard": "Tarjeta SIM"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "pending": "Pendiente",
+      "approved": "Aprobado",
+      "rejected": "Rechazado"
+    },
+    "actions": {
+      "newVehicle": "Nuevo Vehículo",
+      "newDevice": "Nuevo Dispositivo",
+      "newDriver": "Nuevo Conductor",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "edit": "Editar"
+    },
+    "toast": {
+      "vehicleCreated": "Vehículo creado",
+      "deviceCreated": "Dispositivo creado",
+      "driverCreated": "Conductor creado",
+      "changesSaved": "Cambios guardados"
+    }
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "signup": "Crear Cuenta",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "fullName": "Nombre completo",
+    "submit": "Ingresar",
+    "submitSignup": "Registrarse",
+    "processing": "Procesando...",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "welcome": "Bienvenido a ASEGURAR LTDA",
+    "accountCreated": "Cuenta creada. Puedes iniciar sesión.",
+    "switchToLogin": "¿Ya tienes cuenta? Inicia sesión",
+    "switchToSignup": "¿No tienes cuenta? Regístrate",
+    "formLabel": "Formulario de autenticación",
+    "loginSubtitle": "Accede a la plataforma ASEGURAR LTDA",
+    "signupSubtitle": "Regístrate para acceder a la plataforma",
+    "noAccount": "¿No tienes cuenta? Regístrate",
+    "hasAccount": "¿Ya tienes cuenta? Inicia sesión",
+    "platformDescription": "Plataforma integral de telemática, monitoreo GPS y gestión de flotas",
+    "vehicles": "Vehículos",
+    "countries": "Países",
+    "backToSite": "← Volver al sitio principal"
+  },
+  "aria": {
+    "closeChat": "Cerrar chat",
+    "sendMessage": "Enviar mensaje",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "openExternalLink": "Abrir enlace externo",
+    "closeMenu": "Cerrar menú",
+    "openMenu": "Abrir menú",
+    "toggleNavigation": "Toggle menu",
+    "mainContent": "Contenido principal de la plataforma",
+    "loadingModule": "Cargando módulo",
+    "offlineMode": "Modo offline activado. Los cambios se sincronizarán automáticamente.",
+    "connectionRestored": "Conexión restaurada",
+    "userMenu": "Menú de usuario",
+    "notifications": "Notificaciones",
+    "platformNav": "Navegación de la plataforma",
+    "offlineBanner": "Modo Offline - Los cambios se sincronizarán automáticamente",
+    "navigatingTo": "Navegando a {{module}}"
+  },
+  "vehicle": {
+    "status": {
+      "moving": "En Movimiento",
+      "stopped": "Detenido",
+      "idle": "Ralentí",
+      "offline": "Sin Señal"
+    },
+    "commands": {
+      "disableEngine": "Deshabilitar Motor",
+      "enableEngine": "Habilitar Motor",
+      "lockDoors": "Bloquear Puertas",
+      "unlockDoors": "Desbloquear Puertas",
+      "honk": "Activar Claxon",
+      "locateNow": "Localizar Ahora"
+    },
+    "metrics": {
+      "speed": "Velocidad",
+      "fuel": "Combustible",
+      "temperature": "Temperatura",
+      "battery": "Batería",
+      "odometer": "Odómetro",
+      "engineHours": "Horas Motor"
+    }
+  },
+  "checklist": {
+    "title": "Inspección Preoperacional",
+    "oilLevel": "Nivel de Aceite Motor",
+    "coolantLevel": "Nivel de Refrigerante",
+    "brakesFluid": "Frenos y Líquido",
+    "tireCondition": "Estado de Llantas",
+    "documentsUpToDate": "Documentos al día",
+    "readyToOperate": "¡Listo para operar!",
+    "notFit": "Vehículo NO APTO",
+    "startInspection": "Iniciar Inspección",
+    "completeInspection": "Completar Inspección"
+  },
+  "auditLog": {
+    "title": "Registro de Auditoría",
+    "events": {
+      "speedExcess": "Exceso velocidad",
+      "geofenceExit": "Salida geocerca",
+      "tempOutOfRange": "Temp. fuera rango",
+      "fuelAnomaly": "Anomalía combustible",
+      "engineBlock": "Bloqueo motor",
+      "ruleTriggered": "Regla disparada"
+    }
   }
 }

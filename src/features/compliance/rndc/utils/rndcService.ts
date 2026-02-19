@@ -14,8 +14,6 @@ export interface RndcResponse {
  * @returns El Job creado en la cola.
  */
 export const submitManifestToRNDC = async (manifestPayload: any): Promise<RndcResponse> => {
-    console.log("Encolando manifiesto RNDC...", manifestPayload);
-
     // Insertar en la cola asíncrona
     const { data: job, error } = await supabase
         .from("integration_jobs") // Tabla creada en migración 20260212200000

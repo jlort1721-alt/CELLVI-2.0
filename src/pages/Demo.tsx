@@ -24,14 +24,17 @@ const DashboardCompliance = lazy(() => import("@/features/compliance/components/
 const DashboardPredictive = lazy(() => import("@/features/analytics/components/DashboardPredictive"));
 
 /* ── Loading Fallback ── */
-const ModuleLoader = () => (
-  <div className="flex items-center justify-center h-64">
-    <div className="flex flex-col items-center gap-3">
-      <Loader2 className="w-8 h-8 text-gold animate-spin" />
-      <span className="text-xs text-primary-foreground/40">Cargando módulo...</span>
+const ModuleLoader = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="w-8 h-8 text-gold animate-spin" />
+        <span className="text-xs text-primary-foreground/40">{t("common.loadingModule")}</span>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const statusColors: Record<string, string> = { activo: "#22c55e", detenido: "#3b82f6", alerta: "#ef4444", apagado: "#6b7280" };
 

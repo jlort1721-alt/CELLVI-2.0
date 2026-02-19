@@ -7,6 +7,7 @@ import { useUIStore, type ActiveModule } from "@/stores/uiStore";
 import { useSyncStatusStore } from "@/stores/syncStatusStore";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { NotificationCenter, getInitialUnreadCount } from "@/features/notifications/NotificationCenter";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -58,22 +59,23 @@ Breadcrumbs.displayName = "Breadcrumbs";
 /* ── Sync Status Indicator ────────────────────────────── */
 const SyncIndicator = memo(() => {
   const { isOnline, isSyncing, pendingOperations } = useSyncStatusStore();
+  const { t } = useTranslation();
   const pendingCount = pendingOperations.filter((op) => op.status === "pending").length;
 
   if (isSyncing) {
     return (
-      <div className="flex items-center gap-1.5 text-yellow-400" title="Sincronizando...">
+      <div className="flex items-center gap-1.5 text-yellow-400" title={t("header.syncingTitle")}>
         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-        <span className="hidden lg:inline text-[10px]">Sincronizando</span>
+        <span className="hidden lg:inline text-[10px]">{t("header.syncing")}</span>
       </div>
     );
   }
 
   if (!isOnline) {
     return (
-      <div className="flex items-center gap-1.5 text-red-400" title="Sin conexión">
+      <div className="flex items-center gap-1.5 text-red-400" title={t("header.offlineTitle")}>
         <SignalZero className="w-3.5 h-3.5" />
-        <span className="hidden lg:inline text-[10px]">Offline</span>
+        <span className="hidden lg:inline text-[10px]">{t("header.offline")}</span>
         {pendingCount > 0 && (
           <span className="bg-red-500/20 text-red-400 text-[9px] font-bold px-1.5 py-0.5 rounded-full">
             {pendingCount}
@@ -84,9 +86,9 @@ const SyncIndicator = memo(() => {
   }
 
   return (
-    <div className="flex items-center gap-1.5 text-green-500" title="Sistema Online">
+    <div className="flex items-center gap-1.5 text-green-500" title={t("header.onlineTitle")}>
       <Signal className="w-3.5 h-3.5" />
-      <span className="hidden lg:inline text-[10px]">Online</span>
+      <span className="hidden lg:inline text-[10px]">{t("header.online")}</span>
     </div>
   );
 });
@@ -106,6 +108,7 @@ const ROLE_LABELS: Record<string, string> = {
 /* ── User Menu Dropdown ───────────────────────────────── */
 const UserMenu = memo(({ onSignOut }: { onSignOut: () => void }) => {
   const { profile, role, isAdmin } = useAuth();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -122,6 +125,9 @@ const UserMenu = memo(({ onSignOut }: { onSignOut: () => void }) => {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        aria-expanded={open ? "true" : "false"}
+        aria-haspopup="menu"
+        aria-label="User menu"
         className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
       >
         <div className="w-7 h-7 rounded-full bg-gold/20 flex items-center justify-center text-gold text-[10px] font-bold">
@@ -129,10 +135,10 @@ const UserMenu = memo(({ onSignOut }: { onSignOut: () => void }) => {
         </div>
         <div className="hidden md:block text-left">
           <div className="text-primary-foreground text-[10px] font-medium leading-tight">
-            {profile?.display_name || "Usuario"}
+            {profile?.display_name || t("header.user")}
           </div>
           <div className="text-gold text-[9px] leading-tight">
-            {ROLE_LABELS[role || "operator"] || role}
+            {t(`header.role.${role || "operator"}`, role || "operator")}
           </div>
         </div>
       </button>
@@ -141,7 +147,7 @@ const UserMenu = memo(({ onSignOut }: { onSignOut: () => void }) => {
         <div className="absolute right-0 top-full mt-1 w-56 bg-sidebar border border-sidebar-border rounded-lg shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
           {/* User Info */}
           <div className="px-3 py-2.5 border-b border-gold/10">
-            <div className="text-primary-foreground text-xs font-semibold">{profile?.display_name || "Usuario"}</div>
+            <div className="text-primary-foreground text-xs font-semibold">{profile?.display_name || t("header.user")}</div>
             <div className="text-primary-foreground/40 text-[10px]">{profile?.email}</div>
             {profile?.company && (
               <div className="flex items-center gap-1 mt-1 text-gold/60 text-[10px]">
@@ -158,7 +164,7 @@ const UserMenu = memo(({ onSignOut }: { onSignOut: () => void }) => {
               className="w-full flex items-center gap-2 px-3 py-2 text-xs text-primary-foreground/60 hover:text-primary-foreground hover:bg-white/5 transition-colors"
               onClick={() => setOpen(false)}
             >
-              <User className="w-3.5 h-3.5" /> Mi Perfil
+              <User className="w-3.5 h-3.5" /> {t("header.profile")}
             </button>
             {isAdmin && (
               <button
@@ -166,7 +172,7 @@ const UserMenu = memo(({ onSignOut }: { onSignOut: () => void }) => {
                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-primary-foreground/60 hover:text-primary-foreground hover:bg-white/5 transition-colors"
                 onClick={() => setOpen(false)}
               >
-                <Settings className="w-3.5 h-3.5" /> Configuración
+                <Settings className="w-3.5 h-3.5" /> {t("header.settings")}
               </button>
             )}
           </div>
@@ -178,7 +184,7 @@ const UserMenu = memo(({ onSignOut }: { onSignOut: () => void }) => {
               onClick={() => { setOpen(false); onSignOut(); }}
               className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/5 transition-colors"
             >
-              <LogOut className="w-3.5 h-3.5" /> Cerrar Sesión
+              <LogOut className="w-3.5 h-3.5" /> {t("header.signOut")}
             </button>
           </div>
         </div>
@@ -192,6 +198,7 @@ UserMenu.displayName = "UserMenu";
 const PlatformHeader = memo(() => {
   const { sidebarOpen, activeModule, toggleSidebar } = useUIStore();
   const { signOut } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [now, setNow] = useState(new Date());
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -228,10 +235,10 @@ const PlatformHeader = memo(() => {
           type="button"
           onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
           className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gold/10 hover:border-gold/30 text-primary-foreground/30 hover:text-primary-foreground/60 transition-colors"
-          title="Buscar (Ctrl+K)"
+          title={t("header.searchShortcut")}
         >
           <Search className="w-3.5 h-3.5" />
-          <span className="text-[10px]">Buscar</span>
+          <span className="text-[10px]">{t("header.search")}</span>
           <kbd className="ml-1 px-1 py-0.5 rounded bg-white/5 text-[9px] font-mono">⌘K</kbd>
         </button>
 
@@ -251,6 +258,8 @@ const PlatformHeader = memo(() => {
           className="relative p-1.5 rounded-lg hover:bg-white/5 transition-colors"
           title="Notificaciones"
           aria-label="Notificaciones"
+          aria-expanded={notificationsOpen ? "true" : "false"}
+          aria-haspopup="true"
         >
           <Bell className="w-4 h-4 text-primary-foreground/50" />
           {notificationCount > 0 && (

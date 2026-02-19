@@ -8,27 +8,28 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 8088,
     hmr: {
       overlay: false,
     },
     headers: {
       "Content-Security-Policy": [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com",
+        "script-src 'self' 'unsafe-inline' https://unpkg.com",
         "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com",
         "img-src 'self' data: blob: https: http:",
         "font-src 'self' https://fonts.gstatic.com",
-        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://unpkg.com https://*.basemaps.cartocdn.com",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://unpkg.com https://*.basemaps.cartocdn.com https://cdn.jsdelivr.net",
         "frame-ancestors 'self'",
         "base-uri 'self'",
         "form-action 'self'",
       ].join("; "),
+      "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
       "X-Content-Type-Options": "nosniff",
       "X-Frame-Options": "SAMEORIGIN",
       "X-XSS-Protection": "1; mode=block",
       "Referrer-Policy": "strict-origin-when-cross-origin",
-      "Permissions-Policy": "camera=(), microphone=(), geolocation=(self)",
+      "Permissions-Policy": "camera=(self), microphone=(), geolocation=(self)",
     },
   },
   plugins: [
@@ -283,6 +284,21 @@ export default defineConfig(({ mode }) => ({
           // PDF & Export utilities
           if (id.includes('node_modules/html2canvas') || id.includes('node_modules/jspdf')) {
             return 'vendor-export';
+          }
+
+          // Animation library (heavy - used across 50+ files)
+          if (id.includes('node_modules/framer-motion')) {
+            return 'vendor-motion';
+          }
+
+          // Date utilities
+          if (id.includes('node_modules/date-fns')) {
+            return 'vendor-date';
+          }
+
+          // Error monitoring & logging (defer load)
+          if (id.includes('node_modules/@sentry') || id.includes('node_modules/logrocket')) {
+            return 'vendor-monitoring';
           }
 
           // Other large vendor dependencies

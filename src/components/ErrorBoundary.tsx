@@ -54,8 +54,14 @@ export class ErrorBoundary extends Component<Props, State> {
       this.props.onError(error, errorInfo);
     }
 
-    // TODO: Send to Sentry or other error tracking service
-    // Sentry.captureException(error, { contexts: { react: errorInfo } });
+    // Send to Sentry (dynamic import to avoid hard dependency)
+    if (typeof window !== 'undefined' && (window as any).__SENTRY__) {
+      import('@sentry/react').then(Sentry => {
+        Sentry.captureException(error, { contexts: { react: errorInfo as any } });
+      }).catch(() => {
+        // Sentry not available, already logged to console
+      });
+    }
   }
 
   componentDidUpdate(prevProps: Props) {

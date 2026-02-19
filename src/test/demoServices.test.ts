@@ -181,7 +181,7 @@ describe("alertService", () => {
     });
 
     it("getByVehicle returns empty for vehicle without alerts", () => {
-        const filtered = alertService.getByVehicle("V003");
+        const filtered = alertService.getByVehicle("V006");
         expect(filtered).toEqual([]);
     });
 });

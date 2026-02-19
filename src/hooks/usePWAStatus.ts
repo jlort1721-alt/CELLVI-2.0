@@ -5,31 +5,47 @@
 
 import { useState, useEffect } from 'react';
 import { getPermissionStatus, isPushSupported } from '@/lib/pwa/pushNotifications';
+import type { BeforeInstallPromptEvent } from '@/types/shared';
 
+/**
+ * Reactive snapshot of the Progressive Web App environment.
+ * Covers installation state, notification permissions, connectivity, and platform detection.
+ */
 export interface PWAStatus {
   // Installation
+  /** Whether the app has been installed as a PWA. */
   isInstalled: boolean;
+  /** Whether the app is running in standalone (PWA) display mode. */
   isStandalone: boolean;
+  /** Whether the browser has offered an install prompt. */
   canInstall: boolean;
+  /** The deferred install prompt event (call `.prompt()` to show). */
   installPromptEvent: BeforeInstallPromptEvent | null;
 
   // Notifications
+  /** Current browser notification permission (`'granted'`, `'denied'`, or `'default'`). */
   notificationPermission: NotificationPermission;
+  /** Whether the Push API is supported in this browser. */
   notificationsSupported: boolean;
 
   // Connectivity
+  /** Whether the device currently has network connectivity. */
   isOnline: boolean;
 
   // Platform
+  /** Detected platform based on user-agent sniffing. */
   platform: 'ios' | 'android' | 'desktop' | 'unknown';
+  /** Whether the device is a mobile/tablet form factor. */
   isMobile: boolean;
 }
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
-}
-
+/**
+ * Hook that tracks PWA installation state, notification permissions,
+ * online/offline connectivity, and platform detection.
+ * Updates reactively when conditions change (e.g. going offline).
+ *
+ * @returns A {@link PWAStatus} object with current values.
+ */
 export const usePWAStatus = (): PWAStatus => {
   const [status, setStatus] = useState<PWAStatus>({
     isInstalled: false,
@@ -155,7 +171,9 @@ function isMobileDevice(): boolean {
 }
 
 /**
- * Hook to trigger install prompt
+ * Hook that wraps {@link usePWAStatus} to expose a simple install-prompt API.
+ * @returns `{ canInstall, isInstalled, promptInstall }` where `promptInstall`
+ *   shows the browser install dialog and resolves to `'accepted'`, `'dismissed'`, or `null`.
  */
 export const useInstallPrompt = () => {
   const { installPromptEvent, canInstall, isInstalled } = usePWAStatus();

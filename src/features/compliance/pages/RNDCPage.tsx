@@ -131,7 +131,6 @@ const RNDCPage = memo(() => {
             };
 
             const response = await submitManifestToRNDC(payload);
-            console.log("Job Encolado:", response);
 
             // Refresh queues immediately
             refetchJobs();

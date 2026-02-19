@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, lazy, Suspense } from "react";
 import { Car, MapPin, Fuel, Gauge, Clock, Shield, Thermometer, Signal, ChevronRight, CheckCircle, Battery, Lock, Unlock, Activity, Send, Power, Locate, AlertTriangle, Zap } from "lucide-react";
 import { vehicles } from "@/lib/demoData";
 import { Button } from "@/components/ui/button";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area } from "recharts";
-import { DigitalTwinViewer } from "./DigitalTwinViewer";
+const DigitalTwinViewer = lazy(() => import("./DigitalTwinViewer").then(m => ({ default: m.DigitalTwinViewer })));
 import { toast } from "sonner";
 
 /* ── Mock telemetry timeline for selected vehicle ──── */
@@ -159,7 +159,9 @@ const DashboardAssetDetail = () => {
         <div className="lg:col-span-3 space-y-4">
           {/* Digital Twin Viewer */}
           <div className="rounded-xl border bg-sidebar border-sidebar-border h-[400px] overflow-hidden relative">
-            <DigitalTwinViewer vehicleData={selectedVehicle} />
+            <Suspense fallback={<div className="h-full animate-pulse bg-gray-800/50 rounded-lg" />}>
+              <DigitalTwinViewer vehicleData={selectedVehicle} />
+            </Suspense>
           </div>
 
           {/* Quick metrics */}

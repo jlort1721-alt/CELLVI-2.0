@@ -90,8 +90,6 @@ const RoutePlanner = () => {
 
             if (error) throw error;
 
-            console.log("IA Response:", data);
-
             // Mapear respuesta a objetos Stop
             // La IA devuelve coordenadas, necesitamos re-asociar las etiquetas si es posible
             // O simplemente usar la geometría devuelta

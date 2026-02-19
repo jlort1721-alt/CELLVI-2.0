@@ -29,7 +29,7 @@ const Auth = () => {
         if (error) {
           toast.error(error.message);
         } else {
-          toast.success("Bienvenido a CELLVI 2.0");
+          toast.success(t("auth.welcome"));
           navigate("/platform");
         }
       } else {
@@ -37,7 +37,7 @@ const Auth = () => {
         if (error) {
           toast.error(error.message);
         } else {
-          toast.success("Cuenta creada. Puedes iniciar sesión.");
+          toast.success(t("auth.accountCreated"));
           setIsLogin(true);
         }
       }
@@ -55,13 +55,13 @@ const Auth = () => {
           <img src={logoAsegurar} alt="ASEGURAR LTDA" className="h-20 w-auto object-contain brightness-0 invert mx-auto mb-8" />
           <h1 className="font-heading text-4xl font-bold text-primary-foreground mb-4">CELLVI 2.0</h1>
           <p className="text-primary-foreground/60 text-lg max-w-md">
-            Plataforma integral de telemática con Evidence-Grade Tracking, Connectivity Autopilot y Policy Engine
+            {t("auth.platformDescription")}
           </p>
           <div className="mt-12 grid grid-cols-3 gap-6 text-center">
             {[
-              { label: "Vehículos", value: "10K+" },
+              { label: t("auth.vehicles"), value: "10K+" },
               { label: "Uptime", value: "99.9%" },
-              { label: "Países", value: "5+" },
+              { label: t("auth.countries"), value: "5+" },
             ].map((s) => (
               <div key={s.label}>
                 <div className="text-gold font-heading font-bold text-2xl">{s.value}</div>
@@ -82,17 +82,17 @@ const Auth = () => {
           <div className="flex items-center gap-2 mb-2">
             <Shield className="w-5 h-5 text-gold" />
             <h2 className="font-heading font-bold text-xl text-foreground">
-              {isLogin ? "Iniciar Sesión" : "Crear Cuenta"}
+              {isLogin ? t("auth.login") : t("auth.signup")}
             </h2>
           </div>
           <p className="text-muted-foreground text-sm mb-8">
-            {isLogin ? "Accede a la plataforma CELLVI 2.0" : "Regístrate para acceder a la plataforma"}
+            {isLogin ? t("auth.loginSubtitle") : t("auth.signupSubtitle")}
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} aria-label={t(isLogin ? "auth.login" : "auth.signup")} className="space-y-4">
             {!isLogin && (
               <div>
-                <Label htmlFor="displayName">Nombre completo</Label>
+                <Label htmlFor="displayName">{t("auth.fullName")}</Label>
                 <Input
                   id="displayName"
                   value={displayName}
@@ -104,7 +104,7 @@ const Auth = () => {
               </div>
             )}
             <div>
-              <Label htmlFor="email">Correo electrónico</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -116,7 +116,7 @@ const Auth = () => {
               />
             </div>
             <div>
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <div className="relative mt-1">
                 <Input
                   id="password"
@@ -130,14 +130,15 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={t(showPassword ? "auth.hidePassword" : "auth.showPassword")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
-            <Button type="submit" disabled={loading} className="w-full bg-gold-gradient text-navy font-heading font-bold hover:opacity-90">
-              {loading ? "Procesando..." : isLogin ? "Ingresar" : "Registrarse"}
+            <Button type="submit" disabled={loading} aria-busy={loading} className="w-full bg-gold-gradient text-navy font-heading font-bold hover:opacity-90">
+              {t(loading ? "auth.processing" : isLogin ? "auth.submit" : "auth.submitSignup")}
             </Button>
           </form>
 
@@ -146,13 +147,13 @@ const Auth = () => {
               onClick={() => setIsLogin(!isLogin)}
               className="text-sm text-gold hover:underline"
             >
-              {isLogin ? "¿No tienes cuenta? Regístrate" : "¿Ya tienes cuenta? Inicia sesión"}
+              {isLogin ? t("auth.noAccount") : t("auth.hasAccount")}
             </button>
           </div>
 
           <div className="mt-8 text-center">
             <a href="/" className="text-xs text-muted-foreground hover:text-foreground">
-              ← Volver al sitio principal
+              {t("auth.backToSite")}
             </a>
           </div>
         </div>

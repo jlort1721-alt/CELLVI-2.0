@@ -115,10 +115,10 @@ const AppContent = () => {
           </ProtectedRoute>
         } />
 
-        {/* Feature routes - non-lazy, no Suspense needed */}
-        <Route path="/tracking" element={<ErrorBoundary level="feature"><TrackingDashboard /></ErrorBoundary>} />
-        <Route path="/planning" element={<ErrorBoundary level="feature"><RoutePlanner /></ErrorBoundary>} />
-        <Route path="/driver" element={<ErrorBoundary level="feature"><DriverRoute /></ErrorBoundary>} />
+        {/* Feature routes - protected with auth */}
+        <Route path="/tracking" element={<ProtectedRoute><ErrorBoundary level="feature"><TrackingDashboard /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/planning" element={<ProtectedRoute><ErrorBoundary level="feature"><RoutePlanner /></ErrorBoundary></ProtectedRoute>} />
+        <Route path="/driver" element={<ProtectedRoute><ErrorBoundary level="feature"><DriverRoute /></ErrorBoundary></ProtectedRoute>} />
 
         {/* Protected lazy routes - each with isolated Suspense */}
         <Route path="/preoperacional" element={<ProtectedRoute><ErrorBoundary level="feature"><Suspense fallback={<PageLoader />}><ChecklistPage /></Suspense></ErrorBoundary></ProtectedRoute>} />

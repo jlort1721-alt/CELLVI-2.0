@@ -132,9 +132,7 @@ const LiveMap = () => {
                     }
                 }
             )
-            .subscribe((status) => {
-                if (status === 'SUBSCRIBED') console.log('✅ Realtime Connected to Vehicles');
-            });
+            .subscribe();
 
         return () => {
             supabase.removeChannel(channel);

@@ -25,6 +25,31 @@ if (import.meta.env.VITE_LOGROCKET_ID) {
   });
 }
 
+// Global error handler for uncaught errors (fires before React mounts)
+window.addEventListener("error", (event) => {
+  try {
+    console.error("[Global Error]", event.error || event.message);
+    if (import.meta.env.VITE_SENTRY_DSN && event.error) {
+      Sentry.captureException(event.error);
+    }
+  } catch (_) {
+    // Defensive: never let the error handler itself throw
+  }
+});
+
+// Global handler for unhandled promise rejections
+window.addEventListener("unhandledrejection", (event) => {
+  try {
+    const error = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+    console.error("[Unhandled Rejection]", error);
+    if (import.meta.env.VITE_SENTRY_DSN) {
+      Sentry.captureException(error);
+    }
+  } catch (_) {
+    // Defensive: never let the error handler itself throw
+  }
+});
+
 createRoot(document.getElementById("root")!).render(<App />);
 
 // Register Service Worker for PWA (ONLY in production)

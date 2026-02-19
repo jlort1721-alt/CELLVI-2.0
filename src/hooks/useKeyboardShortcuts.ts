@@ -29,8 +29,7 @@ export function useCommonShortcuts() {
       // Cmd/Ctrl + K - Search
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        // Open search modal (implement based on your UI)
-        console.log('Search shortcut triggered');
+        focusSearch();
       }
 
       // / - Focus search

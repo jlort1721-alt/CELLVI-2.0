@@ -1,17 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import type { VehiclePosition } from "@/types/shared";
 
-export interface VehiclePosition {
-  vehicle_id: string;
-  latitude: number;
-  longitude: number;
-  speed: number;
-  heading: number;
-  engine_on: boolean | null;
-  fuel_level: number | null;
-  ts: string;
-}
+export type { VehiclePosition };
 
 export function useFleetRealtime() {
   const { profile } = useAuth();

@@ -1,21 +1,19 @@
 /**
  * Claude API Integration for Intelligent Chatbot Responses
  *
- * This module provides integration with Anthropic's Claude API for
- * generating intelligent, context-aware responses using RAG
- * (Retrieval-Augmented Generation) with OpenAI embeddings.
+ * SECURITY: All AI API calls go through the /ai-proxy Edge Function.
+ * API keys are NEVER exposed to the client.
  *
  * Features:
- * - Semantic search using OpenAI embeddings
- * - Context-aware responses via Claude API
+ * - Semantic search using server-side OpenAI embeddings
+ * - Context-aware responses via server-side Claude API
  * - Source attribution and confidence scoring
  * - Suggested actions based on context
- *
- * @requires openai
- * @requires @anthropic-ai/sdk
+ * - Automatic fallback to simulated responses when API unavailable
  */
 
 import { env } from '@/config/env';
+import { supabase } from '@/lib/supabase';
 
 // Types for Claude API
 export interface ClaudeMessage {
@@ -72,19 +70,10 @@ const OPENAI_CONFIG = {
 };
 
 /**
- * Claude API Configuration
- */
-const CLAUDE_CONFIG = {
-  model: 'claude-3-5-sonnet-20241022',
-  maxTokens: 1024,
-  temperature: 0.7,
-};
-
-/**
  * System prompts for different contexts
  */
 const SYSTEM_PROMPTS = {
-  general: `Eres un asistente experto de CELLVI, una plataforma de gestión de flotas de transporte en Colombia.
+  general: `Eres un asistente experto de ASEGURAR LTDA, una plataforma de gestión de flotas de transporte en Colombia.
 
 Tu función es ayudar a los usuarios con:
 - Consultas sobre mantenimiento de vehículos
@@ -141,50 +130,55 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
 }
 
 /**
- * OpenAI Embeddings Wrapper
+ * Call the AI proxy Edge Function securely
  */
-export class OpenAIEmbeddings {
-  private apiKey: string;
-  private baseURL = 'https://api.openai.com/v1';
+async function callAIProxy(payload: Record<string, unknown>): Promise<Response> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
 
-  constructor(apiKey?: string) {
-    this.apiKey = apiKey || env.ai.openaiApiKey || '';
-    if (!this.apiKey) {
-      console.warn('⚠️ OpenAI API key not configured. Embeddings will be simulated.');
-    }
+  if (!token) {
+    throw new Error('User not authenticated');
   }
 
+  const response = await fetch(env.ai.proxyEndpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return response;
+}
+
+/**
+ * OpenAI Embeddings Wrapper (via server-side proxy)
+ */
+export class OpenAIEmbeddings {
   /**
-   * Generate embedding for text
+   * Generate embedding for text via Edge Function proxy
    */
   async generateEmbedding(text: string): Promise<number[]> {
-    if (!this.apiKey) {
-      // Return simulated embedding for demo
+    if (env.features.useMockData) {
       return this.simulateEmbedding(text);
     }
 
     try {
-      const response = await fetch(`${this.baseURL}/embeddings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: OPENAI_CONFIG.model,
-          input: text,
-          dimensions: OPENAI_CONFIG.dimensions,
-        }),
+      const response = await callAIProxy({
+        action: 'embeddings',
+        text,
       });
 
       if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.statusText}`);
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || `AI proxy error: ${response.status}`);
       }
 
       const data = await response.json();
-      return data.data[0].embedding;
+      return data.embedding;
     } catch (error) {
-      console.error('Error generating embedding:', error);
+      console.error('Error generating embedding via proxy:', error);
       return this.simulateEmbedding(text);
     }
   }
@@ -193,7 +187,6 @@ export class OpenAIEmbeddings {
    * Simulate embedding for demo mode
    */
   private simulateEmbedding(text: string): number[] {
-    // Simple hash-based simulation
     const hash = this.hashCode(text);
     const embedding: number[] = [];
 
@@ -215,70 +208,46 @@ export class OpenAIEmbeddings {
   }
 
   /**
-   * Check if OpenAI is configured
+   * Check if AI proxy is available (Supabase must be configured)
    */
   static isConfigured(): boolean {
-    return Boolean(env.ai.openaiApiKey);
+    return Boolean(env.supabase.url && !env.features.useMockData);
   }
 }
 
 /**
- * Claude API Wrapper
+ * Claude API Wrapper (via server-side proxy)
  */
 export class ClaudeAPI {
-  private apiKey: string;
-  private baseURL = 'https://api.anthropic.com/v1';
-  private apiVersion = '2023-06-01';
-
-  constructor(apiKey?: string) {
-    this.apiKey = apiKey || env.ai.anthropicApiKey || '';
-    if (!this.apiKey) {
-      console.warn('⚠️ Claude API key not configured. Responses will be simulated.');
-    }
-  }
-
   /**
-   * Generate response using Claude
+   * Generate response using Claude via Edge Function proxy
    */
   async generateResponse(
     messages: ClaudeMessage[],
     systemPrompt: string = SYSTEM_PROMPTS.general,
     context?: string
   ): Promise<ClaudeResponse> {
-    if (!this.apiKey) {
+    if (env.features.useMockData) {
       return this.simulateResponse(messages);
     }
 
     try {
-      // Add context to system prompt if provided
-      const fullSystemPrompt = context
-        ? `${systemPrompt}\n\n## Contexto relevante:\n${context}`
-        : systemPrompt;
-
-      const response = await fetch(`${this.baseURL}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': this.apiKey,
-          'anthropic-version': this.apiVersion,
-        },
-        body: JSON.stringify({
-          model: CLAUDE_CONFIG.model,
-          max_tokens: CLAUDE_CONFIG.maxTokens,
-          temperature: CLAUDE_CONFIG.temperature,
-          system: fullSystemPrompt,
-          messages: messages,
-        }),
+      const response = await callAIProxy({
+        action: 'chat',
+        messages,
+        systemPrompt,
+        context,
       });
 
       if (!response.ok) {
-        throw new Error(`Claude API error: ${response.statusText}`);
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || `AI proxy error: ${response.status}`);
       }
 
       const data: ClaudeResponse = await response.json();
       return data;
     } catch (error) {
-      console.error('Error calling Claude API:', error);
+      console.error('Error calling Claude via proxy:', error);
       return this.simulateResponse(messages);
     }
   }
@@ -320,17 +289,18 @@ export class ClaudeAPI {
   }
 
   /**
-   * Check if Claude is configured
+   * Check if Claude API is available via proxy
    */
   static isConfigured(): boolean {
-    return Boolean(env.ai.anthropicApiKey);
+    return Boolean(env.supabase.url && !env.features.useMockData);
   }
 }
 
 /**
  * RAG (Retrieval-Augmented Generation) System
  *
- * Combines semantic search with Claude API for context-aware responses
+ * Combines semantic search with Claude API for context-aware responses.
+ * All API calls routed through secure server-side proxy.
  */
 export class RAGChatbot {
   private claudeAPI: ClaudeAPI;
@@ -356,10 +326,8 @@ export class RAGChatbot {
     }>,
     topK: number = 3
   ): Promise<RAGContext['relevantDocuments']> {
-    // Generate query embedding
     const queryEmbedding = await this.embeddings.generateEmbedding(query);
 
-    // Calculate similarity for each document
     const similarities = documents.map((doc) => {
       const docEmbedding = doc.embedding || [];
       const similarity =
@@ -374,7 +342,6 @@ export class RAGChatbot {
       };
     });
 
-    // Sort by relevance and return top K
     return similarities.sort((a, b) => b.relevanceScore - a.relevanceScore).slice(0, topK);
   }
 
@@ -393,21 +360,17 @@ export class RAGChatbot {
     }>
   ): Promise<ChatResponse> {
     try {
-      // 1. Search knowledge base for relevant documents
       const relevantDocs = await this.searchKnowledgeBase(userMessage, knowledgeBase, 3);
 
-      // 2. Build context from relevant documents
       const context = relevantDocs
         .map((doc) => `### ${doc.title}\n${doc.content}`)
         .join('\n\n');
 
-      // 3. Add user message to history
       this.conversationHistory.push({
         role: 'user',
         content: userMessage,
       });
 
-      // 4. Generate response using Claude with context
       const claudeResponse = await this.claudeAPI.generateResponse(
         this.conversationHistory,
         SYSTEM_PROMPTS.general,
@@ -416,18 +379,15 @@ export class RAGChatbot {
 
       const responseText = claudeResponse.content[0]?.text || '';
 
-      // 5. Add assistant response to history
       this.conversationHistory.push({
         role: 'assistant',
         content: responseText,
       });
 
-      // 6. Calculate confidence based on relevance scores
       const avgRelevance =
         relevantDocs.reduce((sum, doc) => sum + doc.relevanceScore, 0) / relevantDocs.length;
       const confidence = Math.min(avgRelevance * 1.2, 1.0);
 
-      // 7. Extract sources
       const sources = relevantDocs.map((doc) => ({
         id: doc.id,
         title: doc.title,
@@ -436,7 +396,6 @@ export class RAGChatbot {
         url: knowledgeBase.find((kb) => kb.id === doc.id)?.url,
       }));
 
-      // 8. Generate suggested actions based on context
       const suggestedActions = this.generateSuggestedActions(userMessage, relevantDocs);
 
       return {
@@ -448,7 +407,6 @@ export class RAGChatbot {
     } catch (error) {
       console.error('Error in RAG chat:', error);
 
-      // Fallback response
       return {
         content:
           'Lo siento, hubo un error al procesar tu consulta. Por favor, intenta de nuevo o contacta al soporte.',
@@ -469,7 +427,6 @@ export class RAGChatbot {
     const actions: ChatResponse['suggestedActions'] = [];
     const queryLower = query.toLowerCase();
 
-    // Maintenance-related actions
     if (queryLower.includes('mantenimiento') || queryLower.includes('revisión')) {
       actions.push({
         type: 'schedule_maintenance',
@@ -478,7 +435,6 @@ export class RAGChatbot {
       });
     }
 
-    // Route-related actions
     if (queryLower.includes('ruta') || queryLower.includes('optimizar')) {
       actions.push({
         type: 'navigate',
@@ -487,7 +443,6 @@ export class RAGChatbot {
       });
     }
 
-    // Report-related actions
     if (queryLower.includes('reporte') || queryLower.includes('incidente')) {
       actions.push({
         type: 'generate_report',
@@ -496,7 +451,6 @@ export class RAGChatbot {
       });
     }
 
-    // Alert-related actions
     if (
       queryLower.includes('alerta') ||
       queryLower.includes('notificación') ||
@@ -512,23 +466,14 @@ export class RAGChatbot {
     return actions;
   }
 
-  /**
-   * Clear conversation history
-   */
   clearHistory(): void {
     this.conversationHistory = [];
   }
 
-  /**
-   * Get conversation history
-   */
   getHistory(): ClaudeMessage[] {
     return [...this.conversationHistory];
   }
 
-  /**
-   * Check if RAG system is fully configured
-   */
   static isFullyConfigured(): boolean {
     return ClaudeAPI.isConfigured() && OpenAIEmbeddings.isConfigured();
   }
@@ -542,38 +487,9 @@ export function createRAGChatbot(): RAGChatbot {
 
   if (!RAGChatbot.isFullyConfigured()) {
     console.warn(
-      '⚠️ RAG system not fully configured. Using simulated responses.\n' +
-        'Configure VITE_ANTHROPIC_API_KEY and VITE_OPENAI_API_KEY for production use.'
+      'RAG system running in demo mode. Configure Supabase and set AI keys in Edge Function secrets for production.'
     );
   }
 
   return chatbot;
 }
-
-/**
- * Integration Instructions:
- *
- * 1. Install required packages:
- *
- * npm install openai @anthropic-ai/sdk
- *
- * 2. Configure environment variables in .env:
- *
- * VITE_ANTHROPIC_API_KEY=sk-ant-api03-...
- * VITE_OPENAI_API_KEY=sk-...
- *
- * 3. Generate embeddings for knowledge base documents:
- *
- * const embeddings = new OpenAIEmbeddings();
- * for (const doc of knowledgeBase) {
- *   doc.embedding = await embeddings.generateEmbedding(doc.content);
- *   // Save to Supabase
- * }
- *
- * 4. Use in ChatbotInterface component:
- *
- * const ragChatbot = createRAGChatbot();
- * const response = await ragChatbot.chat(userMessage, knowledgeBaseDocuments);
- *
- * 5. Display sources and suggested actions in UI
- */

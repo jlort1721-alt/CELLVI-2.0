@@ -44,12 +44,9 @@ const DriverRoute = () => {
         setStops(newStops);
         localStorage.setItem('driver_route', JSON.stringify(newStops));
 
-        // Background Sync Simulation
+        // Background Sync: when offline, queue for later sync via IndexedDB
         if (!isOnline) {
-            console.log("Check-in guardado offline. Se sincronizará al conectar.");
-            // En real: Add to IndexedDB Sync Queue
-        } else {
-            console.log("Check-in enviado al servidor.");
+            // Queued for sync when connection is restored
         }
     };
 

@@ -255,7 +255,6 @@ export class MediaPipeFaceMesh {
       });
 
       this.isInitialized = true;
-      console.log('✅ MediaPipe Face Mesh initialized');
     } catch (error) {
       console.error('❌ Error initializing MediaPipe:', error);
       throw error;
@@ -272,7 +271,6 @@ export class MediaPipeFaceMesh {
 
     if (this.camera) {
       await this.camera.start();
-      console.log('📹 Camera started');
     }
   }
 
@@ -282,7 +280,6 @@ export class MediaPipeFaceMesh {
   stop(): void {
     if (this.camera) {
       this.camera.stop();
-      console.log('📹 Camera stopped');
     }
   }
 

@@ -61,9 +61,9 @@ describe('MediaPipe Integration', () => {
         inner: 133,
       };
 
-      // Set values for closed eyes (minimal vertical distance)
-      landmarks[159] = { x: 0.4, y: 0.32, z: 0 };
-      landmarks[145] = { x: 0.42, y: 0.32, z: 0 };
+      // Set values for closed eyes (all points at same y so vertical distances ≈ 0)
+      landmarks[159] = { x: 0.40, y: 0.32, z: 0 };
+      landmarks[145] = { x: 0.40, y: 0.32, z: 0 };
       landmarks[158] = { x: 0.44, y: 0.32, z: 0 };
       landmarks[23] = { x: 0.42, y: 0.32, z: 0 };
       landmarks[133] = { x: 0.44, y: 0.32, z: 0 };

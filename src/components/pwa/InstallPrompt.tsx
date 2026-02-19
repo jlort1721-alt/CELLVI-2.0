@@ -31,7 +31,6 @@ const InstallPrompt = () => {
         // Check if user has dismissed too many times
         const dismissCount = parseInt(localStorage.getItem(STORAGE_KEYS.DISMISS_COUNT) || '0');
         if (dismissCount >= MAX_DISMISSALS) {
-            console.log('[InstallPrompt] Max dismissals reached, not showing');
             return;
         }
 
@@ -45,7 +44,6 @@ const InstallPrompt = () => {
             if (dismissedAt) {
                 const daysSinceDismiss = (Date.now() - new Date(dismissedAt).getTime()) / (1000 * 60 * 60 * 24);
                 if (daysSinceDismiss < COOLDOWN_DAYS) {
-                    console.log(`[InstallPrompt] Within cooldown (${daysSinceDismiss.toFixed(1)} days)`);
                     return;
                 }
             }
@@ -67,7 +65,6 @@ const InstallPrompt = () => {
             if (iosDismissedAt) {
                 const daysSinceDismiss = (Date.now() - new Date(iosDismissedAt).getTime()) / (1000 * 60 * 60 * 24);
                 if (daysSinceDismiss < COOLDOWN_DAYS) {
-                    console.log(`[InstallPrompt iOS] Within cooldown (${daysSinceDismiss.toFixed(1)} days)`);
                     return;
                 }
             }
@@ -133,7 +130,6 @@ const InstallPrompt = () => {
                 ...params
             });
         }
-        console.log(`[InstallPrompt] ${eventName}`, params);
     };
 
     if (isStandalone) return null; // Don't show if already app

@@ -97,13 +97,13 @@ const PlatformSidebar = ({ id }: { id?: string }) => {
       id={id}
       className={`${sidebarOpen ? "w-52" : "w-0"} transition-all duration-300 overflow-y-auto overflow-x-hidden flex flex-col flex-shrink-0 z-10 bg-sidebar border-r border-sidebar-border`}
     >
-      <nav className="flex-1 py-2">
+      <nav className="flex-1 py-2" aria-label="Platform navigation">
         {menuSections.map((section) => {
           const visibleItems = section.items.filter((item) => can(item.permission));
           if (visibleItems.length === 0) return null;
           return (
-            <div key={section.title}>
-              <div className="px-4 py-2 text-[9px] font-bold text-sidebar-foreground/30 uppercase tracking-wider">
+            <div key={section.title} role="group" aria-label={section.title}>
+              <div className="px-4 py-2 text-[9px] font-bold text-sidebar-foreground/30 uppercase tracking-wider" aria-hidden="true">
                 {section.title}
               </div>
               {visibleItems.map((item) => (
@@ -113,6 +113,7 @@ const PlatformSidebar = ({ id }: { id?: string }) => {
                     setActiveModule(item.id);
                     if (window.innerWidth < 1024) setSidebarOpen(false);
                   }}
+                  aria-current={activeModule === item.id ? "page" : undefined}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-colors border-l-2 ${activeModule === item.id
                       ? "bg-sidebar-accent text-sidebar-primary border-sidebar-primary"
                       : "text-sidebar-foreground/50 border-transparent hover:text-sidebar-foreground/70"

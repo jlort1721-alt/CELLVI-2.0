@@ -1,7 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { ReactNode } from "react";
-
-type AppRole = "super_admin" | "admin" | "manager" | "operator" | "driver" | "client" | "auditor";
+import type { AppRole } from "@/types/shared";
 
 /**
  * Permission mapping for each role

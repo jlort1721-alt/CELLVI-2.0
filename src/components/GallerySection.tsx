@@ -2,8 +2,8 @@ import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
-import oficinaImg from "@/assets/oficina.jpg";
-import vehiculoImg from "@/assets/vehiculo.jpg";
+import oficinaImg from "@/assets/oficina.webp";
+import vehiculoImg from "@/assets/vehiculo.webp";
 import heroBg from "@/assets/hero-bg.jpg";
 import platformImg from "@/assets/platform-preview.jpg";
 

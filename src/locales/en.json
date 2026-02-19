@@ -526,7 +526,32 @@
     "cancel": "Cancel",
     "save": "Save",
     "loading": "Loading...",
+    "loadingApp": "Loading ASEGURAR LTDA...",
+    "loadingModule": "Loading module...",
     "back": "Back"
+  },
+  "header": {
+    "search": "Search",
+    "searchShortcut": "Search (Ctrl+K)",
+    "profile": "My Profile",
+    "settings": "Settings",
+    "signOut": "Sign Out",
+    "syncing": "Syncing",
+    "syncingTitle": "Syncing...",
+    "offline": "Offline",
+    "offlineTitle": "No connection",
+    "online": "Online",
+    "onlineTitle": "System Online",
+    "user": "User",
+    "role": {
+      "super_admin": "Super Admin",
+      "admin": "Administrator",
+      "manager": "Manager",
+      "operator": "Operator",
+      "driver": "Driver",
+      "client": "Client",
+      "auditor": "Auditor"
+    }
   },
   "faq": {
     "badge": "FAQ",
@@ -843,5 +868,142 @@
     "deviations": "Deviations",
     "criticalLabel": "critical",
     "valueThreshold": "Value: {{value}} / Threshold: {{threshold}}"
+  },
+  "admin": {
+    "title": "Administration",
+    "tabs": {
+      "vehicles": "Vehicles",
+      "devices": "Devices",
+      "drivers": "Drivers",
+      "usersRoles": "Users & Roles",
+      "billing": "Billing",
+      "organization": "Organization",
+      "settings": "Settings"
+    },
+    "form": {
+      "plate": "Plate",
+      "brand": "Brand",
+      "model": "Model",
+      "year": "Year",
+      "fullName": "Full name",
+      "license": "License",
+      "phone": "Phone",
+      "imei": "IMEI",
+      "simCard": "SIM Card"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "actions": {
+      "newVehicle": "New Vehicle",
+      "newDevice": "New Device",
+      "newDriver": "New Driver",
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit"
+    },
+    "toast": {
+      "vehicleCreated": "Vehicle created",
+      "deviceCreated": "Device created",
+      "driverCreated": "Driver created",
+      "changesSaved": "Changes saved"
+    }
+  },
+  "auth": {
+    "login": "Log In",
+    "signup": "Create Account",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "fullName": "Full name",
+    "submit": "Log In",
+    "submitSignup": "Sign Up",
+    "processing": "Processing...",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "welcome": "Welcome to ASEGURAR LTDA",
+    "accountCreated": "Account created. You can now log in.",
+    "switchToLogin": "Already have an account? Log in",
+    "switchToSignup": "Don't have an account? Sign up",
+    "formLabel": "Authentication form",
+    "loginSubtitle": "Access the ASEGURAR LTDA platform",
+    "signupSubtitle": "Sign up to access the platform",
+    "noAccount": "Don't have an account? Sign up",
+    "hasAccount": "Already have an account? Log in",
+    "platformDescription": "Comprehensive telematics, GPS monitoring and fleet management platform",
+    "vehicles": "Vehicles",
+    "countries": "Countries",
+    "backToSite": "← Back to main site"
+  },
+  "aria": {
+    "closeChat": "Close chat",
+    "sendMessage": "Send message",
+    "previous": "Previous",
+    "next": "Next",
+    "openExternalLink": "Open external link",
+    "closeMenu": "Close menu",
+    "openMenu": "Open menu",
+    "toggleNavigation": "Toggle menu",
+    "mainContent": "Platform main content",
+    "loadingModule": "Loading module",
+    "offlineMode": "Offline mode activated. Changes will sync automatically.",
+    "connectionRestored": "Connection restored",
+    "userMenu": "User menu",
+    "notifications": "Notifications",
+    "platformNav": "Platform navigation",
+    "offlineBanner": "Offline Mode - Changes will sync automatically",
+    "navigatingTo": "Navigating to {{module}}"
+  },
+  "vehicle": {
+    "status": {
+      "moving": "Moving",
+      "stopped": "Stopped",
+      "idle": "Idle",
+      "offline": "No Signal"
+    },
+    "commands": {
+      "disableEngine": "Disable Engine",
+      "enableEngine": "Enable Engine",
+      "lockDoors": "Lock Doors",
+      "unlockDoors": "Unlock Doors",
+      "honk": "Activate Horn",
+      "locateNow": "Locate Now"
+    },
+    "metrics": {
+      "speed": "Speed",
+      "fuel": "Fuel",
+      "temperature": "Temperature",
+      "battery": "Battery",
+      "odometer": "Odometer",
+      "engineHours": "Engine Hours"
+    }
+  },
+  "checklist": {
+    "title": "Pre-operational Inspection",
+    "oilLevel": "Engine Oil Level",
+    "coolantLevel": "Coolant Level",
+    "brakesFluid": "Brakes & Fluid",
+    "tireCondition": "Tire Condition",
+    "documentsUpToDate": "Documents up to date",
+    "readyToOperate": "Ready to operate!",
+    "notFit": "Vehicle NOT FIT",
+    "startInspection": "Start Inspection",
+    "completeInspection": "Complete Inspection"
+  },
+  "auditLog": {
+    "title": "Audit Log",
+    "events": {
+      "speedExcess": "Speed excess",
+      "geofenceExit": "Geofence exit",
+      "tempOutOfRange": "Temp. out of range",
+      "fuelAnomaly": "Fuel anomaly",
+      "engineBlock": "Engine block",
+      "ruleTriggered": "Rule triggered"
+    }
   }
 }

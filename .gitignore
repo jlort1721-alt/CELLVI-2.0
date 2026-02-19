@@ -28,6 +28,11 @@ dist-ssr
 .env
 .env.local
 .env.*
+!.env.example
+
+# Test artifacts
+coverage/
+playwright-report/
 
 # Supabase
 supabase/.branches

@@ -94,7 +94,6 @@ export function DigitalTwinViewer({ vehicleData }: { vehicleData?: any }) {
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'digital_twin_state', filter: `vehicle_id=eq.${vehicleData.id}` },
                 (payload) => {
-                    console.log('Twin Update:', payload);
                     setTwinState((prev: any) => ({ ...prev, ...(payload.new as any) }));
                 }
             )

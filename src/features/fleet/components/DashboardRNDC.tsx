@@ -185,7 +185,7 @@ const DashboardRNDC = () => {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Button size="icon" variant="ghost" className="w-9 h-9 rounded-xl hover:bg-sidebar-foreground/5 text-sidebar-foreground/40 hover:text-sidebar-foreground">
+                                                <Button size="icon" variant="ghost" aria-label="Abrir enlace externo" className="w-9 h-9 rounded-xl hover:bg-sidebar-foreground/5 text-sidebar-foreground/40 hover:text-sidebar-foreground">
                                                     <ExternalLink className="w-4 h-4" />
                                                 </Button>
                                                 <Button

@@ -1,37 +1,47 @@
 /**
  * Environment Configuration
  * Centralizes all environment variables with type safety and validation
+ *
+ * SECURITY: AI API keys (Anthropic, OpenAI) are NEVER exposed to the client.
+ * All AI calls go through the /ai-proxy Edge Function server-side.
  */
 
+/**
+ * Typed shape for the application's environment configuration.
+ * Populated from `VITE_*` environment variables at build time.
+ */
 interface EnvConfig {
-  // Supabase
+  /** Supabase connection settings. */
   supabase: {
+    /** Supabase project URL (e.g. `https://xxx.supabase.co`). */
     url: string;
+    /** Supabase anonymous/public API key. */
     anonKey: string;
-    serviceRoleKey?: string;
   };
 
-  // AI Services
+  /** AI service configuration. API keys are never exposed client-side. */
   ai: {
-    anthropicApiKey?: string;
-    openaiApiKey?: string;
+    /** Full URL to the Supabase Edge Function AI proxy. */
+    proxyEndpoint: string;
+    /** MediaPipe face-detection model settings. */
     mediapipe: {
       useCdn: boolean;
       baseUrl: string;
     };
   };
 
-  // Application
+  /** Application metadata. */
   app: {
     name: string;
     version: string;
     env: 'development' | 'staging' | 'production';
   };
 
-  // Feature Flags
+  /** Runtime feature flags toggled via environment variables. */
   features: {
     analytics: boolean;
     errorReporting: boolean;
+    /** When `true`, components fall back to demo/mock data instead of Supabase. */
     useMockData: boolean;
     debugMode: boolean;
   };
@@ -60,8 +70,17 @@ function validateEnv() {
 
   if (missing.length > 0) {
     console.warn(
-      `⚠️ Missing required environment variables: ${missing.join(', ')}\n` +
+      `Missing required environment variables: ${missing.join(', ')}\n` +
       'Please copy .env.example to .env and fill in the values.'
+    );
+  }
+
+  // SECURITY: Warn if AI keys are accidentally exposed to client
+  if (import.meta.env.VITE_ANTHROPIC_API_KEY || import.meta.env.VITE_OPENAI_API_KEY) {
+    console.error(
+      'SECURITY WARNING: AI API keys detected in client-side environment!\n' +
+      'Remove VITE_ANTHROPIC_API_KEY and VITE_OPENAI_API_KEY from .env.\n' +
+      'AI keys must only be stored in Supabase Edge Function secrets.'
     );
   }
 }
@@ -69,17 +88,22 @@ function validateEnv() {
 // Validate on load
 validateEnv();
 
-// Export configuration
+/**
+ * Validated, typed environment configuration singleton.
+ * Import this instead of accessing `import.meta.env` directly.
+ *
+ * @example
+ * import { env } from '@/config/env';
+ * const client = createClient(env.supabase.url, env.supabase.anonKey);
+ */
 export const env: EnvConfig = {
   supabase: {
     url: getEnv('VITE_SUPABASE_URL'),
     anonKey: getEnv('VITE_SUPABASE_ANON_KEY'),
-    serviceRoleKey: getEnv('VITE_SUPABASE_SERVICE_ROLE_KEY'),
   },
 
   ai: {
-    anthropicApiKey: getEnv('VITE_ANTHROPIC_API_KEY'),
-    openaiApiKey: getEnv('VITE_OPENAI_API_KEY'),
+    proxyEndpoint: `${getEnv('VITE_SUPABASE_URL')}/functions/v1/ai-proxy`,
     mediapipe: {
       useCdn: getBoolEnv('VITE_MEDIAPIPE_USE_CDN', true),
       baseUrl: getEnv(
@@ -92,7 +116,7 @@ export const env: EnvConfig = {
   app: {
     name: getEnv('VITE_APP_NAME', 'ASEGURAR LTDA'),
     version: getEnv('VITE_APP_VERSION', '2.5.4'),
-    env: (getEnv('VITE_APP_ENV', 'development') as any),
+    env: (getEnv('VITE_APP_ENV', 'development') as EnvConfig['app']['env']),
   },
 
   features: {
@@ -103,19 +127,20 @@ export const env: EnvConfig = {
   },
 };
 
-// Export helper to check if APIs are configured
+/**
+ * Quick boolean checks for whether external services have valid configuration.
+ * Useful for conditionally enabling features at runtime.
+ */
 export const isConfigured = {
   supabase: Boolean(env.supabase.url && env.supabase.anonKey),
-  anthropic: Boolean(env.ai.anthropicApiKey),
-  openai: Boolean(env.ai.openaiApiKey),
+  aiProxy: Boolean(env.supabase.url), // AI is available if Supabase is configured
 };
 
-// Log configuration status
+// Log configuration status (debug only)
 if (env.features.debugMode) {
-  console.log('🔧 Environment Configuration:', {
+  console.log('Environment Configuration:', {
     supabaseConfigured: isConfigured.supabase,
-    anthropicConfigured: isConfigured.anthropic,
-    openaiConfigured: isConfigured.openai,
+    aiProxyConfigured: isConfigured.aiProxy,
     useMockData: env.features.useMockData,
   });
 }

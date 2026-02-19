@@ -87,7 +87,7 @@ export function AsegurarAssistant() {
                             <p className="text-[10px] text-slate-400">Powered by RAG & Vector Search</p>
                         </div>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white">
+                    <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} aria-label="Cerrar chat" className="text-slate-400 hover:text-white">
                         <X className="w-5 h-5" />
                     </Button>
                 </CardHeader>
@@ -139,7 +139,7 @@ export function AsegurarAssistant() {
                                 placeholder="Escribe tu consulta..."
                                 className="bg-slate-800 border-white/10 text-white focus-visible:ring-gold/50"
                             />
-                            <Button type="submit" size="icon" className="bg-gold hover:bg-yellow-500 text-black shadow-lg shadow-gold/20" disabled={isLoading}>
+                            <Button type="submit" size="icon" aria-label="Enviar mensaje" className="bg-gold hover:bg-yellow-500 text-black shadow-lg shadow-gold/20" disabled={isLoading}>
                                 <Send className="w-4 h-4" />
                             </Button>
                         </form>

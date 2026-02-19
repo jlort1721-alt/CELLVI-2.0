@@ -110,7 +110,7 @@ const TestimonialsSection = () => {
 
           {/* Navigation */}
           <div className="flex items-center justify-center gap-4 mt-8">
-            <Button variant="outline" size="icon" onClick={prev} className="rounded-full border-border hover:border-gold/50">
+            <Button variant="outline" size="icon" onClick={prev} aria-label="Anterior" className="rounded-full border-border hover:border-gold/50">
               <ChevronLeft className="w-4 h-4" />
             </Button>
             <div className="flex gap-2">
@@ -126,7 +126,7 @@ const TestimonialsSection = () => {
                 />
               ))}
             </div>
-            <Button variant="outline" size="icon" onClick={next} className="rounded-full border-border hover:border-gold/50">
+            <Button variant="outline" size="icon" onClick={next} aria-label="Siguiente" className="rounded-full border-border hover:border-gold/50">
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
